@@ -1,0 +1,78 @@
+{% if settings.custom_currency_converter_enabled %}
+
+<style>
+  #custom-currency-selector-wrap .disclosure__toggle {
+    background-color: transparent !important;
+    border: none !important;
+    height: 40px;
+    padding: 0;
+    margin-right: 0;
+    text-transform: uppercase;
+  }
+  #custom-currency-selector-wrap .disclosure__list-wrap {
+    border: none;
+    bottom: initial;
+    top: 100%;
+    position: absolute;
+  }
+  #custom-currency-selector-wrap .disclosure-list__item {
+    display: block;
+  }
+</style>
+
+<div
+  id="custom-currency-selector-wrap"
+  class="selectors-form__item selectors-form__currency"
+>
+  <h2
+    class="hidden"
+    id="custom-currency-heading"
+  >
+    {{ 'general.currency.dropdown_label' | t }}
+  </h2>
+
+  <div
+    class="disclosure disclosure--currency disclosure-text-style-{{ settings.nav_font_style }}"
+    data-disclosure
+    data-custom-currency-disclosure
+  >
+    <button
+      type="button"
+      class="disclosure__toggle disclosure__toggle--currency"
+      aria-expanded="false"
+      aria-controls="custom-currency-list"
+      aria-describedby="custom-currency-heading"
+      data-disclosure-toggle
+      data-custom-currency-toggle
+    >
+<span class="custom-currency-code">{{ shop.currency | upcase }}</span><div aria-hidden="true" class="ly-arrow ly-arrow-black stroke" style="vertical-align: middle; width: 14.0px; height: 14.0px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.0 14.0" height="14.0px" width="14.0px" style="position: absolute;"><path d="M2 5.5 L7.0 10.5 L12.0 5.5" fill="transparent" stroke="#000" stroke-width="2px"></path></svg></div>
+    </button>
+    <div class="disclosure__list-wrap">
+      <ul
+        id="custom-currency-list"
+        class="disclosure-list"
+        data-disclosure-list
+        data-custom-currency-list
+      >
+        {% assign currencies = settings.custom_supported_currencies | split: ',' %}
+        {% for currency in currencies %}
+          {% assign currency_code = currency | strip %}
+          <li
+            class="disclosure-list__item {% if currency_code == shop.currency %}disclosure-list__item--current{% endif %}"
+            data-custom-currency-item
+          >
+            <button
+              type="button"
+              class="disclosure__button"
+              data-custom-currency-button
+              value="{{ currency_code }}"
+            >
+              {{ currency_code }}
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}

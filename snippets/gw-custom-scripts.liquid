@@ -1,0 +1,16 @@
+{% if template contains 'product' %}
+<script>
+  window.addEventListener('sswhelperload', () => { 
+    if(typeof sswRun === 'function') {
+      sswRun(function(){
+        const WishlistButton = setInterval(function(){
+          if(ssw('#widget-fave-html').length && ssw('.shopify-product-form .add_to_cart').length){
+            ssw('#widget-fave-html').insertAfter(ssw('.shopify-product-form .purchase-details'));
+            clearInterval(WishlistButton);
+          }
+        }, 1000);
+      });
+    }
+  })
+</script>
+{% endif %}
