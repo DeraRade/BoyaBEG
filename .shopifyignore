@@ -4,7 +4,6 @@
 # skip the compiled twins so `shopify theme push` stays clean.
 assets/app.js
 assets/gift-card.css
-assets/socialshopwave-custom.css
 assets/sections.js
 assets/styles.css
 assets/utilities.js
