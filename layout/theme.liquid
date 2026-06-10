@@ -105,7 +105,7 @@
     <script src="{{ 'jquery.min.js' | asset_url }}" defer></script>
 
     {% if settings.show_multiple_currencies or settings.show_shipping_calculator %}
-      <script type="text/javascript" src="/services/javascripts/currencies.js" data-no-instant></script>
+      <script type="text/javascript" src="/services/javascripts/currencies.js" data-no-instant defer></script>
     {% endif %}
 
     {% if settings.show_multiple_currencies or shop.enabled_currencies.size > 1 %}
