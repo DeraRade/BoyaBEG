@@ -70,6 +70,24 @@
               {{ block.shopify_attributes }}
               data-block-id="{{ block.id }}"
             >
+              {% comment %}
+                Eagerly load only the first slide's *visible* image as the LCP.
+                When a separate mobile image is set the desktop image is hidden
+                on mobile (and vice versa), so prioritise just the one that will
+                actually be shown to avoid a duplicate eager download.
+              {% endcomment %}
+              {% liquid
+                assign desktop_priority = false
+                assign mobile_priority = false
+                if forloop.first
+                  if block.settings.mobile_image
+                    assign mobile_priority = true
+                  else
+                    assign desktop_priority = true
+                  endif
+                endif
+              %}
+
               {% if block.settings.mobile_image %}
                 <div class="is-hidden-mobile-only">
               {% endif %}
@@ -81,6 +99,7 @@
                   alt: block.settings.image.alt,
                   stretch_width: true,
                   focal_point: block.settings.image.presentation.focal_point,
+                  priority: desktop_priority,
                 %}
 
                 {% if block.settings.caption_content_background == 'darken_bg' %}
@@ -100,6 +119,7 @@
                     alt: block.settings.mobile_image.alt,
                     stretch_width: true,
                     focal_point: block.settings.mobile_image.presentation.focal_point,
+                    priority: mobile_priority,
                   %}
 
                   {% if block.settings.caption_content_background == 'darken_bg' %}

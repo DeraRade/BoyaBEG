@@ -42,34 +42,31 @@
     {% endif %}
 
     <!-- Preconnect Domains -->
-    <link rel="preconnect" href="https://fonts.shopifycdn.com" />
+    <!-- Only preconnect the origins needed for the first paint. Keep this list
+         short (browsers warn when more than 4 preconnects are used); everything
+         else falls back to the cheaper dns-prefetch hint below. -->
     <link rel="preconnect" href="https://cdn.shopify.com" />
-    <link rel="preconnect" href="https://v.shopify.com" />
-    <link rel="preconnect" href="https://cdn.shopifycloud.com" />
-    <link rel="preconnect" href="https://monorail-edge.shopifysvc.com">
+    <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin />
 
-    <!-- fallback for browsers that don't support preconnect -->
-    <link rel="dns-prefetch" href="https://fonts.shopifycdn.com" />
+    <!-- dns-prefetch fallback / non-critical origins -->
     <link rel="dns-prefetch" href="https://cdn.shopify.com" />
+    <link rel="dns-prefetch" href="https://fonts.shopifycdn.com" />
     <link rel="dns-prefetch" href="https://v.shopify.com" />
     <link rel="dns-prefetch" href="https://cdn.shopifycloud.com" />
     <link rel="dns-prefetch" href="https://monorail-edge.shopifysvc.com">
 
-    <!-- Preload Assets -->
-    <link rel="preload" href="{{ 'fancybox.css' | asset_url }}" as="style">
+    <!-- Preload the main stylesheet only. The theme scripts are already
+         deferred, so preloading them here just competes with the LCP image for
+         early bandwidth. -->
     <link rel="preload" href="{{ 'styles.css' | asset_url }}" as="style">
 
-    <link rel="preload" href="{{ 'jquery.min.js' | asset_url }}" as="script">
-    <link rel="preload" href="{{ 'vendors.js' | asset_url }}" as="script">
-    <link rel="preload" href="{{ 'sections.js' | asset_url }}" as="script">
-    <link rel="preload" href="{{ 'utilities.js' | asset_url }}" as="script">
-    <link rel="preload" href="{{ 'app.js' | asset_url }}" as="script">
-
-    <!-- Stylesheet for Fancybox library -->
-    {{ 'fancybox.css' | asset_url | stylesheet_tag }}
-
-    <!-- Stylesheets for Turbo -->
+    <!-- Stylesheet for Turbo (render-blocking, required for first paint) -->
     {{ 'styles.css' | asset_url | stylesheet_tag }}
+
+    <!-- Fancybox styles are only needed once a lightbox opens, so load them
+         without blocking the first render. -->
+    <link rel="stylesheet" href="{{ 'fancybox.css' | asset_url }}" media="print" onload="this.media='all'">
+    <noscript>{{ 'fancybox.css' | asset_url | stylesheet_tag }}</noscript>
 
     <script>
       window.lazySizesConfig = window.lazySizesConfig || {};
