@@ -1,0 +1,33 @@
+{%- comment -%}
+  ============================================================================
+  layout/links.liquid
+  ----------------------------------------------------------------------------
+  Goli layout za "link-in-bio" stranicu (zamena za Linkpop).
+  NE učitava header, footer, glavni meni, cart drawer ni temu-navigaciju —
+  renderuje samo ono što template ubaci kroz {{ content_for_layout }}.
+
+  Tracking teme (Google Analytics, Pinterest...) je hardkodovan u
+  layout/theme.liquid, pa se OVDE ne nasleđuje. Jedino {{ content_for_header }}
+  je obavezan (Shopify ga sam popunjava svojim sistemskim skriptama).
+
+  Koristi se tako što template ima:  "layout": "links"
+  ============================================================================
+{%- endcomment -%}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    {%- comment -%} viewport-fit=cover => sadržaj poštuje "safe area" na telefonima sa zarezom {%- endcomment -%}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>{{ page.title | default: shop.name }}</title>
+
+    {%- comment -%} OBAVEZNO: bez ovoga Shopify prijavljuje grešku pri uploadu teme. {%- endcomment -%}
+    {{ content_for_header }}
+  </head>
+
+  <body>
+    {%- comment -%} Ceo sadržaj stranice dolazi iz template-a (sekcija link-in-bio). {%- endcomment -%}
+    {{ content_for_layout }}
+  </body>
+</html>

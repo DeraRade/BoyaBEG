@@ -1,0 +1,9 @@
+{
+  "layout": "links",
+  "sections": {
+    "main": {
+      "type": "link-in-bio"
+    }
+  },
+  "order": ["main"]
+}
