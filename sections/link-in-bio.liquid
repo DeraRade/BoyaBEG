@@ -64,6 +64,31 @@
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
 
+  /* Divider blok */
+  .lib-divider-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+  }
+  .lib-divider-item::before,
+  .lib-divider-item::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--lib-title);
+    opacity: 0.2;
+  }
+  .lib-divider__label {
+    color: var(--lib-title);
+    opacity: 0.5;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
   /* Sakrij Shopify language/currency switcher koji se ubacuje kroz content_for_header */
   #shopify-pc-banner,
   .shopify-features__geo-banner,
@@ -248,7 +273,14 @@
               endcase
             -%}
 
-            {%- if href != blank -%}
+            {%- if block.type == 'divider' -%}
+              <li {{ block.shopify_attributes }} class="lib-divider-item" role="separator">
+                {%- if block.settings.label != blank -%}
+                  <span class="lib-divider__label">{{ block.settings.label | escape }}</span>
+                {%- endif -%}
+              </li>
+
+            {%- elsif href != blank -%}
               <li {{ block.shopify_attributes }}>
                 <a class="lib-button" href="{{ href }}" rel="noopener">
                   {%- comment -%} Sličica se renderuje samo ako je globalno uključena I blok ima sliku. {%- endcomment -%}
@@ -270,6 +302,7 @@
             {%- endif -%}
           {%- endfor -%}
         </ul>
+
       </nav>
     {%- endif -%}
 
@@ -341,6 +374,17 @@
         { "type": "image_picker", "id": "thumbnail", "label": "Sličica (opciono)" },
         { "type": "text", "id": "label", "label": "Naziv dugmeta", "default": "Novi link" },
         { "type": "url",  "id": "url",   "label": "URL" }
+      ]
+    },
+    {
+      "type": "divider",
+      "name": "Razdvajač",
+      "settings": [
+        {
+          "type": "text", "id": "label",
+          "label": "Tekst razdvajača (opciono)",
+          "info": "Ostavi prazno za čistu liniju bez teksta."
+        }
       ]
     },
     {
