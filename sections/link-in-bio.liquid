@@ -29,7 +29,8 @@
     when 'soft'
       assign radius_value = '8px'
     else
-      assign radius_value = '0px'   # 'sharp' = oštri uglovi
+      # 'sharp' = oštri uglovi
+      assign radius_value = '0px'
   endcase
 
   # Oblik loga -> border-radius
@@ -39,7 +40,8 @@
     when 'rounded'
       assign logo_radius = '20%'
     else
-      assign logo_radius = '0'      # 'square'
+      # 'square'
+      assign logo_radius = '0'
   endcase
 
   assign logo_alt = section.settings.title | default: shop.name
