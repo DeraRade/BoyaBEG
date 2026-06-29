@@ -10,13 +10,26 @@
 	  <!-- Google tag (gtag.js) -->
     <!-- Pinterest Site Verification -->
   <meta name="p:domain_verify" content="7cf1e8e6717e9b51f2f0f4d9490531bb"/>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9LT05CFYKY"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-9LT05CFYKY');
+  // Exclude known search-engine crawlers / bots from Google Analytics.
+  // GA4 auto-filters the IAB bot list, but JS-rendering crawlers
+  // (Googlebot, bingbot, etc.) and many smaller crawlers still get
+  // counted as real visits. If the user agent matches a known crawler
+  // we skip loading gtag.js entirely, so no hit is ever sent.
+  var __isCrawler = /bot|crawl|spider|slurp|mediapartners|google-inspectiontool|googleother|adsbot|bingpreview|baiduspider|yandex|sogou|exabot|ia_archiver|facebookexternalhit|semrush|ahrefs|mj12bot|dotbot|petalbot|seznambot|duckduckbot|applebot/i.test(navigator.userAgent);
+
+  if (!__isCrawler) {
+    var __gaScript = document.createElement('script');
+    __gaScript.async = true;
+    __gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9LT05CFYKY';
+    document.head.appendChild(__gaScript);
+
+    gtag('js', new Date());
+    gtag('config', 'G-9LT05CFYKY');
+  }
 </script>
   <script>
     window.Store = window.Store || {};
