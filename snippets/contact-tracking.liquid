@@ -1,0 +1,50 @@
+{% comment %}
+  Emits GA4 'contact_click' events when a user clicks a phone (tel:) or
+  WhatsApp link anywhere on the storefront. Uses a single delegated
+  listener on document so it covers header (desktop + mobile), footer,
+  store-pickup, social icons, and any dynamically injected links.
+
+  Fires the gtag event synchronously on click, before navigation, and
+  never calls preventDefault — the phone dialer / WhatsApp app opens
+  exactly as before.
+{% endcomment %}
+<script>
+  (function () {
+    document.addEventListener('click', function (event) {
+      try {
+        var target = event.target;
+        if (!target || typeof target.closest !== 'function') return;
+
+        var link = target.closest('a');
+        if (!link) return;
+
+        var href = link.getAttribute('href') || '';
+        var method = null;
+        var value = null;
+
+        if (href.indexOf('tel:') === 0) {
+          method = 'phone';
+          value = href.slice(4);
+        } else if (
+          href.indexOf('whatsapp:') === 0 ||
+          href.indexOf('wa.me') !== -1 ||
+          href.indexOf('whatsapp.com') !== -1 ||
+          (link.classList && link.classList.contains('icon-whatsapp'))
+        ) {
+          method = 'whatsapp';
+          value = href;
+        }
+
+        if (!method) return;
+        if (typeof gtag !== 'function') return;
+
+        gtag('event', 'contact_click', {
+          'contact_method': method,
+          'contact_value': value
+        });
+      } catch (e) {
+        /* never break the click */
+      }
+    }, true);
+  })();
+</script>
