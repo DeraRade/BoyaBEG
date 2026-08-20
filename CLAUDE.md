@@ -8,8 +8,12 @@ ovaj fajl je jedini izvor istine za koji sajt/store/tema idu zajedno.
 
 | Brend                       | Custom domen             | Shopify handle                  | Lokalni folder     | GitHub repo             |
 |-----------------------------|--------------------------|---------------------------------|--------------------|-------------------------|
-| Boya Porcelain **Belgrade** | `boyaporcelain.com`      | *(popuniti kad korisnik potvrdi)* | `~/BoyaBEG`        | `DeraRade/BoyaBEG`      |
+| Boya Porcelain **Belgrade** | `boyaporcelain.com`      | `boyaporcelain.myshopify.com`   | `~/BoyaBEG`        | `DeraRade/BoyaBEG`      |
 | Boya Porcelana **Valencia** | `boyaporcelana.com` (…)  | `boya-valencia.myshopify.com`   | `~/boyavlc`        | *(drugi repo)*          |
+
+**Belgrade deploy vrednosti (potvrdio korisnik):**
+- `--store boyaporcelain.myshopify.com`
+- `--theme 122473283718` (live tema; admin: `admin.shopify.com/store/boyaporcelain/themes/122473283718`)
 
 **Ovaj repo (`DeraRade/BoyaBEG`, folder `~/BoyaBEG`) pripada Belgrade-u.** Sve
 izmene odavde idu na Belgrade Shopify store. NIKAD ne push-uj kod iz ovog foldera
