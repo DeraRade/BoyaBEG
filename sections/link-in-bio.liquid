@@ -162,6 +162,8 @@
   .lang-en { display: none; }
   #lib-lang-en:checked ~ .lib-card .lang-en { display: inline; }
   #lib-lang-en:checked ~ .lib-card .lang-sr { display: none; }
+  /* Kad je ceo anchor jezička verzija (link sa /sr), prikaži ga kao flex (ne inline) */
+  #lib-lang-en:checked ~ .lib-card a.lib-button.lang-en { display: flex; }
 
   /* --- Zaglavlje: logo + naslov + podnaslov --- */
   .lib-header { text-align: center; margin-bottom: 24px; }
@@ -343,7 +345,48 @@
                 {%- endif -%}
               </li>
 
+            {%- elsif block.type == 'link' and block.settings.url != blank -%}
+              {%- comment -%}
+                Link ima DVA anchora: SR i EN. SR verzija dobija /sr prefiks
+                ako je interni link (počinje sa "/"); eksterni linkovi
+                (Instagram, https...) ostaju isti. CSS prikazuje aktivni jezik.
+              {%- endcomment -%}
+              {%- liquid
+                assign url_en = block.settings.url
+                assign url_sr = url_en
+                assign first_char = url_en | slice: 0
+                if first_char == '/'
+                  assign url_sr = '/sr' | append: url_en
+                endif
+              -%}
+              {%- comment -%} Sličicu izračunamo jednom pa je koristimo u oba anchora. {%- endcomment -%}
+              {%- capture thumb_html -%}
+                {%- if section.settings.show_thumbnail == 'show' and block.settings.thumbnail != blank -%}
+                  {{
+                    block.settings.thumbnail
+                    | image_url: width: 96
+                    | image_tag:
+                        class: 'lib-button__thumb',
+                        alt: '',
+                        loading: 'lazy',
+                        width: 32,
+                        height: 32
+                  }}
+                {%- endif -%}
+              {%- endcapture -%}
+              <li {{ block.shopify_attributes }}>
+                <a class="lib-button lang-sr" href="{{ url_sr }}" rel="noopener">
+                  {{ thumb_html }}
+                  <span class="lib-button__label">{{ label | escape }}</span>
+                </a>
+                <a class="lib-button lang-en" href="{{ url_en }}" rel="noopener">
+                  {{ thumb_html }}
+                  <span class="lib-button__label">{{ label_en | escape }}</span>
+                </a>
+              </li>
+
             {%- elsif href != blank -%}
+              {%- comment -%} Ostali tipovi (WhatsApp i budući): jedan anchor, tekst se menja po jeziku. {%- endcomment -%}
               <li {{ block.shopify_attributes }}>
                 <a class="lib-button" href="{{ href }}" rel="noopener">
                   {%- comment -%} Sličica se renderuje samo ako je globalno uključena I blok ima sliku. {%- endcomment -%}
