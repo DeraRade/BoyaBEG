@@ -2,7 +2,16 @@
   Emits GA4 'contact_click' events when a user clicks a phone (tel:) or
   WhatsApp link anywhere on the storefront. Uses a single delegated
   listener on document so it covers header (desktop + mobile), footer,
-  store-pickup, social icons, and any dynamically injected links.
+  store-pickup, social icons, and floating chat widgets from apps.
+
+  WhatsApp detection covers three shapes: an <a> with wa.me/wa.link/
+  whatsapp.com in href (or whatsapp: scheme), the theme's icon-whatsapp
+  social link, and any clickable element whose own attributes or those
+  of a nearby ancestor carry the WhatsApp URL in a data-* value (how
+  most floating chat widgets stash it).
+
+  The Growave share-to-WhatsApp button (.ssw-share-faves) is explicitly
+  skipped — it shares a wishlist, it is not a contact link.
 
   Fires the gtag event synchronously on click, before navigation, and
   never calls preventDefault — the phone dialer / WhatsApp app opens
@@ -15,24 +24,56 @@
         var target = event.target;
         if (!target || typeof target.closest !== 'function') return;
 
-        var link = target.closest('a');
-        if (!link) return;
+        if (target.closest('.ssw-share-faves')) return;
 
-        var href = link.getAttribute('href') || '';
+        var anchor = target.closest('a');
+        var href = (anchor && anchor.getAttribute('href')) || '';
         var method = null;
         var value = null;
 
         if (href.indexOf('tel:') === 0) {
           method = 'phone';
           value = href.slice(4);
-        } else if (
-          href.indexOf('whatsapp:') === 0 ||
-          href.indexOf('wa.me') !== -1 ||
-          href.indexOf('whatsapp.com') !== -1 ||
-          (link.classList && link.classList.contains('icon-whatsapp'))
-        ) {
-          method = 'whatsapp';
-          value = href;
+        } else {
+          var lower = href.toLowerCase();
+          if (
+            lower.indexOf('whatsapp:') === 0 ||
+            lower.indexOf('wa.me') !== -1 ||
+            lower.indexOf('wa.link') !== -1 ||
+            lower.indexOf('whatsapp.com') !== -1
+          ) {
+            method = 'whatsapp';
+            value = href;
+          } else if (anchor && anchor.classList && anchor.classList.contains('icon-whatsapp')) {
+            method = 'whatsapp';
+            value = href || 'unknown';
+          } else {
+            var node = target;
+            var depth = 0;
+            while (node && depth < 5) {
+              if (node.attributes) {
+                for (var i = 0; i < node.attributes.length; i++) {
+                  var attr = node.attributes[i];
+                  if (attr.name && attr.name.indexOf('data-') === 0 && attr.value) {
+                    var v = attr.value.toLowerCase();
+                    if (
+                      v.indexOf('whatsapp:') === 0 ||
+                      v.indexOf('wa.me') !== -1 ||
+                      v.indexOf('wa.link') !== -1 ||
+                      v.indexOf('whatsapp.com') !== -1
+                    ) {
+                      method = 'whatsapp';
+                      value = attr.value;
+                      break;
+                    }
+                  }
+                }
+              }
+              if (method) break;
+              node = node.parentElement;
+              depth++;
+            }
+          }
         }
 
         if (!method) return;
