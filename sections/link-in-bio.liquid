@@ -126,6 +126,43 @@
     margin: 0 auto;
   }
 
+  /* --- Jezički prekidač (SR | EN), čist CSS --- */
+  .lib-lang-input { position: absolute; left: -9999px; }  /* radio skriven ali funkcionalan */
+
+  .lib-lang-switch {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .lib-lang-btn {
+    cursor: pointer;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--lib-title);
+    border: 1px solid var(--lib-title);
+    opacity: 0.45;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+  /* Aktivni jezik: SR podrazumevano; EN kad je njegov radio čekiran */
+  #lib-lang-sr:checked ~ .lib-card .lib-lang-btn--sr,
+  #lib-lang-en:checked ~ .lib-card .lib-lang-btn--en {
+    opacity: 1;
+    background: var(--lib-title);
+    color: var(--lib-bg);
+  }
+
+  /* Sadržaj po jeziku: podrazumevano SR vidljiv, EN skriven.
+     Kad je EN radio čekiran — obrni. */
+  .lang-en { display: none; }
+  #lib-lang-en:checked ~ .lib-card .lang-en { display: inline; }
+  #lib-lang-en:checked ~ .lib-card .lang-sr { display: none; }
+
   /* --- Zaglavlje: logo + naslov + podnaslov --- */
   .lib-header { text-align: center; margin-bottom: 24px; }
 
@@ -212,7 +249,21 @@
 
 {%- comment -%} ======================= RENDER ======================= {%- endcomment -%}
 <div class="lib-page">
+
+  {%- comment -%}
+    Jezički prekidač (SR | EN) — čist CSS, bez JS. Dva skrivena radio dugmeta
+    stoje PRE .lib-card; labele niže ih menjaju klikom. SR je podrazumevan.
+  {%- endcomment -%}
+  <input type="radio" name="lib-lang" id="lib-lang-sr" class="lib-lang-input" checked>
+  <input type="radio" name="lib-lang" id="lib-lang-en" class="lib-lang-input">
+
   <main class="lib-card lib--align-{{ section.settings.text_align }} lib--thumbs-{{ section.settings.show_thumbnail }}">
+
+    {%- comment -%} SR | EN dugmad (labele "kucaju" gornje radio dugmiće) --- {%- endcomment -%}
+    <div class="lib-lang-switch" role="group" aria-label="Jezik / Language">
+      <label for="lib-lang-sr" class="lib-lang-btn lib-lang-btn--sr">SR</label>
+      <label for="lib-lang-en" class="lib-lang-btn lib-lang-btn--en">EN</label>
+    </div>
 
     {%- comment -%} --- Zaglavlje (renderuje se samo ako postoji bar jedan element) --- {%- endcomment -%}
     {%- if section.settings.logo != blank or section.settings.title != blank or section.settings.subtitle != blank -%}
@@ -232,11 +283,17 @@
         {%- endif -%}
 
         {%- if section.settings.title != blank -%}
-          <h1 class="lib-title">{{ section.settings.title | escape }}</h1>
+          <h1 class="lib-title">
+            <span class="lang-sr">{{ section.settings.title | escape }}</span>
+            <span class="lang-en">{{ section.settings.title_en | default: section.settings.title | escape }}</span>
+          </h1>
         {%- endif -%}
 
         {%- if section.settings.subtitle != blank -%}
-          <p class="lib-subtitle">{{ section.settings.subtitle | escape }}</p>
+          <p class="lib-subtitle">
+            <span class="lang-sr">{{ section.settings.subtitle | escape }}</span>
+            <span class="lang-en">{{ section.settings.subtitle_en | default: section.settings.subtitle | escape }}</span>
+          </p>
         {%- endif -%}
       </header>
     {%- endif -%}
@@ -271,12 +328,18 @@
                 #   when 'email'
                 #     assign href = 'mailto:' | append: block.settings.email
               endcase
+
+              # Engleska verzija naziva; ako je prazna, koristi srpsku.
+              assign label_en = block.settings.label_en | default: label
             -%}
 
             {%- if block.type == 'divider' -%}
               <li {{ block.shopify_attributes }} class="lib-divider-item" role="separator">
                 {%- if block.settings.label != blank -%}
-                  <span class="lib-divider__label">{{ block.settings.label | escape }}</span>
+                  <span class="lib-divider__label">
+                    <span class="lang-sr">{{ block.settings.label | escape }}</span>
+                    <span class="lang-en">{{ block.settings.label_en | default: block.settings.label | escape }}</span>
+                  </span>
                 {%- endif -%}
               </li>
 
@@ -296,7 +359,10 @@
                           height: 32
                     }}
                   {%- endif -%}
-                  <span class="lib-button__label">{{ label | escape }}</span>
+                  <span class="lib-button__label">
+                    <span class="lang-sr">{{ label | escape }}</span>
+                    <span class="lang-en">{{ label_en | escape }}</span>
+                  </span>
                 </a>
               </li>
             {%- endif -%}
@@ -330,9 +396,11 @@
       ]
     },
 
-    { "type": "header", "content": "Tekst" },
-    { "type": "text", "id": "title",    "label": "Naslov",    "default": "Ime brenda" },
-    { "type": "text", "id": "subtitle", "label": "Podnaslov", "default": "Kratak opis ili slogan" },
+    { "type": "header", "content": "Tekst (SR = srpski, EN = engleski)" },
+    { "type": "text", "id": "title",       "label": "Naslov (SR)",    "default": "Ime brenda" },
+    { "type": "text", "id": "title_en",    "label": "Naslov (EN)",    "info": "Ostavi prazno da koristi srpski." },
+    { "type": "text", "id": "subtitle",    "label": "Podnaslov (SR)", "default": "Kratak opis ili slogan" },
+    { "type": "text", "id": "subtitle_en", "label": "Podnaslov (EN)", "info": "Ostavi prazno da koristi srpski." },
 
     { "type": "header", "content": "Boje" },
     { "type": "color", "id": "background_color",  "label": "Pozadina",           "default": "#ffffff" },
@@ -372,7 +440,8 @@
       "name": "Link",
       "settings": [
         { "type": "image_picker", "id": "thumbnail", "label": "Sličica (opciono)" },
-        { "type": "text", "id": "label", "label": "Naziv dugmeta", "default": "Novi link" },
+        { "type": "text", "id": "label",    "label": "Naziv dugmeta (SR)", "default": "Novi link" },
+        { "type": "text", "id": "label_en", "label": "Naziv dugmeta (EN)", "info": "Ostavi prazno da koristi srpski." },
         { "type": "url",  "id": "url",   "label": "URL" }
       ]
     },
@@ -382,8 +451,13 @@
       "settings": [
         {
           "type": "text", "id": "label",
-          "label": "Tekst razdvajača (opciono)",
+          "label": "Tekst razdvajača SR (opciono)",
           "info": "Ostavi prazno za čistu liniju bez teksta."
+        },
+        {
+          "type": "text", "id": "label_en",
+          "label": "Tekst razdvajača EN (opciono)",
+          "info": "Ostavi prazno da koristi srpski."
         }
       ]
     },
@@ -392,7 +466,8 @@
       "name": "WhatsApp poruka",
       "settings": [
         { "type": "image_picker", "id": "thumbnail", "label": "Sličica (opciono)" },
-        { "type": "text", "id": "label", "label": "Naziv dugmeta", "default": "Pošalji poruku" },
+        { "type": "text", "id": "label",    "label": "Naziv dugmeta (SR)", "default": "Pošalji poruku" },
+        { "type": "text", "id": "label_en", "label": "Naziv dugmeta (EN)", "info": "Ostavi prazno da koristi srpski. Npr. Send a message" },
         {
           "type": "text", "id": "phone",
           "label": "Broj telefona",
