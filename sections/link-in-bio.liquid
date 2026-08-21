@@ -162,7 +162,10 @@
   .lang-en { display: none; }
   #lib-lang-en:checked ~ .lib-card .lang-en { display: inline; }
   #lib-lang-en:checked ~ .lib-card .lang-sr { display: none; }
-  /* Kad je ceo anchor jezička verzija (link sa /sr), prikaži ga kao flex (ne inline) */
+  /* Kad je ceo anchor jezička verzija (link ima 2 anchora: SR i EN):
+     EN anchor mora biti sakriven po defaultu jače od .lib-button (display:flex),
+     zato .lib-button.lang-en (2 klase) pobeđuje .lib-button (1 klasa). */
+  .lib-button.lang-en { display: none; }
   #lib-lang-en:checked ~ .lib-card a.lib-button.lang-en { display: flex; }
 
   /* --- Zaglavlje: logo + naslov + podnaslov --- */
