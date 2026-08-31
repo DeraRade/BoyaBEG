@@ -1,0 +1,104 @@
+<script>
+(function() {
+  if (window.__qvScoringLoaded) return;
+  window.__qvScoringLoaded = true;
+
+  var HOT = 4, HOT_MAX = 7;
+  var FIRED_TTL = 30 * 24 * 60 * 60 * 1000;
+  var path = location.pathname;
+
+  function alreadyFired(k){try{var t=parseInt(localStorage.getItem(k)||'0',10);return t&&(Date.now()-t)<FIRED_TTL;}catch(e){return false;}}
+  function markFired(k){try{localStorage.setItem(k,String(Date.now()));}catch(e){}}
+
+  // Ponovljeni pregled iste PDP (uz drugu stranicu izmedju = ne refresh)
+  try {
+    if (path.indexOf('/products/') !== -1) {
+      var handle = path.split('/products/')[1].split('/')[0].split('?')[0];
+      if (handle) {
+        var seen = JSON.parse(localStorage.getItem('qv_seen_products') || '[]');
+        var isRefresh = (sessionStorage.getItem('qv_last_path') === path);
+        if (seen.indexOf(handle) !== -1 && !isRefresh) sessionStorage.setItem('qv_repeat_pdp','1');
+        if (seen.indexOf(handle) === -1) { seen.push(handle); localStorage.setItem('qv_seen_products', JSON.stringify(seen)); }
+      }
+    }
+    sessionStorage.setItem('qv_last_path', path);
+  } catch(e) {}
+
+  // Broj razlicitih proizvoda u sesiji
+  try {
+    if (path.indexOf('/products/') !== -1) {
+      var h2 = path.split('/products/')[1].split('/')[0].split('?')[0];
+      var sp = JSON.parse(sessionStorage.getItem('qv_sess_products') || '[]');
+      if (h2 && sp.indexOf(h2) === -1) { sp.push(h2); sessionStorage.setItem('qv_sess_products', JSON.stringify(sp)); }
+    }
+  } catch(e) {}
+
+  // Povratna poseta (7 / 8-30 dana), jednom po sesiji
+  try {
+    if (!sessionStorage.getItem('qv_session_started')) {
+      var now = Date.now(), last = parseInt(localStorage.getItem('boyaLastVisit') || '0', 10);
+      if (last && (now - last) > 0) {
+        var d = now - last;
+        if (d < 7*24*60*60*1000) sessionStorage.setItem('qv_return','7');
+        else if (d < 30*24*60*60*1000) sessionStorage.setItem('qv_return','30');
+      }
+      localStorage.setItem('boyaLastVisit', String(now));
+      sessionStorage.setItem('qv_session_started','1');
+    }
+  } catch(e) {}
+
+  // Interna pretraga
+  try { if (path.indexOf('/search') !== -1 && location.search.indexOf('q=') !== -1) sessionStorage.setItem('qv_search','1'); } catch(e) {}
+
+  // Info stranice (Beograd handle-ovi)
+  try {
+    if (path.indexOf('/pages/our-story') !== -1) sessionStorage.setItem('qv_story','1');
+    if (path.indexOf('/pages/refund-and-return-goods-policy') !== -1) sessionStorage.setItem('qv_refund','1');
+    if (path.indexOf('/pages/shipping-and-faq') !== -1) sessionStorage.setItem('qv_faq','1');
+  } catch(e) {}
+
+  // Live listeneri: contact klik + RVP klik
+  try {
+    if (!window.__qvClickBound) {
+      window.__qvClickBound = true;
+      document.addEventListener('click', function(e) {
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        var href = a.getAttribute('href') || '', cls = (a.className || '') + '';
+        if (href.indexOf('tel:') === 0 || href.indexOf('wa.me') !== -1 || href.indexOf('whatsapp') !== -1 || cls.indexOf('icon-whatsapp') !== -1) {
+          sessionStorage.setItem('qv_contact','1'); evaluate();
+        }
+        // RVP klik — SPAVAJUCI: promeni '.recently-viewed' u stvarni selektor kad traka zazivi
+        if (a.closest && a.closest('.recently-viewed')) { sessionStorage.setItem('qv_rvp_return','1'); evaluate(); }
+      }, true);
+    }
+  } catch(e) {}
+
+  function evaluate() {
+    var score = 0, reasons = [];
+    function add(p,r){score+=p;reasons.push(r);}
+    try {
+      if (sessionStorage.getItem('qv_repeat_pdp')==='1' || sessionStorage.getItem('qv_rvp_return')==='1') add(3,'repeat_product');
+      var ret = sessionStorage.getItem('qv_return');
+      if (ret==='7') add(3,'return_visit_7d'); else if (ret==='30') add(2,'return_visit_30d');
+      if (sessionStorage.getItem('qv_search')==='1') add(3,'onsite_search');
+      if (sessionStorage.getItem('qv_contact')==='1') add(4,'contact_click'); // BEOGRAD +4
+      var sp = JSON.parse(sessionStorage.getItem('qv_sess_products') || '[]');
+      if (sp.length>=3) add(2,'product_views_3plus'); else if (sp.length===2) add(1,'product_views_2');
+      if (sessionStorage.getItem('qv_story')==='1') add(1,'story_page');
+      if (sessionStorage.getItem('qv_refund')==='1') add(1,'refund_page');
+      if (sessionStorage.getItem('qv_faq')==='1') add(1,'faq_page');
+    } catch(e) {}
+    var rs = reasons.join(',');
+    if (score>=HOT && !alreadyFired('qv_fired_hot')) { markFired('qv_fired_hot'); push('high_scoring_intent', score, rs); }
+    if (score>=HOT_MAX && !alreadyFired('qv_fired_max')) { markFired('qv_fired_max'); push('high_scoring_intent_max', score, rs); }
+  }
+
+  function push(name, score, rs) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ 'event': name, 'qv_score': score, 'qv_reasons': rs });
+    if (typeof gtag === 'function') gtag('event', name, { 'qv_score': score, 'qv_reasons': rs });
+  }
+
+  evaluate();
+})();
+</script>
