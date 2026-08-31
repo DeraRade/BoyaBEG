@@ -1,0 +1,94 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "links",
+  "sections": {
+    "main": {
+      "type": "link-in-bio",
+      "blocks": {
+        "divider_mrNdDr": {
+          "type": "divider",
+          "settings": {
+            "label": "",
+            "label_en": ""
+          }
+        },
+        "link_aHAd7g": {
+          "type": "link",
+          "settings": {
+            "label": "Prodavnica",
+            "label_en": "Shop",
+            "url": "shopify://collections"
+          }
+        },
+        "link_QkVLBq": {
+          "type": "link",
+          "settings": {
+            "label": "Radionice",
+            "label_en": "Workshops",
+            "url": "shopify://pages/workshops"
+          }
+        },
+        "link_EBC9YH": {
+          "type": "link",
+          "settings": {
+            "label": "Najčešća pitanja",
+            "label_en": "FAQ",
+            "url": "shopify://pages/shipping-and-faq"
+          }
+        },
+        "link_6BbHRn": {
+          "type": "link",
+          "settings": {
+            "label": "Boya x Hyatt",
+            "label_en": "Boya x Hyatt",
+            "url": "shopify://blogs/boya/boya-porcelain-and-metropolitan-restaurant-of-hyatt-regency-milan-and-bojana-at-the-playground"
+          }
+        },
+        "whatsapp_chat_PAAJwC": {
+          "type": "whatsapp_chat",
+          "settings": {
+            "label": "WhatsApp poruka",
+            "label_en": "WhatsApp message",
+            "phone": "381692595888",
+            "prefill_message": ""
+          }
+        }
+      },
+      "block_order": [
+        "divider_mrNdDr",
+        "link_aHAd7g",
+        "link_QkVLBq",
+        "link_EBC9YH",
+        "link_6BbHRn",
+        "whatsapp_chat_PAAJwC"
+      ],
+      "settings": {
+        "logo": "shopify://shop_images/logo_350x297_bd610a1a-cfb3-4aba-9e2d-a97e6c6873cc.jpg",
+        "logo_size": 96,
+        "logo_shape": "circle",
+        "title": "Boya Porcelain",
+        "title_en": "Boya Porcelain",
+        "subtitle": "izdvojeni linkovi",
+        "subtitle_en": "featured links",
+        "background_color": "#dcc1b5",
+        "button_color": "#4e2626",
+        "button_text_color": "#ffffff",
+        "title_color": "#111111",
+        "button_radius": "pill",
+        "show_thumbnail": "show",
+        "text_align": "center"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -1,1 +1,36 @@
-{"sections":{"1718902368417494bb":{"type":"apps","blocks":{"essential_countdown_app_block_6Xectf":{"type":"shopify:\/\/apps\/essential-countdown\/blocks\/app-block\/722378e8-5a70-4eae-aa89-9e44e8e9f6de","settings":{"id":"clxnh891j60611419ukwyfjm6br"}}},"block_order":["essential_countdown_app_block_6Xectf"],"settings":{}},"main":{"type":"collection-template","settings":{"featured_collection_image":false,"wide_display":true,"caption_content_background":"darken_bg","display_collection_title":true,"collection_breadcrumb":true,"collection_tags":false,"collection_sort":false,"products_per_row":3,"pagination_limit":48,"toggle":false}}},"order":["1718902368417494bb","main"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "1718902368417494bb": {
+      "type": "apps",
+      "settings": {}
+    },
+    "main": {
+      "type": "collection-template",
+      "settings": {
+        "featured_collection_image": false,
+        "wide_display": true,
+        "caption_content_background": "darken_bg",
+        "display_collection_title": true,
+        "collection_breadcrumb": true,
+        "collection_tags": false,
+        "collection_sort": false,
+        "products_per_row": 3,
+        "pagination_limit": 48,
+        "toggle": false
+      }
+    }
+  },
+  "order": [
+    "1718902368417494bb",
+    "main"
+  ]
+}
