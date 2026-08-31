@@ -1,0 +1,689 @@
+{%- comment -%}
+    This is the cart's core. Changes to this file will affect both "cart dawers" and "cart page".
+
+    Accepts:
+    - location = drawer/page
+    - blocks = {Array} of blocks
+
+    Usage:
+	{%- render 'c-cart', location: 'drawer' -%}
+{%- endcomment -%}
+
+{% # Load stylesheet %}
+{%- render 'inc-stylesheet', src: 'c-cart.css' -%}
+
+{%- liquid
+    assign cartLocation = location | default: 'page'
+
+    # Cart form id
+    assign cartFormId = 'coretex-cart-form'
+    # Drawer cart form id
+    if cartLocation == 'drawer'
+        assign cartFormId = 'coretex-cart-form-drawer'
+    endif
+
+    assign showImage = settings.cart_image
+    assign showVendor = settings.cart_vendor
+    assign showTax = settings.cart_tax
+    assign showContinue = settings.cart_continue
+    assign showViewCart = settings.cart_viewButton
+    assign showExtraButtons = settings.cart_dynamicButtons
+    assign showNotes = settings.cart_notes
+    assign showDiscount = settings.cart_discount
+    assign showPaymentIcons = settings.cart_icons
+    assign paymentIconsGrey = settings.cart_icons_grey
+    assign freeShippingBar = settings.cart_free_shipping
+    assign showAnnouncement = settings.cart_announcement
+-%}
+
+{%- comment -%} Title for Cart Page {%- endcomment -%}
+{%- if location == 'page' -%}<h1 class="h5 title visually-hidden">{{ 'sections.cart.title' | t }}</h1>{% endif %}
+
+{%- comment -%}
+    Related products
+{%- endcomment -%}
+<coretex-cart empty="{{ cart.empty? }}" counter="{{ cart.item_count }}" data-ajax-cart-section>
+
+{%- # Cart is empty -%}
+{%- if cart.empty? -%}
+
+    <section class="empty">
+        <x-flex direction="row" wrap="wrap">
+            <x-cell><span>{{ 'sections.cart.empty' | t }}</span></x-cell>
+            <x-cell><a href="{{ settings.cart_empty_url }}">{{ 'general.continue_shopping' | t }}</a></x-cell>
+        </x-flex>
+    </section>
+
+{%- else -%}
+
+<x-grid columns="6" columns-m="1f" columns-s="1f" class="coretex-cart">
+    {%- comment -%}
+        # Cart Items
+    {%- endcomment -%}
+    <cart-body span="4" x-flex direction="column" class="cart-items" data-ajax-cart-section-scroll>
+        {%- for item in cart.items -%}
+            {%- assign line_item_index = forloop.index -%}
+            <cart-item item-number="{{ line_item_index }}" x-grid class="onHover-a">
+
+                {%- # Image -%}
+                <x-cell span="1" span-y="1-2" class="image">
+                    {%- if showImage -%}
+                    <a href="{{ item.url | escape }}">
+                    {%- liquid 
+                        if item.image
+    
+                            assign img = item.image
+                            assign alt = item.image.alt | default: item.title
+                            assign width = 500
+                            assign widths = '100,200,300,500'
+                            assign sizes = '(min-width: 777px) 300px, 78.75vw'
+                            assign loading = 'lazy'
+
+                            render 'inc-img' img: img, width: width, widths: widths, sizes: sizes, loading: loading, alt: alt
+    
+                        endif
+                    -%}
+                    </a>
+                    {%- endif -%}
+                </x-cell>
+
+                {%- # Meta -%}
+                <x-flex direction="column" span="2" class="meta">
+                    <x-cell>
+                        {%- liquid 
+                            # Pre-order
+                            capture preOrder
+                                # Check if product has preorder tag
+                                # Preorder tag (normalize + handle spelling variants)
+                                assign pre_order = false
+                                assign tags_csv = item.product.tags | join: ',' | downcase
+                                if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+                                    assign pre_order = true
+                                endif
+
+                                if pre_order and settings.cart_preorder_label
+                                    echo '<span class="preorderLabel text-clip labeler">'
+                                    echo 'openthinking.dictionary.word.preorder' | t
+                                    echo '</span>'
+                                endif
+                            endcapture
+                        -%}
+
+                        {%- # Vendor -%}
+                        {%- if showVendor -%}
+                        <span class="vendor text-clip"><a href="{{ item.product.vendor | url_for_vendor }}" class="no-style">{{ item.product.vendor }}</a></span>
+                        {%- endif -%}
+        
+                        {%- # Title -%}
+                        <x-flex wrap="wrap" ai="center" style="gap:0 var(--space-3)">
+                            <span class="title"><a href="{{ item.url | escape }}">{{ item.title | escape }}</a></span>
+                            {{ preOrder }}
+                        </x-flex>
+
+                        {% comment %} 
+                            OG product price (doesn't change based on quantity in cart) 
+                        {% endcomment %}
+                        {%- liquid
+                            # Check if product is on sale (has compare_at_price)
+                            assign has_sale_price = false
+                            if item.variant.compare_at_price and item.variant.compare_at_price > item.original_price
+                                assign has_sale_price = true
+                            endif
+
+                            # Check if product has line-item discount applied
+                            assign has_discount = false
+                            if item.original_price != item.final_price
+                                assign has_discount = true
+                            endif
+                        -%}
+
+                        {%- if has_sale_price or has_discount -%}
+                            <div class="ogPrice discounted-prices">
+                                <span class="visually-hidden">{{ 'products.product.price.sale_price' | t }}</span>
+                                <span class="final-price">{{ item.final_price | money }}</span>
+
+                                <span class="visually-hidden">{{ 'products.product.price.regular_price' | t }}</span>
+                                <s class="old-price">
+                                    {%- if has_sale_price -%}
+                                        {{- item.variant.compare_at_price | money -}}
+                                    {%- else -%}
+                                        {{- item.original_price | money -}}
+                                    {%- endif -%}
+                                </s>
+                            </div>
+                        {%- else -%}
+                            <div class="ogPrice">{{ item.original_price | money }}</div>
+                        {%- endif -%}
+                    </x-cell>
+
+                    {%- # Bundle components -%}
+                    {% if item.item_components.size > 0 %}
+                    <x-cell>
+                        <ul class="product-components inside smaller"> 
+                        {%- for component in item.item_components -%}
+                              <li>
+                                {{ component.title }}
+                                {%- if component.quantity > 1 -%}
+                                  <span> × {{ component.quantity }}</span>
+                                {%- endif -%}
+                              </li>
+                            {%- endfor -%}
+                        </ul>
+                    </x-cell>
+                    {%- endif -%}
+    
+                    {%- # Selling plans -%}
+                    {%- if item.product.has_only_default_variant == false or item.properties.size != 0 or item.selling_plan_allocation != nil -%}
+                    <x-cell>
+                        <d class="properties smaller">
+                            {%- if item.product.has_only_default_variant == false -%}
+                                {%- for option in item.options_with_values -%}
+                                    <div class="product-option">
+                                        <dt>{{ option.name }}:</dt>
+                                        <dd>{{ option.value }}</dd>
+                                    </div>
+                                {%- endfor -%}
+                            {%- endif -%}
+                            
+                            {%- for property in item.properties -%}
+                                {%- assign property_first_char = property.first | slice: 0 -%}
+                                {%- if property.last != blank and property_first_char != '_' -%}
+                                    <div class="product-option">
+                                        <dt>{{ property.first }}:</dt>
+                                        <dd>
+                                            {%- if property.last contains '/uploads/' -%}
+                                                <a href="{{ property.last }}" class="link" target="_blank">{{ property.last | split: '/' | last }}</a>
+                                            {%- else -%}
+                                                {{ property.last }}
+                                            {%- endif -%}
+                                        </dd>
+                                    </div>
+                                {%- endif -%}
+                            {%- endfor -%}
+                        </d>
+    
+                        {%- if item.selling_plan_allocation != nil -%}
+                        <div class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</div>
+                        {%- endif -%}
+                    </x-cell>
+                    {%- endif -%}
+
+                </x-flex>
+
+                {%- # Price -%}
+                <x-flex direction="column" js="end" class="price text-end">
+
+                {%- liquid
+                    # Check if product has compare_at_price (on sale)
+                    assign has_compare_price = false
+                    assign compare_line_price = 0
+                    if item.variant.compare_at_price and item.variant.compare_at_price > item.original_price
+                        assign has_compare_price = true
+                        assign compare_line_price = item.variant.compare_at_price | times: item.quantity
+                    endif
+
+                    # Check if discount is applied
+                    assign has_discount = false
+                    if item.original_line_price != item.final_line_price
+                        assign has_discount = true
+                    endif
+                -%}
+
+                {%- if has_compare_price -%}
+                    {%- # Product is on sale - show compare price and final price -%}
+                    <x-flex style="gap: var(--space-1)">
+                        <span class="final-price">{{ item.final_line_price | money }}</span>
+                        <span class="price-old"><s><small>{{ compare_line_price | money }}</small></s></span>
+                    </x-flex>
+
+                {%- elsif has_discount -%}
+                    {%- # Product has discount but not on sale -%}
+                    <x-flex style="gap: var(--space-1)">
+                        <span class="final-price">{{ item.final_line_price | money }}</span>
+                        <span class="price-old"><s><small>{{ item.original_line_price | money }}</small></s></span>
+                    </x-flex>
+
+                {%- else -%}
+                    {%- # No sale, no discount -%}
+                    {{ item.original_line_price | money }}
+
+                {%- endif -%}
+
+
+                {%- comment -%} Unit price measurement {%- endcomment -%}
+                {%- if item.variant.available and item.unit_price_measurement -%}
+                <price-unit class="price-unit smaller">
+                    <small>
+                        <span class="visually-hidden">{{ 'products.product.price.unit_price' | t }}</span>
+                        {{ item.unit_price | money }}
+                        <span aria-hidden="true">/</span>
+                        <span class="visually-hidden">&nbsp;{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span>
+                        {%- liquid 
+                            if item.unit_price_measurement.reference_value != 1
+                                echo item.unit_price_measurement.reference_value
+                            endif
+                            echo item.unit_price_measurement.reference_unit
+                        -%}
+                    </small>
+                </price-unit>
+                {%- endif -%}
+
+                {%- comment -%} Line discount {%- endcomment -%}
+                {%- if item.line_level_discount_allocations.size > 0 -%}
+                <ul class="no-style">
+                    {%- for discount in item.line_level_discount_allocations -%}
+                    <li>
+                        <small class="smaller">{{ discount.discount_application.title | escape }}</small>
+                    </li>
+                    {%- endfor -%}
+                </ul>
+                {%- endif -%}
+                </x-flex>
+
+                {%- # Actions -%}
+                <ajax-cart-quantity as="end" class="qty off" x-flex ai="center">
+
+                        {%- # Item quantity input -%}
+                        <x-flex ai="center">
+                            <label for="coretex-qty-{{ line_item_index }}" class="visually-hidden">{{ 'products.product.quantity.input_label' | t: product: variant.title | escape }}</label>
+                            <input type="number" name="updates[]" 
+                                data-ajax-cart-quantity-input="{{ line_item_index }}" 
+                                id="coretex-qty-{{ line_item_index }}"
+                                class="qtyinput"
+                                value="{{ item.quantity }}" 
+                                form="{{ cartFormId }}"
+                                min="{{ item.variant.quantity_rule.min }}"
+                                {% if item.variant.quantity_rule.max != null %}
+                                max="{{ item.variant.quantity_rule.max }}"
+                                {% endif %}
+                                step="{{ item.variant.quantity_rule.increment }}"
+                                aria-label="{{ 'products.product.quantity.input_label' | t: product: variant.title | escape }}"
+                            >
+                        </x-flex>
+
+                        {%- # "Plus one" button -%}
+                        <x-cell>
+                            <a data-ajax-cart-quantity-plus href="{{ routes.cart_change_url }}?line={{ line_item_index }}&quantity={{ item.quantity | plus: 1 }}" 
+                                class="button is-blank has-icon plus" role="button" aria-label="{{ 'products.product.quantity.increase' | t: product: variant.title | escape }}">
+                                {% render 'inc-icon', icon: 'plus' %}
+                            </a>
+                        </x-cell>
+
+                        {%- # "Minus one" button -%}
+                        <x-cell>
+                            <a data-ajax-cart-quantity-minus href="{{ routes.cart_change_url }}?line={{ line_item_index }}&quantity={{ item.quantity | minus: 1 }}"
+                                class="button is-blank has-icon minus" role="button" aria-label="{{ 'products.product.quantity.decrease' | t: product: variant.title | escape }}">
+                                {% render 'inc-icon', icon: 'minus' %}
+                            </a>
+                        </x-cell>
+
+                </ajax-cart-quantity>
+
+                {%- # "Cart quantity line items errors" -%}
+                <x-cell data-ajax-cart-errors="{{ item.key }}" span="2+1"></x-cell>
+
+                {% # "Remove item" button %}
+                <x-cell ps="end" span="3.." class="off">
+                    <remove-item>
+                        <a data-ajax-cart-request-button href="{{ item.url_to_remove }}"
+                            class="button is-blank trash" role="button" aria-label="{{ 'sections.cart.remove_title' | t: title: item.title | escape }}">
+                            {% render 'inc-icon', icon: 'trash' %}
+                        </a>
+                    </remove-item>
+                </x-cell>
+
+            </cart-item>
+        {%- endfor -%}
+    </cart-body>
+
+    {%- comment -%}
+        # Cart Action
+    {%- endcomment -%}
+    <cart-footer span="2">
+        <x-flex direction="column" class="sticky" style="--sticky: var(--headSpace)">
+
+            {% comment %} Announcement bar {% endcomment %}
+            {%- if showAnnouncement -%}
+                <cart-announcement class="rte" highlight="{{ settings.cart_announcement_highlight }}">{{ settings.cart_announcement_message }}</cart-announcement>
+            {%- endif -%}
+
+            {% comment %} Free shipping bar {% endcomment %}
+            {%- if freeShippingBar -%}
+                {%- liquid
+                    # Check if free shipping is enabled for current market
+                    assign market_free_shipping_enabled = true
+                    
+                    if settings.cart_free_shipping_threshold_market
+                        assign free_shipping_threshold = localization.market.metafields.openthinking.free_shipping_threshold
+                        # If market-specific setting is enabled, ONLY show bar if market has a valid threshold set
+                        unless free_shipping_threshold and free_shipping_threshold > 0
+                            assign market_free_shipping_enabled = false
+                        endunless
+                    endif
+                -%}
+                
+                {%- if market_free_shipping_enabled -%}
+                    {%- liquid
+                        assign calculated_total_price = 0
+                        for line_item in cart.items
+                            if line_item.requires_shipping
+                                assign calculated_total_price = calculated_total_price | plus: line_item.final_line_price
+                            endif
+                        endfor
+                        
+                        # Free shipping threshold per market
+                        if settings.cart_free_shipping_threshold_market
+                            if free_shipping_threshold
+                                assign threshold = free_shipping_threshold | times: 100.0
+                            else 
+                                # fallback to global setting if market metafield is not set
+                                assign threshold = settings.cart_free_shipping_threshold | times: 100.0
+                            endif
+                        else 
+                            assign threshold = settings.cart_free_shipping_threshold | times: 100.0
+                        endif
+                        
+                        if calculated_total_price >= threshold
+                            assign free_shipping_away = 0
+                        else
+                            assign free_shipping_away = threshold | minus: calculated_total_price | money_without_trailing_zeros
+                        endif
+                        assign free_shipping_threshold = threshold | money_without_trailing_zeros
+                    -%}
+                    
+                    <component-loader><cart-shipping span="row" style="--progressFg: {{ settings.cart_free_shipping_color }}; --progressBg: color-mix(in srgb, {{ settings.cart_free_shipping_color }} 5%, rgb(0 0 0 / 0.1)); --gap: var(--space-1)">
+                        <x-flex wrap="wrap" ai="center" jc="between">
+                        {% if calculated_total_price >= threshold %}
+                            <x-cell class="omgFreeShipping"><span>{{ 'openthinking.cart_shipping.free_shipping_ok' | t }}</span></x-cell>
+                            <x-flex span="row" ai="center" jc="between" class="omgFreeShipping">
+                                <progress max="100" value="100" class="is-success" style="--progressFg: var(--green)"></progress>
+                                <x-cell class="truck">{% render 'inc-icon', icon: 'o-success' %}</x-cell>
+                            </x-flex>
+                        {% elsif calculated_total_price < threshold %}
+                            <x-cell>{{ 'openthinking.cart_shipping.free_shipping_over_html' | t: amount: free_shipping_threshold }}</x-cell>
+                            <x-cell>{{ 'openthinking.cart_shipping.free_shipping_away_html' | t: amount: free_shipping_away }}</x-cell>
+                            <x-cell span="row"><progress max="{{ threshold | round }}" value="{{ calculated_total_price | round }}"></progress></x-cell>
+                            {% endif %}
+                        </x-flex>
+                    </cart-shipping></component-loader>
+                {%- endif -%}
+            {%- endif -%}
+
+            {% comment %} Applied Discounts {% endcomment %}
+            {%- if cart.cart_level_discount_applications.size > 0 -%}
+            <x-cell class="discount">
+                <ul class="no-style inside subtotal text-end" role="list" aria-label="{{ 'customer.order.discount' | t }}">
+                    {%- for discount in cart.cart_level_discount_applications -%}
+                        <li x-flex jc="between" ai="center" style="--gap: var(--space-1)">
+                            <x-flex ai="center">
+                                <span>{%- render 'inc-icon', icon: 'sale' -%}</span>
+                                <small>{{ discount.title | escape }}</small>
+                            </x-flex>
+                            <x-flex ai="center">
+                                <small>
+                                    {%- liquid
+                                        assign displayMoney = discount.total_allocated_amount | money
+                                        if settings.currency_code_enabled
+                                            assign displayMoney = discount.total_allocated_amount | money_with_currency
+                                        endif
+                                        echo displayMoney | prepend: '-'
+                                    -%}
+                                </small>
+                                {% comment %} Remove discount button (only for manual discount codes, not automatic discounts) {% endcomment %}
+                                {%- if discount.type == 'discount_code' -%}
+                                    <button type="button"
+                                        class="button is-custom has-icon discount-remove-btn"
+                                        data-discount-code="{{ discount.title | escape }}"
+                                        aria-label="{{ 'sections.cart.remove_discount' | t }}: {{ discount.title | escape }}"
+                                    >{% render 'inc-icon', icon: 'x-close' %}</button>
+                                {%- endif -%}
+                            </x-flex>
+                        </li>
+                    {%- endfor -%}
+                </ul>
+            </x-cell>
+            {%- endif -%}
+
+            {%- comment %} Total savings {% endcomment -%}
+            {%- if settings.cart_total_savings -%}
+                {%- liquid
+                    assign total_savings = 0
+                    
+                    # 1. Compare at price savings (sale prices)
+                    for item in cart.items
+                        if item.variant.compare_at_price and item.variant.compare_at_price > item.original_price
+                            assign compare_savings = item.variant.compare_at_price | minus: item.original_price | times: item.quantity
+                            assign total_savings = total_savings | plus: compare_savings
+                        endif
+                    endfor
+                    
+                    # 2. Line-level discount savings (discounts applied to individual items)
+                    for item in cart.items
+                        if item.line_level_discount_allocations.size > 0
+                            for discount_allocation in item.line_level_discount_allocations
+                                assign total_savings = total_savings | plus: discount_allocation.amount
+                            endfor
+                        endif
+                    endfor
+                    
+                    # 3. Cart-level discount savings (discount codes, cart-wide automatic discounts)
+                    if cart.cart_level_discount_applications.size > 0
+                        for discount in cart.cart_level_discount_applications
+                            assign total_savings = total_savings | plus: discount.total_allocated_amount
+                        endfor
+                    endif
+                -%}
+
+                {%- if total_savings > 0 -%}
+                <x-cell jc="between" class="totalSavings">
+                    <x-flex ai="center" jc="between"> 
+                        <x-cell>{{ 'openthinking.dictionary.word.savings' | t }}</x-cell>
+                        <x-cell>
+                            <strong>{{ total_savings | money }}</strong>
+                        </x-cell>
+                    </x-flex>
+                </x-cell>
+                {%- endif -%}
+            {%- endif -%}
+
+            {% comment %} Total {% endcomment %}
+            <x-flex jc="between" class="subtotal">
+                <x-cell>{{ 'sections.cart.estimated_total' | t }}:</x-cell>
+                <x-cell>
+                    <strong>
+                        {%- liquid
+                            assign displayMoney = cart.total_price | money
+                            if settings.currency_code_enabled
+                                assign displayMoney = cart.total_price | money_with_currency
+                            endif
+                            echo displayMoney
+                        -%}
+                    </strong>
+                </x-cell>
+            </x-flex>
+
+            {%- comment -%} Shipping Taxes disclaimers {%- endcomment -%}
+            {%- if showTax -%}
+            <x-cell class="disclaimer">
+                <small class="rte">
+                    {%- liquid
+                        if cart.duties_included and cart.taxes_included
+                            if shop.shipping_policy.body == blank 
+                                echo 'sections.cart.duties_and_taxes_included_shipping_at_checkout_without_policy' | t
+                            else
+                                echo 'sections.cart.duties_and_taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                            endif
+
+                        elsif cart.duties_included == false and cart.taxes_included
+                            if shop.shipping_policy.body == blank
+                                echo 'sections.cart.taxes_included_shipping_at_checkout_without_policy' | t
+                            else
+                                echo 'sections.cart.taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                            endif
+
+                        elsif cart.duties_included and cart.taxes_included == false
+                            if shop.shipping_policy.body == blank
+                                echo 'sections.cart.duties_included_taxes_at_checkout_shipping_at_checkout_without_policy' | t
+                            else
+                                echo  'sections.cart.duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                            endif 
+
+                        elsif cart.duties_included == false and cart.taxes_included == false
+                            if shop.shipping_policy.body == blank
+                                echo 'sections.cart.taxes_at_checkout_shipping_at_checkout_without_policy' | t
+                            else 
+                                echo 'sections.cart.taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                            endif
+
+                        endif 
+                    -%}
+                </small>
+            </x-cell>
+            {%- endif -%}
+
+            {%- if showDiscount -%}
+            {% comment %} Discount Code Input {% endcomment %}
+            <details data-ajax-cart-details="CartDrawer-Discount" id="Detailss-CartDiscount" class="lv1 closex fullwidth">
+                <summary>
+                    <span class="text-clip bdotfx" role="link">{{ 'sections.cart.discount_code' | t }}</span>
+                    {%- render 'inc-icon', icon: 'chevron-down' -%}
+                </summary>
+
+                <component-loader><cart-discount>
+                    <x-flex ai="center" jc="between">
+                        <x-cell span="2">
+                            <label class="visually-hidden" for="cart-discount-code-input">{{ 'sections.cart.discount_code' | t }}</label>
+                            <input type="text" 
+                                id="cart-discount-code-input" 
+                                class="fullwidth discount-code-input" 
+                                placeholder="{{ 'sections.cart.discount_code' | t }}"
+                            >
+                        </x-cell>
+                        <x-cell>
+                            <button type="button" class="discount-apply">
+                                <span class="default">{{ 'sections.cart.apply' | t }}</span>
+                                <span class="working">{{ 'sections.cart.applying' | t }}</span>
+                            </button>
+                        </x-cell>
+                    </x-flex>
+                    <div data-ajax-cart-errors class="discount-error"></div>
+                </cart-discount></component-loader>
+             </details>
+            {%- endif -%}
+
+            {%- comment -%} Cart notes {%- endcomment -%}
+            {%- if showNotes -%}
+            <x-cell class="cart-notes fullwidth js">
+                <details data-ajax-cart-details="CartDrawer-Note" id="Detailss-CartDrawer" class="lv1 closex fullwidth">
+                    <summary>
+                        <span class="text-clip bdotfx" role="link">{{ 'openthinking.dictionary.phrase.order_note' | t }}</span>
+                        {%- render 'inc-icon', icon: 'chevron-down' -%}
+                    </summary>
+                    <cart-note>
+                        <label class="visually-hidden" for="CartDrawer-Note">{{ 'sections.cart.note' | t }}</label>
+                        <textarea
+                            data-ajax-cart-property-input 
+                            name="note" 
+                            form="{{ cartFormId }}" 
+                            id="CartDrawer-Note"
+                            class="fullwidth"
+                            placeholder="{{ 'sections.cart.note' | t }}"
+                        >{{ cart.note }}</textarea>
+                    </cart-note>
+                </details>
+            </x-cell>
+            {%- endif -%}
+
+            {%- comment -%} Terms 'checkbox' {%- endcomment -%}
+            {%- if settings.cart_termsCheckbox -%}
+                <x-flex style="gap:var(--space-1)" data-ajax-cart-static-element>
+                    <input type="checkbox" id="CartFormCheckbox-Dialog" form="{{ cartFormId }}" required>
+                    <label for="CartFormCheckbox-Dialog" class="rte text-normal">{{ 'openthinking.dictionary.sentence.cart_terms_html' | t: link: shop.terms_of_service.url }}</label>
+                </x-flex>
+            {%- endif -%}
+
+            <x-cell>
+                {%- comment -%} Button to checkout {%- endcomment -%}
+                {%- form 'cart', cart, id: cartFormId -%}
+                    <button 
+                        type="submit" 
+                        name="checkout" 
+                        form="{{ cartFormId }}"
+                        id="checkout"
+                        class="fullwidth go-2-checkout"
+                        {% if cart == empty %}disabled{% endif %}
+                    >
+                        {{ 'sections.cart.checkout' | t }}
+                    </button>
+
+                    {%- if showExtraButtons -%}
+                    <div class="cart__dynamic-checkout-buttons additional-checkout-buttons">
+                        {{ content_for_additional_checkout_buttons }}
+                    </div>
+                    {%- endif -%}
+
+                {%- endform -%}
+
+                <x-flex direction="row" jc="between" ai="center" wrap="wrap" style="gap:0">
+                {%- comment -%} [Drawer] - Button to cart {%- endcomment -%}
+                {%- if cartLocation == 'drawer' and showViewCart -%}
+                    <x-cell class="fullwidth"><a href="{{ routes.cart_url }}" class="button is-blank fullwidth viewCart">{{ 'general.cart.view_empty_cart' | t }}</a></x-cell>
+                {%- endif -%}
+
+                {%- comment -%} [Cart page] -  Continue shopping {%- endcomment -%}
+                {%- if cartLocation == 'page' and showContinue -%}
+                    <x-cell class="fullwidth">
+                        <a href="{{ routes.all_products_collection_url }}" class="button is-blank fullwidth continueShopping">{{ 'general.continue_shopping' | t }}</a>
+                    </x-cell>
+                {%- endif -%}
+                </x-flex>
+            </x-cell>
+
+            {%- comment -%} [Cart Page] - 'app' block. {%- endcomment -%}
+            {%- if cartLocation == 'page' -%}
+                {%- for block in blocks -%}
+                    {%- if block.type == 'app' %}
+                        <x-cell class="itsapp" {{ block.shopify_attributes }}>{%- render block -%}</x-cell>
+                    {%- endif -%}
+                {%- endfor -%}
+            {% endif %}  
+
+            {%- comment -%} Payment icons {%- endcomment -%}
+            <x-flex direction="row" ai="center" class="payment-icons" {% if paymentIconsGrey %}style="filter:grayscale(1)"{% endif %}>
+                {%- liquid
+                    if showPaymentIcons 
+                        render 'inc-payment-icons'
+                    endif
+                -%}
+            </x-flex>
+
+            {%- comment -%} [Cart Page] - 'tabs' block {%- endcomment -%}
+            {%- if cartLocation == 'page' -%}
+                <x-grid  {% if section.settings.tabs_column %}columns="2"{% else %}columns="1f"{% endif %} class="tabs">
+                {%- for block in blocks -%}
+                    {%- if block.type == 'tabs' %}
+                        <coretex-accordion class="accordion" data-ajax-cart-static-element {{ block.shopify_attributes }}>
+                            <details class="closex" data-ajax-cart-details="CartDrawer-Tab-{{ block.id }}"
+                                {% if block.settings.expand == true %}open{% endif %}
+                                itemscope
+                                itemprop="mainEntity"
+                                itemtype="https://schema.org/Question"
+                            >
+                                <summary itemprop="name"><span>{{ block.settings.title | escape }}</span></summary>
+
+                                <details-content itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                                    <div class="text rte" itemprop="text">{{ block.settings.content | replace: '\n', '<br/>' }}</div>
+                                </details-content>
+                            </details>
+                        </coretex-accordion>
+                    {%- endif -%}
+                {%- endfor -%}
+                </x-grid>
+            {%- endif -%}
+        </x-flex>
+    </cart-footer>
+
+</x-grid>
+
+{%- endif -%}
+</coretex-cart>

@@ -1,0 +1,121 @@
+<section id="secondaryFooter" 
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+  <x-flex wrap="wrap" ai="end">
+    {%- for block in section.blocks -%}
+      {%- case block.type -%}
+        {%- when 'copyright' -%}
+          <x-cell class="copyright" order-s="2" span-s="1" {{ block.shopify_attributes }}>
+            {%- if block.settings.copyright != empty -%}
+              <span>{{ block.settings.copyright }}</span>
+            {%- else -%}
+              <span>&copy; {{ 'now' | date: '%Y' }}, {{ shop.name | link_to: routes.root_url }}.</span>
+            {%- endif -%}
+          </x-cell>
+
+        {%- when 'policies' -%}
+          {%- if shop.policies -%}
+            <x-cell class="policies" order-s="1" span="1" span-s="row" {{ block.shopify_attributes }}>
+              <x-flex jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}">
+                <ul class="no-style inside" x-flex direction="row" wrap="wrap" jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}">
+                  {%- if block.settings.legalMenu != null -%}
+                    {%- assign linklist = block.settings.legalMenu -%}
+                    {%- for link in linklists[linklist].links -%}
+                      <li>
+                        <a href="{{ link.url | default: '#' }}" class="no-style">{{ link.title }}</a>
+                      </li>
+                    {%- endfor -%}
+                  {%- else -%}
+                    {%- for policy in shop.policies -%}
+                      {%- if policy != blank -%}
+                        <li>
+                          <a href="{{ policy.url }}" class="no-style">{{ policy.title }}</a>
+                        </li>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  {%- endif -%}
+                </ul>
+              </x-flex>
+            </x-cell>
+          {%- endif -%}
+
+        {%- when 'powered' -%}
+          <x-cell class="credits" order-s="3" {{ block.shopify_attributes }}>{{ powered_by_link }}</x-cell>
+      {%- endcase -%}
+    {%- endfor -%}
+  </x-flex>
+</section>
+
+{% schema %}
+{
+  "name": "Bottom bar",
+  "class": "main-footer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "copyright",
+      "name": "Copyright",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "copyright",
+          "label": "Custom copyright",
+          "info": "Leave blank for default copyright notice."
+        }
+      ]
+    },
+    {
+      "type": "policies",
+      "name": "Terms and policies",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Your [Store policies](https://shopify.com/admin/settings/legal/) will be used by default unless you select a specific menu below."
+        },
+        {
+          "type": "link_list",
+          "id": "legalMenu",
+          "label": "Menu",
+          "info": "Only top-level menu items are displayed."
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Alignment - desktop",
+          "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "powered",
+      "name": "Powered by Shopify",
+      "limit": 1,
+      "settings": []
+    }
+  ],
+  "default": {
+    "blocks": [{ "type": "copyright" }, { "type": "policies" }, { "type": "powered" }]
+  }
+}
+{% endschema %}

@@ -1,0 +1,609 @@
+{% comment %}
+	Renders a product card
+
+	Accepts:
+	- product: {Object} Shopify Product object
+	- card_media_type: {String} 'image' or 'multimedia'
+	- show_secondary: {Boolean}
+	- show_vendor: {Boolean}
+	- show_rating: {Boolean}
+	- show_subtitle: {Boolean}
+	- show_badges: {Boolean}
+	- show_price: {Boolean}
+	   - show_size_list {Boolean}
+       - show_color_list {Boolean}
+	   - show_quick_buy {Boolean}
+	   - show_quick_view {Boolean}
+	- loading: {String} 'eager', 'lazy' or 'auto'
+    - attributes: {String} additional attributes
+    - index: {Number} index of the card in the grid
+
+	Usage:
+	{%- render 'c-prod-card', product: product, css: false -%}
+{% endcomment %}
+
+{%- if product and product != empty -%}
+	{%- liquid
+		# Clean up section.id
+		#assign sectionIdFirst = section.id | remove: 'template--' | split: '__' | first | prepend: '-'
+		assign sectionIdLast = section.id | remove: 'template--' | split: '_' | last | prepend: '-'
+        assign sectionId = sectionIdFirst | append: sectionIdLast
+        #echo sectionId 
+
+		# Variables
+        if single_line_layout == null
+            assign single_line_layout = settings.card_single_line
+        endif
+
+        if overlay_meta == null
+            assign overlay_meta = settings.card_overlay_meta
+        endif
+
+        if card_clip_meta == null
+            assign card_clip_meta = settings.card_clip_meta
+        endif
+
+		if show_vendor == blank
+			assign show_vendor = settings.card_show_vendor
+		endif
+
+		if show_subtitle == null
+			assign show_subtitle = settings.card_show_subtitle
+		endif
+
+		if show_badges == null
+			assign show_badges = settings.card_show_badges
+		endif
+
+		if show_price == null
+			assign show_price = settings.card_show_price
+		endif
+
+		if show_rating == null
+			assign show_rating = settings.card_show_rating
+		endif
+
+		if show_size_list == null
+			assign show_size_list = settings.card_show_size_list
+		endif
+
+		if show_color_list == null
+			assign show_color_list = settings.card_show_color_list
+		endif
+
+		if show_secondary == null
+			assign show_secondary = settings.card_show_secondary
+
+            # Show secondary media on on hover
+            if settings.card_show_secondary_onHover == 'both'
+                assign show_secondary_type = 'onHover'
+            else
+                assign show_secondary_type = 'onHover-m' 
+            endif
+		endif
+
+		if card_media_type == null
+			assign card_media_type = settings.card_media_type
+		endif
+
+		if show_quick_buy == null
+			assign show_quick_buy = settings.card_quick_buy
+		endif
+
+		if show_quick_view == null
+			assign show_quick_view = settings.card_quick_view
+		endif
+
+        # Optimize loading based on card position
+        # If loading is not explicitly passed, determine it automatically
+        if loading == blank
+            assign loading = 'lazy'
+
+            # Optimize first row in first section only
+            # index must be passed from parent
+            # we hardcode the first 5 cards to eager load
+            if section.index == 1 and index <= 5
+                assign loading = 'eager'
+            endif
+        endif
+
+        # Compact Single line layout
+        assign flexDirection = 'column'
+        if single_line_layout == true
+            assign flexDirection = 'row'
+
+            # Displays only the product title and price on one line
+            assign show_price = true
+        
+            # Hides all other content
+            assign show_vendor = false
+            assign show_subtitle = false
+            assign show_badges = false
+            assign show_rating = false
+            assign show_size_list = false
+            assign show_color_list = false
+        endif
+
+		# Collection-aware link
+		capture collectionAwareUrl
+			echo 'data-href="'
+			echo product.url | within: collection
+			echo '"'
+		endcapture
+
+		# === [ CORETEX FYI ] ===
+		# Calculation the current_variant variable.
+		# If you don't want to preselect a first available variant
+		# replace the line `assign current_variant = product.selected_or_first_available_variant`
+		# with the following line: `assign current_variant = product.selected_variant`
+
+		assign current_variant = null
+		if product.has_only_default_variant
+			assign current_variant = product.variants[0]
+		else
+			assign current_variant = product.selected_or_first_available_variant
+		endif
+	-%}
+
+	{%- liquid
+		# === [ CORETEX FYI ] ===
+		# Logic to render the product variant sizes
+		# This is used for products with sizes
+		# `size` word is defined in translation files! For i18n you need to add `size` word in translation file
+
+		# Initialize the variable
+		assign has_available_size = false
+
+		if show_size_list
+			# Check if the product has variants
+			assign variantCount = product.variants | size
+			if product.available and variantCount > 0
+				# Variables
+				assign size_options = null
+                # number of sizes to display before truncating list.
+                assign size_option_list_truncate = 6
+
+				# Get the size options
+				assign size_label = 'openthinking.variants.size' | t | downcase | escape
+				if size_label contains 'translation missing'
+					assign size_label = 'size' | downcase
+				endif
+
+				# Get the size options from the product options
+				for option in product.options_with_values
+					assign option_name_downcase = option.name | downcase
+					if option_name_downcase == size_label
+						assign size_options = option.values
+					endif
+				endfor
+
+
+				# Capture the available sizes
+				capture size_options_list
+					# Render the size options
+                    assign truncated = false
+                    if size_options and size_options.size > 0
+                        echo '<ul x-flex wrap="wrap" class="sizes-list no-style inside">'
+                        for size in size_options
+                            if forloop.index <= size_option_list_truncate
+                                # Check if the size is available
+                                assign size_available = false
+                                for variant in product.variants
+                                    if variant.option1 == size or variant.option2 == size or variant.option3 == size
+                                        if variant.available
+                                            assign size_available = true
+                                            assign has_available_size = true
+                                            break
+                                        endif
+                                    endif
+                                endfor
+
+                                # Render size with or without strikethrough
+                                if size_available
+                                    echo '<li>' | append: size | append: '</li>'
+                                else
+                                    echo '<li><s class="unavailable">' | append: size | append: '</s></li>'
+                                endif
+                            else
+                                assign truncated = true
+                            endif
+                        endfor
+
+                        # If there are more than `size_option_list_truncate` sizes
+                        if truncated
+                            echo '<li>...</li>'
+                        endif
+                        echo '</ul>'
+                    endif
+				endcapture
+			endif
+		endif
+
+
+        # === [ CORETEX FYI ] ===
+		# Logic to render the product variant swatches (colors)
+
+        # ☝️ TODO: 
+        # - Let merchants choose the display type for the colors.
+        # - Add support for visual color swatches.
+ 
+        if show_color_list
+        # Initialize the variable
+        assign has_available_color = false
+    
+        capture color_options_list
+            for option in product.options_with_values
+                # Variables
+                assign color_option_count = 0 
+    
+                # If the option is text, verify it includes the word 'color'
+                assign color = 'openthinking.variants.color' | t | downcase | escape | default: 'color'
+                assign color_label = option.name | downcase | escape
+    
+                # Determine the actual count of options
+                if color_label == color
+                    # Check if the option is a "text" option (fallback)
+                    # ideally in the future all colors will be mostly swatches...
+                    assign color_option_count = option.values | size
+                else
+                    # Check if the option is a "swatch" option
+                    assign color_option_count = option.values | map: 'swatch' | compact | size
+                endif
+    
+                # Number of colors to display before truncating list.
+                assign color_option_list_truncate = 6
+                # Display type 'list' or 'count'
+                assign type = 'count'
+    
+                # Check if it has more than 1 color option
+                if color_option_count > 1
+                    assign has_available_color = true
+    
+                    case type
+                    
+                    # Display color names
+                    # e.g. RED GREEN BLUE ...
+                    # List will truncate if there are more than 6 colors
+                    when 'list'
+    
+                        echo '<ul x-flex class="swatch-list no-style inside">'
+                            for value in option.values
+                                if forloop.index <= color_option_list_truncate
+                                    echo value | prepend: '<li>' | append: '</li>'
+                                endif
+                            endfor
+                            if color_option_count > color_option_list_truncate
+                                echo '<li>...</li>'
+                            endif
+                        echo '</ul>'
+                        
+                    # Display color count
+                    # e.g. 3 colors
+                    # Count will stop if there are more than 10 colors e.g. +10 colors
+                    # Count won't show if there's only 1 color.
+                    when 'count' 
+    
+                        assign color_option_list_truncate = 9
+    
+                        echo '<span class="swatch-count">'
+                        if color_option_count > color_option_list_truncate
+                            echo 'openthinking.variants.colors_html' | t: count: color_option_list_truncate | prepend: '+'
+                        elsif color_option_count > 1
+                            echo 'openthinking.variants.colors_html' | t: count: color_option_count
+                        endif
+                        echo '</span>'
+    
+                    endcase
+    
+                endif
+    
+            endfor
+        endcapture
+    endif
+    -%}
+
+	<product-card
+		x-flex
+		direction="column"
+		class="product-card onHover-a"
+		id="pc-{{ product.id }}-{{ sectionId }}"
+		in-stock="{{ product.available }}"{% if product.available != true and settings.card_soldout_opacity %} fade="true" {% endif %}
+		stealth="{{ settings.card_stealth_meta }}"
+		crop="{{ settings.card_crop }}"
+        {% if card_clip_meta %}clip-meta="true"{% endif %}
+        {% if single_line_layout %}compact="true" overlay="{{ overlay_meta }}" clip-meta="true"{% endif %}
+		{% unless product.featured_media -%}
+			medialess
+		{%- endunless -%}
+        {{ attributes }}
+	>
+		{% if product.featured_media -%}
+			<x-cell as="center" class="media">
+				<a href="{{ product.url }}" aria-label="{{ product.title | escape }}" {{ collectionAwareUrl }}>
+					<x-grid columns="stack" class="{{ show_secondary_type }}">
+						{%- render 'c-prod-card-media',
+							product: product,
+							card_media_type: card_media_type,
+							show_secondary: show_secondary,
+							current_variant: current_variant,
+							loading: loading
+						-%}
+					</x-grid>
+				</a>
+			</x-cell>
+		{% endif %}
+
+		<x-flex
+			direction="{{ flexDirection }}" {% if single_line_layout %}jc="between"{% endif %}
+			{% if single_line_layout %}ai="end"{% else %}ai="{{ settings.card_text_align | replace: 'left', 'start' | replace: 'right', 'end' }}"{% endif %}
+			class="meta onHover-s {{ settings.card_text_align | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-' }}"
+		>
+			{% comment %} Titles {% endcomment %}
+			<x-cell class="titles">
+				{%- # Vendor -%}
+				{%- if show_vendor -%}
+					<span class="vendor">
+						<span class="visually-hidden">{{ 'accessibility.vendor' | t }}</span>
+						<h3 class="h6">{{ product.vendor }}</h3>
+					</span>
+				{%- endif -%}
+
+				<x-grid columns="stack">
+					{% comment %} Product variant sizes + colors {% endcomment %}
+					{%- if has_available_size or has_available_color -%}
+                        <x-flex wrap="wrap" jc="{{ settings.card_text_align | replace: 'left', 'start' | replace: 'right', 'end' }}" class="variants off" style="gap:var(--space-2) var(--space-4)">
+                            {%- if has_available_size -%}<x-cell class="sizes" role="group" aria-label="{{ 'openthinking.variants.size' | t }}">{{ size_options_list }}</x-cell>{%- endif -%}
+                            {%- if has_available_color -%}<x-cell class="colors" role="group" aria-label="{{ 'openthinking.variants.color' | t }}">{{ color_options_list }}</x-cell>{%- endif -%}
+                        </x-flex>
+					{%- endif -%}
+
+					{%- # Title -%}
+					<x-cell class="{%- if has_available_size or has_available_color -%}on{% endif -%}">
+						<h2 class="h6 title">
+							<a href="{{ product.url }}" {{ collectionAwareUrl }}>{{ product.title | escape }}</a>
+						</h2>
+					</x-cell>
+				</x-grid>
+
+				{%- # Subtitle -%}
+				{%- if product.metafields.descriptors.subtitle.value != blank and show_subtitle -%}
+					<h3 class="h6 subtitle">{{ product.metafields.descriptors.subtitle.value }}</h3>
+				{%- endif -%}
+			</x-cell>
+
+			{%- # Product rating -%}
+			{%- if show_rating -%}
+				<x-cell class="ratings">{%- render 'c-reviews', product: product -%}</x-cell>
+			{%- endif -%}
+
+			{% comment %} BADGES {% endcomment %}
+			{%- unless product.available -%}
+				<x-cell class="badges"><span class="badge soldout labeler">{{ 'products.product.sold_out' | t }}</span></x-cell>
+			{%- else -%}
+				{%- if show_badges -%}
+					<x-cell class="badges">
+						{%- liquid
+							# New in
+							assign show_new_in = false
+							case settings.card_new_type
+								when 'date'
+									assign now_s = 'now' | date: '%s' | plus: 0
+									assign pub_s = product.created_at | date: '%s' | plus: 0
+									assign diff_days = now_s | minus: pub_s | divided_by: 86400
+									if diff_days < settings.card_badge_new_limit
+										assign show_new_in = true
+									endif
+								when 'collection'
+									for collection in product.collections
+										assign split_collection_handle = collection.handle | split: '-'
+										if split_collection_handle contains 'new'
+											assign show_new_in = true
+											break
+										endif
+									endfor
+								when 'tag'
+									if product.tags contains 'new'
+										assign show_new_in = true
+									endif
+							endcase
+
+							# Sale badges
+							assign show_if_sale = false
+							if product.compare_at_price > product.price
+								assign show_if_sale = true
+								capture sale_percentage
+									if settings.card_sale_type == 'label' or settings.card_sale_type == 'both'
+										echo 'products.product.on_sale' | t
+									endif
+
+									if settings.card_sale_type == 'percentage' or settings.card_sale_type == 'both'
+										echo '&nbsp;'
+										echo product.compare_at_price | minus: product.price | times: 100 | divided_by: product.compare_at_price | prepend: '-' | append: '%'
+									endif
+								endcapture
+							endif
+
+                            # Pre-order
+                            # Check if product has preorder tag
+                            # Preorder tag (normalize + handle spelling variants)
+                            assign pre_order = false
+                            assign tags_csv = product.tags | join: ',' | downcase
+                            if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+                                assign pre_order = true
+                            endif
+                            
+                            assign show_if_preorder = false
+                            if pre_order and settings.card_preorder_label
+                                assign show_if_preorder = true
+                            endif
+
+                            capture preOrder
+                                echo 'openthinking.dictionary.word.preorder' | t
+                            endcapture
+						-%}
+
+						{%- # New in -%}
+						{%- if show_new_in -%}
+						<span class="badge new labeler">{{ 'openthinking.dictionary.word.new' | t }}</span>
+						{%- endif -%}
+
+						{%- # Sale badges -%}
+						{%- if show_if_sale -%}
+						<span class="badge sale labeler">{{ sale_percentage }}</span>
+						{%- endif -%}
+
+						{%- # Pre-order badge -%}
+						{%- if show_if_preorder -%}
+						<span class="badge preorder labeler">{{ preOrder }}</span>
+						{%- endif -%}
+
+                        {%- # Custom badges -%}
+                        {%- for tag in product.tags -%}
+                            {%- if tag contains 'badge:' -%}
+                                {%- assign badge_text = tag | split: 'badge:' | last | strip -%}
+                                <span class="badge custom labeler" data-badge="{{ badge_text }}">{{ badge_text }}</span>
+                            {%- endif -%}
+                        {%- endfor -%}
+					</x-cell>
+				{%- endif -%}
+			{%- endunless -%}
+
+			{% comment %} Price {% endcomment %}
+			<x-flex
+				ai="center"
+				{% if show_quick_buy and show_price %}
+					jc="between"
+				{% endif %}
+				wrap="wrap"
+				class="quickBuyPrice"
+				style="display:flex;position:relative"
+			>
+				{%- if show_price -%}
+					<x-cell
+						class="prices"
+						{% unless show_quick_buy %}
+							span="row"
+						{% endunless %}
+					>
+						{%- render 'c-price', product: product, use_variant: false, show_compare_at_price: true -%}
+					</x-cell>
+				{%- endif -%}
+
+				{% comment %} Quick buy button {% endcomment %}
+				{%- if show_quick_buy -%}
+					{% unless product.selected_or_first_available_variant.available == false
+						or quantity_rule_soldout
+						or product.selected_or_first_available_variant == null
+					%}
+						<x-cell
+							{% unless show_price %}
+								span="row"
+							{% endunless %}
+						>
+							<label
+								for="quickToggle-{{ product.id }}{{ sectionId }}"
+								aria-label="{{ 'products.product.choose_options' | t }}"
+                                class="quickBuyToggle"
+							>
+								<span aria-hidden="true" class="button is-custom text-normal">[+]</span>
+								<input type="radio" id="quickToggle-{{ product.id }}{{ sectionId }}" name="quickBuy" class="visually-hidden">
+							</label>
+						</x-cell>
+					{% endunless %}
+				{%- endif -%}
+
+				{% comment %} Quick view button {% endcomment %}
+                {%- if settings.card_quick_view -%}
+					<x-cell>
+						<button
+							type="button"
+							data-open="#quickView"
+							data-qv-handle="{{ product.handle }}"
+							class="button is-custom text-normal quickViewToggle"
+						>
+							{{ 'openthinking.dictionary.phrase.quick_view' | t }}
+						</button>
+					</x-cell>
+                {%- endif -%}
+
+			</x-flex>
+
+			{% comment %} Quick buy form {% endcomment %}
+			{%- if show_quick_buy -%}
+				{%- unless product.selected_or_first_available_variant.available == false
+					or quantity_rule_soldout
+					or product.selected_or_first_available_variant == null
+				-%}
+					<quick-buy id="quickBuy-{{ product.id }}{{ sectionId }}" class="quick-buyer" aria-hidden="true">
+						{% render 'c-prod-card-form', product: product %}
+					</quick-buy>
+				{%- endunless -%}
+			{%- endif -%}
+		</x-flex>
+	</product-card>
+
+{%- else -%}
+	{% comment %}
+		ONBOARDING
+	{% endcomment %}
+
+	{% comment %}
+		=== [ CORETEX FYI ] ===
+		The card here below has to have the same layout/code as the layout above.
+		This is used for onboarding when no data is present on the store.
+	{% endcomment %}
+
+	<product-card
+		x-flex
+		direction="column"
+		class="product-card onHover-m onboarding"
+		stealth="{{ settings.card_stealth_meta }}"
+	>
+		<x-cell as="center" class="media">
+			<a href="#">{%- render 'inc-img', fallback: true -%}</a>
+		</x-cell>
+
+		<x-flex
+			direction="column"
+			ai="{{ settings.card_text_align | replace: 'left', 'start' | replace: 'right', 'end' }}"
+			class="meta onHover-s {{ settings.card_text_align | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-' }}"
+		>
+			{% comment %} Titles {% endcomment %}
+			<x-cell class="titles">
+				{%- # Vendor -%}
+				{%- if show_vendor -%}
+					<span class="vendor">
+						<span class="visually-hidden">{{ 'accessibility.vendor' | t }}</span>
+						<h3 class="h6">{{ 'openthinking.theme' | t }}</h3>
+					</span>
+				{%- endif -%}
+
+				<x-grid columns="stack">
+					{% comment %} Product variant sizes {% endcomment %}
+					{%- if has_available_size or has_available_color -%}
+						<x-cell class="sizes off">{{ size_options_list }}</x-cell>
+					{%- endif -%}
+
+					{%- # Title -%}
+					<x-cell class="{%- if has_available_size or has_available_color -%}on{% endif -%}">
+						<h2 class="h6 text-normal title">
+							<a href="#" tabindex="-1">{{ 'onboarding.product_title' | t }}</a>
+						</h2>
+					</x-cell>
+				</x-grid>
+			</x-cell>
+
+			{% comment %} Price {% endcomment %}
+			<x-flex ai="center" wrap="wrap" class="quickBuyPrice" style="display:flex;position:relative">
+				<x-cell
+					class="prices"
+					{% unless show_quick_buy %}
+						span="row"
+					{% endunless %}
+				>
+					{{ cart.currency.symbol | append: '100' }}
+				</x-cell>
+			</x-flex>
+		</x-flex>
+	</product-card>
+{%- endif -%}

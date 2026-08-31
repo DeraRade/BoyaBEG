@@ -1,0 +1,23 @@
+{%- comment -%}
+    ==== [ Info ] ====
+
+    The payment icons displayed in your theme are determined by your store's payment settings, as well as the customer's region and currency. 
+    If you want to add or remove payment icons without affecting your payment settings, edit the code below.
+
+    Learn more: https://docs.openthinking.net/themes/etheryx/kb/payment-icons/
+
+    /!\ Changing this file will affect all payment icons on the theme. /!\
+
+    ==== [ dev ] ====
+
+    Accepts:
+
+    Usage:
+    {%- render 'inc-payment-icons' -%}
+{%- endcomment -%}
+
+<ul x-flex style="gap:var(--space-1)" class="no-style inside">
+    {%- for type in shop.enabled_payment_types -%}
+        <li><i class="payments">{{ type | payment_type_svg_tag: class: 'payment-icon' }}</i></li>
+    {%- endfor -%}
+</ul>

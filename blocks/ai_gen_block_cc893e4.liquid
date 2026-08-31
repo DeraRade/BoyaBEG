@@ -1,0 +1,415 @@
+{% doc %}
+  @prompt
+    Create a section with two columns: left side has a heading and paragraph text, right side has a call-to-action button. Clean and responsive layout., Tekst mora ostati u svojoj polovini. Klik dugme postavi centralno u desnoj polovini bloka. Ceo blok mor apoštovati grafička i slovna podešavanja teme. 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-two-column-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-two-column-container-{{ ai_gen_id }} {
+    display: flex;
+    align-items: {{ block.settings.vertical_alignment }};
+    gap: {{ block.settings.column_gap }}px;
+    width: 100%;
+  }
+
+  .ai-two-column-left-{{ ai_gen_id }} {
+    flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    gap: {{ block.settings.text_gap }}px;
+  }
+
+  .ai-two-column-heading-{{ ai_gen_id }} {
+    margin: 0;
+    font-family: {{ settings.type_heading_font.family }}, {{ settings.type_heading_font.fallback_families }};
+    font-weight: {{ settings.type_heading_font.weight }};
+    font-style: {{ settings.type_heading_font.style }};
+    font-size: calc({{ block.settings.heading_size }}px * {{ settings.heading_scale | divided_by: 100.0 }});
+    color: {{ block.settings.heading_color }};
+    line-height: 1.2;
+    {% if settings.heading_uppercase %}
+      text-transform: uppercase;
+    {% endif %}
+  }
+
+  .ai-two-column-text-{{ ai_gen_id }} {
+    margin: 0;
+    font-family: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }};
+    font-weight: {{ settings.type_body_font.weight }};
+    font-style: {{ settings.type_body_font.style }};
+    font-size: calc({{ block.settings.text_size }}px * {{ settings.body_scale | divided_by: 100.0 }});
+    color: {{ block.settings.text_color }};
+    line-height: 1.6;
+  }
+
+  .ai-two-column-right-{{ ai_gen_id }} {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-two-column-button-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: {{ block.settings.button_padding_vertical }}px {{ block.settings.button_padding_horizontal }}px;
+    background-color: {{ block.settings.button_bg_color }};
+    color: {{ block.settings.button_text_color }};
+    border: {{ block.settings.button_border_width }}px solid {{ block.settings.button_border_color }};
+    border-radius: calc({{ block.settings.button_border_radius }}px * {{ settings.global_radius | divided_by: 3.0 }});
+    font-family: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }};
+    font-weight: {{ settings.type_body_font.weight }};
+    font-size: calc({{ block.settings.button_text_size }}px * {{ settings.body_scale | divided_by: 100.0 }});
+    text-decoration: none;
+    text-transform: {{ settings.button_text_transform }};
+    text-align: {{ settings.button_alignment }};
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .ai-two-column-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_bg_hover_color }};
+    color: {{ block.settings.button_text_hover_color }};
+    border-color: {{ block.settings.button_border_hover_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-two-column-container-{{ ai_gen_id }} {
+      flex-direction: column;
+      gap: {{ block.settings.mobile_gap }}px;
+    }
+
+    .ai-two-column-left-{{ ai_gen_id }} {
+      text-align: {{ block.settings.mobile_text_alignment }};
+    }
+
+    .ai-two-column-right-{{ ai_gen_id }} {
+      width: 100%;
+      justify-content: {{ block.settings.mobile_button_alignment }};
+    }
+
+    .ai-two-column-button-{{ ai_gen_id }} {
+      {% if block.settings.mobile_button_full_width %}
+        width: 100%;
+      {% endif %}
+    }
+  }
+{% endstyle %}
+
+<div class="ai-two-column-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-two-column-container-{{ ai_gen_id }}">
+    <div class="ai-two-column-left-{{ ai_gen_id }}">
+      {% if block.settings.heading != blank %}
+        <h2 class="ai-two-column-heading-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+      {% endif %}
+      {% if block.settings.text != blank %}
+        <div class="ai-two-column-text-{{ ai_gen_id }}">{{ block.settings.text }}</div>
+      {% endif %}
+    </div>
+    <div class="ai-two-column-right-{{ ai_gen_id }}">
+      <a href="{{ block.settings.button_link }}" class="ai-two-column-button-{{ ai_gen_id }}">
+        {{ block.settings.button_text }}
+      </a>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Two column text and CTA",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Discover our collection"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Explore our carefully curated selection of premium products designed to enhance your everyday life.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "range",
+      "id": "button_text_size",
+      "label": "Text size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical",
+      "label": "Vertical padding",
+      "min": 8,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 16,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "button_border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Background",
+      "default": "#813e35"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "Border",
+      "default": "#813e35"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_hover_color",
+      "label": "Hover background",
+      "default": "#6d3329"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_color",
+      "label": "Hover text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_border_hover_color",
+      "label": "Hover border",
+      "default": "#6d3329"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Column gap",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "text_gap",
+      "label": "Text gap",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "Vertical alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Bottom"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#5b5048"
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "label": "Text size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#6c6a68"
+    },
+    {
+      "type": "header",
+      "content": "Mobile"
+    },
+    {
+      "type": "range",
+      "id": "mobile_gap",
+      "label": "Gap",
+      "min": 16,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "mobile_text_alignment",
+      "label": "Text alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "select",
+      "id": "mobile_button_alignment",
+      "label": "Button alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Right"
+        }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_button_full_width",
+      "label": "Full width button",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "Two column text and CTA"
+    }
+  ]
+}
+{% endschema %}

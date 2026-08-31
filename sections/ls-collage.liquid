@@ -1,0 +1,434 @@
+{%- liquid
+	# Debug check
+	assign debuger = false
+	if request.design_mode and section.settings.debug
+		assign debuger = true
+	endif
+
+	# skelet .debug
+	capture debug
+		if debuger
+			echo 'debug outline' | prepend: ' '
+		endif
+	endcapture
+
+	# x-grid columns
+	assign columns = 8
+
+    # Load CSS
+    render 'inc-stylesheet', src: 's-sections.css' 
+-%}
+
+{%- capture style -%}
+--gridGap: {{ section.settings.gap | prepend: 'var(--space-' | append: ');' }}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+{{ section.settings.masonryColumns | prepend: '--masonryColumns:' | append: ';' }}
+
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+	class="collage"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+    crop-media="{{ section.settings.cropMedia }}"
+>
+	<{{ section.settings.gridType }} {% if section.settings.cropMedia != true %}ai="{{ section.settings.contentPosition }}"{% endif %} columns="{{ columns }}" columns-s="2" class="{{ debug }}">
+		{%- for block in section.blocks -%}
+			{% case block.type %}
+				{%- when 'image' -%}
+					<x-cell span="{{ block.settings.span }}" span-s="{% if block.settings.spanMobile %}2{% else %}1{% endif %}" {{ block.shopify_attributes }} class="image">
+                       {% if block.settings.url != blank %}<a href="{{ block.settings.url }}" {% if block.settings.newTab == true -%}rel="nofollow noopener noreferrer" target="_blank"{%- endif -%}>{% endif %}
+                            {%- liquid
+                                assign fetchpriority = nil
+                                assign preload = false
+                                assign loading = 'lazy'
+
+                                if section.index == 1
+                                    assign fetchpriority = 'high'
+                                    assign preload = true
+                                    assign loading = 'eager'
+                                endif
+
+                                # Calculate dynamic sizes based on grid span
+                                # Mobile: 2 columns (50vw per column or 100vw if spanMobile is true)
+                                # Desktop: 8 columns, calculate percentage based on span
+                                assign desktopPercent = block.settings.span | times: 100 | divided_by: 8.0
+
+                                if block.settings.spanMobile
+                                    assign sizes = '(max-width:777px) 100vw, ' | append: desktopPercent | append: 'vw'
+                                else
+                                    assign sizes = '(max-width:777px) 50vw, ' | append: desktopPercent | append: 'vw'
+                                endif
+
+                                assign img = block.settings.image
+                                assign mediaLoader = true
+
+                                render 'inc-img', img: img, mediaLoader: mediaLoader, fallback: true, loading: loading, fetchpriority: fetchpriority, preload: preload, sizes: sizes
+                            -%}
+                            <p class="caption">{{ block.settings.caption }}</p>
+                            {% if block.settings.url != blank %}</a>{% endif %}
+					</x-cell>
+
+				{%- when 'video' -%}
+					<x-cell span="{{ block.settings.span }}" span-s="{% if block.settings.spanMobile %}2{% else %}1{% endif %}" {{ block.shopify_attributes }} class="video">
+                        {% if block.settings.url != blank %}<a href="{{ block.settings.url }}" {% if block.settings.newTab == true -%}rel="nofollow noopener noreferrer" target="_blank"{%- endif -%}>{% endif %}
+                            {%- liquid 
+                                assign vid = block.settings.video
+
+                                render 'inc-video' vid: vid, loop: true, autoplay: true
+                            -%}
+                            <p class="caption">{{ block.settings.caption }}</p>
+                        {% if block.settings.url != blank %}</a>{% endif %}
+					</x-cell>
+
+				{%- when 'text' -%}
+                    <x-cell 
+                        span="{{ block.settings.span }}" 
+                        span-s="{% if block.settings.spanMobile %}2{% else %}1{% endif %}" 
+                        as="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}"
+                        {{ block.shopify_attributes }} class="text"
+                    >
+                        {%- capture block_style -%}
+                            {{- block.settings.padding | prepend: 'padding-block: var(--space-' | append: ');' -}}
+                            {{- block.settings.textIndent | prepend: 'text-indent: var(--space-' | append: ');' -}}
+                            {{- block.settings.fontSize | prepend: '--_fontSize: var(--type-' | append: ');' -}} 
+                            {{- block.settings.fontSizeMob | prepend: '--_fontSizeMob: var(--type-' | append: ');' -}}
+                        {%- endcapture -%}
+
+                        <div class="content rte" style="{{ block_style | strip_newlines | strip }}" {{ block.shopify_attributes }}>{{ block.settings.text | replace: '\n', '<br/>' }}</div>
+                    </x-cell>
+
+			{%- endcase -%}
+		{%- endfor -%}
+	</{{ section.settings.gridType }}>
+</section>
+
+{% schema %}
+	{
+		"name": "Collage",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "Collage",
+                "category": "Visual",
+				"blocks": [
+					{ "type": "text" },
+					{ "type": "image", "settings": { "span": 4 } },
+					{ "type": "image", "settings": { "span": 2 } },
+					{ "type": "image", "settings": { "span": 3 } },
+					{ "type": "image", "settings": { "span": 3 } },
+					{ "type": "image", "settings": { "span": 1 } },
+					{ "type": "image", "settings": { "span": 1 } },
+					{ "type": "image", "settings": { "span": 8 } },
+					{ "type": "image", "settings": { "span": 5 } },
+                    { "type": "image", "settings": { "span": 3 } }
+				]
+			}
+		],
+		"settings": [
+			{
+				"type": "header",
+				"content": "Grid"
+			},
+			{
+				"type": "checkbox",
+				"id": "debug",
+				"label": "Show grid outline",
+				"default": false,
+				"info": "Visually outline grid areas and elements. These visual aids will only appear in the theme editor and won't be visible to end users."
+			},
+			{
+				"type": "select",
+				"id": "gridType",
+				"label": "Type",
+				"default": "x-grid",
+				"options": [
+					{ "value": "x-grid", "label": "Classic" },
+					{ "value": "x-masonry", "label": "Masonry" }
+				]
+			},
+			{
+				"type": "range",
+				"label": "Columns - desktop",
+				"id": "masonryColumns",
+				"min": 2,
+				"max": 5,
+				"step": 1,
+				"default": 3,
+                "visible_if": "{{ section.settings.gridType == 'x-masonry' }}"
+			},
+			{
+				"type": "range",
+				"label": "Gap",
+				"id": "gap",
+				"min": 0,
+				"max": 7,
+				"step": 1,
+				"default": 1
+			},
+			{
+				"type": "header",
+				"content": "Media",
+                "visible_if": "{{ section.settings.gridType == 'x-grid' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "cropMedia",
+				"label": "Crop",
+				"default": false,
+                "info": "All media will be cropped to fit the grid.",
+                "visible_if": "{{ section.settings.gridType == 'x-grid' }}"
+			},
+			{
+				"type": "select",
+				"id": "contentPosition",
+				"label": "Vertical alignment",
+				"default": "start",
+                "visible_if": "{{ section.settings.gridType == 'x-grid' and section.settings.cropMedia == false }}",
+				"options": [
+					{ "value": "start", "label": "Top" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Bottom" }
+				]
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+			{
+				"type": "checkbox",
+				"id": "paddingInline",
+				"label": "Enable lateral padding",
+				"default": true
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "image",
+				"name": "Image",
+				"settings": [
+					{
+						"type": "image_picker",
+						"id": "image",
+						"label": "Image"
+					},
+                    {
+                        "type": "text",
+                        "id": "caption",
+                        "label": "Caption"
+                    },
+                    {
+                        "type": "url",
+                        "id": "url",
+                        "label": "Link"
+                    },
+                    {
+                        "type": "checkbox",
+                        "id": "newTab",
+                        "label": "Open link in tab",
+                        "default": false,
+                        "visible_if": "{{ block.settings.url != blank }}"
+                    },
+                    {
+                        "type": "header",
+                        "content": "Block"
+                    },
+					{
+						"type": "range",
+						"label": "Span - desktop",
+						"id": "span",
+						"min": 1,
+						"max": 8,
+						"step": 1,
+						"default": 2
+					},
+                    {
+                        "type": "checkbox",
+                        "id": "spanMobile",
+                        "label": "Span fullwidth - mobile",
+                        "info": "Make the block fullwidth on mobile.",
+                        "default": false
+                    }
+				]
+			},
+			{
+				"type": "video",
+				"name": "Video",
+				"settings": [
+                    {
+                        "type": "video",
+                        "id": "video",
+                        "label": "Video"
+                    },
+                    {
+                        "type": "text",
+                        "id": "caption",
+                        "label": "Caption"
+                    },
+                    {
+                        "type": "url",
+                        "id": "url",
+                        "label": "Link"
+                    },
+                    {
+                        "type": "checkbox",
+                        "id": "newTab",
+                        "label": "Open link in tab",
+                        "default": false,
+                        "visible_if": "{{ block.settings.url != blank }}"
+                    },
+                    {
+                        "type": "header",
+                        "content": "Block"
+                    },
+					{
+						"type": "range",
+						"label": "Span - desktop",
+						"id": "span",
+						"min": 1,
+						"max": 8,
+						"step": 1,
+						"default": 2
+					},
+                    {
+                        "type": "checkbox",
+                        "id": "spanMobile",
+                        "label": "Span fullwidth - mobile",
+                        "info": "Make the block fullwidth on mobile.",
+                        "default": false
+                    }
+				]
+			},
+			{
+				"type": "text",
+				"name": "Text",
+				"settings": [
+					{
+						"type": "inline_richtext",
+						"id": "text",
+						"label": "Text",
+						"default": "This text can be used to make announcements, describe products, greet customers, or inform them about your brand."
+					},
+                    {
+                        "type": "text_alignment",
+                        "id": "alignment",
+                        "label": "Alignment",
+                        "default": "left"
+                    },
+					{
+						"type": "range",
+						"id": "textIndent",
+						"label": "Indent",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					},
+                    {
+                        "type": "range",
+                        "id": "fontSize",
+                        "label": "Size - desktop",
+                        "min": 1,
+                        "max": 30,
+                        "step": 1,
+                        "default": 3
+                    },
+                    {
+                        "type": "range",
+                        "id": "fontSizeMob",
+                        "label": "Size - mobile",
+                        "min": 1,
+                        "max": 30,
+                        "step": 1,
+                        "default": 3
+                    },
+                    {
+                        "type": "header",
+                        "content": "Block"
+                    },
+					{
+						"type": "range",
+						"label": "Padding",
+						"id": "padding",
+						"min": 1,
+						"max": 30,
+						"step": 1,
+						"default": 2
+					},
+					{
+						"type": "range",
+						"label": "Span - desktop",
+						"id": "span",
+						"min": 1,
+						"max": 8,
+						"step": 1,
+						"default": 2
+					},
+                    {
+                        "type": "checkbox",
+                        "id": "spanMobile",
+                        "label": "Span fullwidth - mobile",
+                        "info": "Make the block fullwidth on mobile.",
+                        "default": false
+                    }
+				]
+			}
+		]
+	}
+{% endschema %}

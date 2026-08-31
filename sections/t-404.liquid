@@ -1,0 +1,30 @@
+<section class="general-page 404">
+    <div class="container">
+        <pre>
+___   ___  ________  ___   ___      
+|\  \ |\  \|\   __  \|\  \ |\  \    
+\ \  \\_\  \ \  \|\  \ \  \\_\  \   
+ \ \______  \ \  \\\  \ \______  \  
+  \|_____|\  \ \  \\\  \|_____|\  \ 
+         \ \__\ \_______\     \ \__\
+          \|__|\|_______|      \|__|
+        </pre>
+        <h1 class="h4 Title">{{ 'templates.404.title' | t }}</h1>
+        <a href="{{ routes.all_products_collection_url }}" class="text-underline">{{ 'general.continue_shopping' | t }}</a>
+    </div>
+</section>
+
+{% schema %}
+{
+  "name": "404",
+  "limit": 1,
+  "settings": [
+
+  ],
+  "enabled_on": {
+    "templates": [
+      "404"
+    ]
+  }
+}
+{% endschema %}

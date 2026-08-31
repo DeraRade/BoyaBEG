@@ -1,0 +1,437 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+--gridGap: {{ section.settings.gap | prepend: 'var(--space-' | append: ');' }}
+--_height: {% if section.settings.media_height_uncropped %} auto; {% else %} {{ section.settings.media_height | append: 'vh;' }} {% endif %}
+{%- if section.settings.image == null and section.settings.video == null -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+{%- endif -%}
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+{{- section.settings.fontSize | prepend: '--_fontSize: var(--type-' | append: ');' -}} 
+{{- section.settings.fontSizeMob | prepend: '--_fontSizeMob: var(--type-' | append: ');' -}}
+
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+	class="countdown-timer"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+	<x-grid columns="stack" ai="{{ section.settings.section_alignment }}" jc="center">
+		<x-flex
+			direction="{{ section.settings.section_direction }}"
+			ai="{{ section.settings.alignmentAI }}"
+			jc="{{ section.settings.alignmentJC }}"
+			wrap="wrap"
+			direction-s="column"
+			ai-s="center"
+			jc-s="around"
+			class="meta fullwidth fullheight-s"
+		>
+			{% for block in section.blocks %}
+				{%- case block.type -%}
+					{%- when '@app' -%}
+						<x-cell class="itsapp" {{ block.shopify_attributes }}>{%- render block -%}</x-cell>
+
+					{%- when 'heading' -%}
+						{%- if block.settings.heading != blank -%}
+							<x-cell class="heading" {{ block.shopify_attributes }}>
+								<h2 class="h2">
+									{{ block.settings.heading }}
+								</h2>
+							</x-cell>
+						{%- endif -%}
+
+					{%- when 'text' -%}
+						{%- if block.settings.text != blank -%}
+							<x-cell class="text" {{ block.shopify_attributes }}>
+								<p>{{ block.settings.text }}</p>
+							</x-cell>
+						{%- endif -%}
+
+					{%- when 'button' -%}
+						{%- if block.settings.label != blank -%}
+							<x-cell class="cta" {{ block.shopify_attributes }}>
+								<a href="{{ block.settings.url }}" {% if block.settings.linkAsButton %}type="button"{% endif %}>{{ block.settings.label }}</a>
+							</x-cell>
+						{%- endif -%}
+
+					{%- when 'countdown' -%}
+						<x-cell class="countdown" {{ block.shopify_attributes }}>
+							{% render 'c-countdown', block: block %}
+						</x-cell>
+				{%- endcase -%}
+			{%- endfor -%}
+		</x-flex>
+
+        {%- if section.settings.video != null or section.settings.image != null -%}
+		<x-cell class="media full">
+			{% if section.settings.mediaType == 'video' -%}
+				{%- render 'inc-video',
+					vid: section.settings.video,
+					vidMobile: section.settings.videoMob,
+					loop: true,
+					autoplay: true,
+					muted: true,
+					clickToPlay: false,
+					controls: false
+				-%}
+			{%- elsif section.settings.image != null -%}
+				{%-
+					render 'inc-img'
+					dynamic: true,
+					img: section.settings.image,
+					imgMob: section.settings.imageMob,
+					width: 2560,
+					widths: '480,640,768,1024,1280,1536,1920,2560',
+					mediaLoader: true
+				-%}
+			{%- endif -%}
+		</x-cell>
+        {%- endif -%}
+
+		{%- if section.settings.show_backdrop -%}
+			<x-cell class="backdrop"></x-cell>
+		{%- endif -%}
+	</x-grid>
+</section>
+
+{% schema %}
+	{
+		"name": "Countdown timer",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "Countdown timer",
+                "category": "Banners",
+				"blocks": [{ "type": "heading" }, { "type": "countdown" }, { "type": "text" }, { "type": "button" }]
+			}
+		],
+		"settings": [
+			{
+				"type": "header",
+				"content": "Background media"
+			},
+            {
+                "type": "select",
+                "id": "mediaType",
+                "label": "Type",
+                "default": "image",
+                "options": [
+                    { "value": "image", "label": "Image" },
+                    { "value": "video", "label": "Video" }
+                ]
+            },
+            {
+                "type": "image_picker",
+                "id": "image",
+                "label": "Desktop",
+                "visible_if": "{{ section.settings.mediaType == 'image' }}"
+            },
+            {
+                "type": "image_picker",
+                "id": "imageMob",
+                "label": "Mobile",
+                "visible_if": "{{ section.settings.mediaType == 'image' }}"
+            },
+            {
+                "type": "video",
+                "id": "video",
+                "label": "Desktop",
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+            },
+            {
+                "type": "video",
+                "id": "videoMob",
+                "label": "Mobile",
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+            },
+			{
+				"type": "checkbox",
+				"id": "show_backdrop",
+				"label": "Enable backdrop",
+				"default": false
+			},
+			{
+				"type": "range",
+				"id": "media_height",
+				"label": "Media height",
+				"min": 40,
+				"max": 100,
+				"step": 10,
+                "unit": "vh",
+				"default": 100
+			},
+			{
+				"type": "checkbox",
+				"id": "media_height_uncropped",
+				"label": "Full height uncropped",
+				"default": false
+			},
+			{
+				"type": "header",
+				"content": "Content"
+			},
+			{
+				"type": "select",
+				"id": "section_direction",
+				"label": "Section direction - desktop",
+				"default": "row",
+				"options": [
+                    { "value": "row", "label": "Row" },
+                    { "value": "column", "label": "Stacked" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "section_alignment",
+				"label": "Section alignment - desktop",
+				"default": "center",
+				"options": [
+					{ "value": "start", "label": "Top" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Bottom" },
+					{ "value": "between", "label": "Space between" },
+				]
+			},
+			{
+				"type": "select",
+				"id": "alignmentAI",
+				"label": "Block vertical alignment - desktop",
+				"default": "start",
+				"options": [
+					{ "value": "start", "label": "Top" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Bottom" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "alignmentJC",
+				"label": "Block horizontal alignment - desktop",
+				"default": "around",
+				"options": [
+					{ "value": "start", "label": "Left" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Right" },
+					{ "value": "between", "label": "Space between" },
+					{ "value": "around", "label": "Space around" }
+				]
+			},
+            {
+                "type": "range",
+                "id": "fontSize",
+                "label": "Text size - desktop",
+                "min": 1,
+                "max": 30,
+                "step": 1,
+                "default": 3
+            },
+            {
+                "type": "range",
+                "id": "fontSizeMob",
+                "label": "Text size - mobile",
+                "min": 1,
+                "max": 30,
+                "step": 1,
+                "default": 3
+            },
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+			{
+				"type": "checkbox",
+				"id": "paddingInline",
+				"label": "Enable lateral padding",
+				"default": false
+			},
+			{
+				"type": "range",
+				"id": "gap",
+				"label": "Gap",
+				"min": 0,
+				"max": 10,
+				"step": 1,
+				"default": 6
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "@app"
+			},
+			{
+				"type": "heading",
+				"name": "Heading",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "text",
+						"id": "heading",
+						"label": "Heading"
+					}
+				]
+			},
+			{
+				"type": "text",
+				"name": "Text",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "text",
+						"id": "text",
+						"label": "Text",
+						"default": "Coming soon..."
+					}
+				]
+			},
+			{
+				"type": "button",
+				"name": "button",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "text",
+						"id": "label",
+						"label": "Label"
+					},
+                    					{
+						"type": "url",
+						"id": "url",
+						"label": "URL"
+					},
+					{
+						"type": "checkbox",
+						"id": "linkAsButton",
+						"label": "Link as button",
+						"default": true
+					}
+				]
+			},
+			{
+				"type": "countdown",
+				"name": "Countdown timer",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "header",
+						"content": "Time"
+					},
+					{
+						"type": "text",
+						"id": "date",
+						"label": "Countdown target date",
+						"default": "12-31-2026",
+						"placeholder": "MM-DD-YYYY",
+						"info": "Enter the date in MM-DD-YYYY format (month-day-year). Example: 12-31-2026"
+					},
+					{
+						"type": "text",
+						"id": "time",
+						"label": "Countdown target time",
+						"default": "00:00:00",
+						"placeholder": "HH:MM:SS",
+						"info": "Enter the time in HH:MM:SS format (24-hour clock). Example: 15:30:59"
+					},
+					{
+						"type": "select",
+						"id": "now",
+						"label": "Time zone",
+						"default": "auto",
+						"info": "When set to auto, the time zone is retrieved from your store's [time zone settings](https://shopify.com/admin/settings/general). However, due to caching, this may occasionally fail to display the correct time.",
+						"options": [
+							{ "value": "auto", "label": "Auto" },
+							{ "value": "custom", "label": "Custom time zone" }
+						]
+					},
+					{
+						"type": "text",
+						"id": "timezone",
+						"label": "Custom time zone",
+						"placeholder": "Europe/Copenhagen",
+						"info": "View the [complete list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) of IANA TZ identifiers. Format: Asia/Tokyo",
+                        "visible_if": "{{ block.settings.now == 'custom' }}"
+					},
+					{
+						"type": "checkbox",
+						"id": "show_weeks",
+						"label": "Show weeks",
+						"default": false
+					},
+					{
+						"type": "checkbox",
+						"id": "show_seconds",
+						"label": "Show seconds",
+						"default": true
+					},
+					{
+						"type": "header",
+						"content": "Message"
+					},
+					{
+						"type": "textarea",
+						"id": "final_message",
+						"label": "Message",
+						"default": "It's over!",
+						"info": "Upon completion of the countdown, display a message."
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

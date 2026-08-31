@@ -1,0 +1,361 @@
+import EmblaCarousel from "{{ 'm-carousel.js' | asset_url }}";
+import ClassNames from "{{ 'h-carousel-cn.js' | asset_url }}";
+
+/**
+ * CoretexSlider - Base carousel component
+ * Provides core functionality for all carousel/slider components
+ *
+ * -> c-slideshow.js inherits from this class
+ * -> c-autoscroll.js inherits from this class
+ *
+ */
+export default class CoretexSlider extends HTMLElement {
+	constructor() {
+		super();
+		this.embla = null;
+		this.autoplayPlugin = null;
+	}
+
+	// Override methods for subclasses
+	// ------------------------------------------
+
+	// Method to be overridden by subclasses - defines the viewport selector
+	getViewportSelector() {
+		return "[slider-viewport]";
+	}
+
+	// Method to get the attribute to check for slide index
+	getSlideAttribute() {
+		return "slider-slide";
+	}
+
+	// Method to provide customization hooks for subclasses
+	// Returns default options that can be extended
+	getDefaultOptions() {
+		// Get the direction from the html element
+		const htmlDir = document.documentElement.getAttribute("dir") || "ltr";
+
+		// Default slider options
+		return {
+			active: true,
+			loop: false,
+			axis: "x",
+			direction: htmlDir,
+			breakpoints: {
+				"(max-width: 777px)": { active: true, axis: "x" }, // Mobile active by default
+			},
+		};
+	}
+
+	// Core component logic
+	// ------------------------------------------
+
+	// The connectedCallback method is marked as async to handle the asynchronous import() calls.
+	// customOptions = {} is used to pass custom options from sub-classes
+	async connectedCallback(customOptions = {}) {
+		// Selector for viewport can be overridden by subclasses
+		const viewportSelector = this.getViewportSelector();
+
+		this.emblaNode = this;
+		this.viewportNode = this.querySelector(viewportSelector);
+
+		// Find control elements
+		this.buttonPrev = this.querySelector("[control-prev]");
+		this.buttonNext = this.querySelector("[control-next]");
+		this.buttonPlay = this.querySelector("[control-play]");
+		this.buttonDots = this.querySelector("[control-dots]");
+		this.numbersNode = this.querySelector("[control-numbers]");
+
+		if (!this.viewportNode) {
+			console.error(`Viewport node with selector "${viewportSelector}" not found. Disabling slider.`);
+			return;
+		}
+
+		// Initialize plugins based on attributes
+		const plugins = await this.initializePlugins();
+
+		// Combine options from different sources with proper priority
+		const baseOptions = this.getDefaultOptions();
+		const attributeOptions = this.getAttributeOptions();
+		const OPTIONS = {
+			...baseOptions,
+			...attributeOptions,
+			...customOptions, // Custom options have highest priority
+		};
+
+		// Initialize EmblaCarousel with options and selected plugins
+		this.embla = EmblaCarousel(this.viewportNode, OPTIONS, plugins);
+
+		// Store a reference to the emblaApi (handle both newer and older Embla versions)
+		this.emblaApi = this.embla.internalEngine ? this.embla.internalEngine() : null;
+		this.isSliderActive = this.emblaApi ? this.emblaApi.options.active : OPTIONS.active !== false;
+
+		this.init();
+
+		// Setup Shopify editor support
+		this.setupShopifyEditorSupport();
+	}
+
+	// Plugin initialization
+	async initializePlugins() {
+		const plugins = [ClassNames()]; // Always include ClassNames plugin
+
+		// Check for slider-autoplay attribute [plugin]
+		if (this.hasAttribute("autoplay")) {
+			const delayAttr = this.getAttribute("delay");
+			const autoplayDelay = delayAttr ? parseInt(delayAttr, 10) : 4000; // default is set to 4s delay between slides
+			const { default: Autoplay } = await import("{{ 'h-carousel-ap.js' | asset_url }}"); // conditionally load plugin w/ dynamic imports
+			const autoplay = Autoplay({ stopOnInteraction: true, delay: autoplayDelay });
+			plugins.push(autoplay);
+			this.autoplayPlugin = autoplay; // Store reference to the Autoplay plugin
+		}
+
+		// Check for slider-fade attribute [plugin]
+		if (this.hasAttribute("fade")) {
+			const { default: Fade } = await import("{{ 'h-carousel-fa.js' | asset_url }}"); // conditionally load plugin w/ dynamic imports
+			plugins.push(Fade());
+		}
+
+		return plugins;
+	}
+
+	// Extract attribute options
+	getAttributeOptions() {
+		const options = {};
+
+		// Get attributes and set options accordingly
+		const axis = this.getAttribute("direction"); // x or y
+		const axisS = this.getAttribute("direction-s"); // x or y
+		const loop = this.getAttribute("loop");
+		const mq = this.getAttribute("mq");
+		const mqS = this.getAttribute("mq-s");
+
+		// Set the axis if the attribute is present
+		if (this.hasAttribute("direction")) {
+			options.axis = axis;
+		}
+
+		// Set the axis for small screens if the attribute is present
+		if (this.hasAttribute("direction-s")) {
+			options.breakpoints = options.breakpoints || {};
+			options.breakpoints["(max-width: 777px)"] = options.breakpoints["(max-width: 777px)"] || {};
+			options.breakpoints["(max-width: 777px)"].axis = axisS;
+		}
+
+		// Set the loop if the attribute is present
+		if (this.hasAttribute("loop")) {
+			options.loop = loop === "true";
+		}
+
+		// Set the desktop/tablet active status if the attribute is present
+		if (this.hasAttribute("mq")) {
+			options.active = mq === "true"; // Converts string "true"/"false" to boolean
+		}
+
+		// Set the mobile active status if the attribute is present
+		if (this.hasAttribute("mq-s")) {
+			options.breakpoints = options.breakpoints || {};
+			options.breakpoints["(max-width: 777px)"] = options.breakpoints["(max-width: 777px)"] || {};
+			options.breakpoints["(max-width: 777px)"].active = mqS === "true"; // Converts string "true"/"false" to boolean
+		}
+
+		return options;
+	}
+
+	setupShopifyEditorSupport() {
+		if (Shopify.designMode && !this.hasAttribute("data-nosdm")) {
+			document.addEventListener("shopify:section:load", (event) => filterShopifyEvent(event, this, () => this.stopAutoplay()));
+			document.addEventListener("shopify:section:select", (event) => filterShopifyEvent(event, this, () => this.stopAutoplay()));
+
+			document.addEventListener("shopify:block:load", (event) => filterShopifyEvent(event, this, () => this.selectSlide(event)));
+			document.addEventListener("shopify:block:select", (event) => filterShopifyEvent(event, this, () => this.selectSlide(event)));
+		}
+	}
+
+	disconnectedCallback() {
+		this.destroy();
+	}
+
+	init() {
+		if (!this.embla) return;
+
+		this.embla.on("init", this.a11y.bind(this));
+		this.embla.on("select", this.a11y.bind(this));
+
+		this.a11y();
+		this.buttons();
+		this.dots();
+		this.numbers();
+		this.setupInteractionStopAutoplay();
+	}
+
+	destroy() {
+		if (this.embla) {
+			this.embla.destroy();
+			this.embla = null;
+		}
+
+		// Shopify editor exclusive
+		if (Shopify.designMode && !this.hasAttribute("data-nosdm")) {
+			document.removeEventListener("shopify:block:load", (event) => filterShopifyEvent(event, this, () => this.selectSlide(event)));
+			document.removeEventListener("shopify:block:select", (event) => filterShopifyEvent(event, this, () => this.selectSlide(event)));
+		}
+	}
+
+	// Accessibility
+	a11y() {
+		const slides = this.embla.slideNodes();
+		const inView = this.embla.slidesInView();
+
+		slides.forEach((slide, index) => {
+			if (inView.includes(index)) {
+				slide.removeAttribute("aria-hidden");
+			} else {
+				slide.setAttribute("aria-hidden", "true");
+			}
+		});
+
+		// Additional a11y improvements
+		this.viewportNode.setAttribute("role", "region");
+		this.viewportNode.setAttribute("aria-roledescription", "carousel");
+		this.viewportNode.setAttribute("aria-label", "Image slideshow");
+
+		slides.forEach((slide) => {
+			slide.setAttribute("role", "group");
+			slide.setAttribute("aria-roledescription", "slide");
+		});
+	}
+
+	// Controls
+	// ------------------------------------------
+
+	buttons() {
+		// Arrow buttons
+		if (this.buttonPrev && this.buttonNext) {
+			const scrollPrev = () => {
+				this.embla.scrollPrev();
+			};
+			const scrollNext = () => {
+				this.embla.scrollNext();
+			};
+
+			this.buttonPrev.addEventListener("click", scrollPrev, false);
+			this.buttonNext.addEventListener("click", scrollNext, false);
+
+			const togglePrevNextState = () => {
+				if (this.embla.canScrollPrev()) this.buttonPrev.removeAttribute("disabled");
+				else this.buttonPrev.setAttribute("disabled", "disabled");
+
+				if (this.embla.canScrollNext()) this.buttonNext.removeAttribute("disabled");
+				else this.buttonNext.setAttribute("disabled", "disabled");
+			};
+
+			this.embla.on("select", togglePrevNextState).on("init", togglePrevNextState).on("reInit", togglePrevNextState);
+
+			// Initialize button states
+			togglePrevNextState();
+
+			return () => {
+				this.buttonPrev.removeEventListener("click", scrollPrev, false);
+				this.buttonNext.removeEventListener("click", scrollNext, false);
+			};
+		}
+
+		// Play button
+		if (this.buttonPlay) {
+			this.buttonPlay.addEventListener("click", () => {
+				if (this.autoplayPlugin) {
+					if (this.autoplayPlugin.isPlaying()) {
+						this.autoplayPlugin.stop();
+						this.buttonPlay.innerText = "Play";
+					} else {
+						this.autoplayPlugin.start();
+						this.buttonPlay.innerText = "Pause";
+					}
+				}
+			});
+		}
+	}
+
+	// Dots
+	dots() {
+		if (!this.buttonDots) return;
+
+		// Clear existing dots
+		this.buttonDots.innerHTML = "";
+
+		// Get the number of slides
+		const numberOfSlides = this.embla.slideNodes().length;
+
+		// Create a dot for each slide
+		for (let i = 0; i < numberOfSlides; i++) {
+			const dot = document.createElement("button");
+			dot.classList.add("control-dot"); // Add a class for styling
+			dot.setAttribute("type", "button");
+			dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+			dot.addEventListener("click", () => this.embla.scrollTo(i));
+			this.buttonDots.appendChild(dot);
+		}
+
+		// Get the newly created dots
+		const dots = Array.from(this.buttonDots.children);
+
+		const updateDots = () => {
+			const selectedIndex = this.embla.selectedScrollSnap();
+			dots.forEach((dot, index) => {
+				dot.classList.toggle("is-selected", index === selectedIndex);
+
+				// Update ARIA attributes for accessibility
+				if (index === selectedIndex) {
+					dot.setAttribute("aria-current", "true");
+				} else {
+					dot.removeAttribute("aria-current");
+				}
+			});
+		};
+
+		this.embla.on("select", updateDots);
+		updateDots();
+	}
+
+	// Numbers
+	numbers() {
+		if (!this.numbersNode) return;
+		const updateNumbers = () => {
+			const totalSlides = this.embla.scrollSnapList().length;
+			const currentIndex = this.embla.selectedScrollSnap();
+			this.numbersNode.innerText = `${currentIndex + 1} / ${totalSlides}`;
+		};
+
+		this.embla.on("select", updateNumbers).on("reInit", updateNumbers);
+		updateNumbers();
+	}
+
+	// Autoplay
+	stopAutoplay() {
+		if (this.autoplayPlugin && this.autoplayPlugin.isPlaying()) this.autoplayPlugin.stop();
+	}
+
+	setupInteractionStopAutoplay() {
+		const stopAutoplayOnInteraction = this.stopAutoplay.bind(this);
+
+		const navElements = [this.buttonPrev, this.buttonNext, this.buttonDots, this.numbersNode];
+		navElements.forEach((navElement) => {
+			if (navElement) navElement.addEventListener("click", stopAutoplayOnInteraction, true);
+		});
+	}
+
+	selectSlide(event) {
+		this.stopAutoplay(); // Stop autoplay
+
+		// Get the slide index from the slide attribute
+		const slideIndex = event.target.getAttribute(this.getSlideAttribute());
+
+		// Ensure the slideIndex is a valid number
+		if (slideIndex !== null) {
+			const index = parseInt(slideIndex, 10) - 1; // Subtract 1 from the slide index to account for the difference in indexing
+			if (!isNaN(index)) this.embla.scrollTo(index); // Scroll to the slide at the specified index
+		}
+	}
+}
+if (!customElements.get("coretex-slider")) customElements.define("coretex-slider", CoretexSlider);

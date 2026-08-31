@@ -1,0 +1,428 @@
+{% style %}
+/* Raleway (variable, weights 300-400) — served from theme assets, contact form only */
+@font-face {
+    font-family: 'Raleway';
+    font-style: normal;
+    font-weight: 300 400;
+    font-display: swap;
+    src: url('{{ 'raleway-latin.woff2' | asset_url }}') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Raleway';
+    font-style: normal;
+    font-weight: 300 400;
+    font-display: swap;
+    src: url('{{ 'raleway-latin-ext.woff2' | asset_url }}') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+.contact-page {
+    /* Form fields: #E5DECF fill, #E4DBC7 frame */
+    --inputBg: #E5DECF;
+    --inputBgHover: #E5DECF;
+    --inputBgActive: #E5DECF;
+    --inputBorderColor: #E4DBC7;
+    --inputBorderHover: #E4DBC7;
+    --inputBorderActive: #E4DBC7;
+    --inputBorderWidth: 1px;
+
+    /* Sharp edges on all buttons and fields */
+    --buttonRadius: 0;
+    --inputRadius: 0;
+
+    font-family: 'Raleway', sans-serif;
+    font-weight: 400;
+
+    padding: var(--layoutInline);
+
+    :is(input, textarea, select, button, label) { font-family: inherit }
+    :is(h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6) { font-family: inherit; font-weight: 300 }
+
+    .centre {
+        justify-content: center;
+        .h1.title {  margin: 0 auto;  text-align: center }
+    }
+
+    form {
+        --gap: 0;
+        textarea {  margin-inline: 0 }
+
+        /* Name and email fields same width as the message field */
+        :is(x-field, x-field > input) { width: 100% }
+    }
+    
+    .message { font-size: var(--type-3);  max-width: 30rem;  word-wrap: break-word }
+    
+    component-loader.contact-form { min-width: 30rem }
+    
+    @media (width <= 777px) { 
+        .content { margin-block: var(--space-4) }
+    }
+}
+{% endstyle %}
+
+<div 
+    class="general-page contact-page" 
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+<section class="contact">
+    <x-grid columns="8" columns-m="4" columns-s="1f" class="{% if section.settings.layout == 'centre' %}centre{% endif %}">
+
+    {%- comment -%} Contact page title {%- endcomment -%}
+    {%- if section.settings.show_title -%}
+        <x-cell span="{{ section.settings.title_position }}" span-m="row" order-s="1"><h1 class="h4 title">{{ page.title }}</h1></x-cell>
+    {%- endif -%}
+
+    {%- comment -%} Contact page content {%- endcomment -%}
+    {%- if section.settings.show_content -%}<x-cell span="2" class="content" order-s="2"><div class="rte">{{ page.content }}</div></x-cell>{%- endif -%}
+
+    {%- comment -%} Contact page form {%- endcomment -%}
+    <component-loader span="2" order-s="3" class="contact-form">
+        <smart-form>
+            {%- form 'contact', id: 'ContactForm' -%}
+
+                {%- if form.posted_successfully? -%}
+                    <h2 class="h6 message" tabindex="-1" autofocus>{{ 'templates.contact.form.post_success' | t }}</h2>
+
+                {%- elsif form.errors -%}
+                    <h2 class="h6 message" role="alert" tabindex="-1" autofocus>{{ 'templates.contact.form.error_heading' | t }}</h2>
+            
+                    <ul role="list" class="no-style inside">
+                        <li>
+                            <a href="#ContactForm-email" class="link">
+                                {{ form.errors.translated_fields.email | capitalize }}
+                                {{ form.errors.messages.email }}
+                            </a>
+                        </li>
+                    </ul>
+                {%- endif -%}
+
+                <fieldset x-flex direction="column">
+                    <legend class="visually-hidden">{{ 'customer.register.title' | t }}</legend>
+
+                    {%- for block in section.blocks -%}
+                        {%- case block.type -%}
+                        {%- when '@app' -%}
+                            <p class="itsapp" {{ block.shopify_attributes }}>{% render block %}</p>
+
+                        {%- when 'liquid' -%}
+                            <section class="liquid" {{ block.shopify_attributes }}>{{- block.settings.liquid -}}</section>
+
+                        {%- when 'name' -%}
+                            <x-field {{ block.shopify_attributes }}>
+                                <input
+                                    autocomplete="name"
+                                    type="text"
+                                    id="ContactForm-name"
+                                    name="contact[{{ 'templates.contact.form.name' | t }}]"
+                                    value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+                                    placeholder="{{ 'templates.contact.form.name' | t }}"
+                                    {% if block.settings.requiredInput %}required aria-required="true"{% endif %}
+                                >
+                                <label for="ContactForm-name">
+                                    <span>{{ 'templates.contact.form.name' | t }}</span>
+                                    <sup>{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                </label>
+                            </x-field>
+                        
+                        {%- when 'email' -%}
+                            <x-cell {{ block.shopify_attributes }}>
+                                <x-field {{ block.shopify_attributes }}>
+                                    <input
+                                        autocomplete="email"
+                                        type="email"
+                                        id="ContactForm-email"
+                                        name="contact[email]"
+                                        spellcheck="false"
+                                        autocapitalize="off"
+                                        value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
+                                        {% if block.settings.requiredInput %}required aria-required="true"{% endif %}
+                                        {% if form.errors contains 'email' %}
+                                        aria-invalid="true"
+                                        aria-describedby="ContactForm-email-error"
+                                        {% endif %}
+                                        placeholder="{{ 'templates.contact.form.email' | t }}"
+                                    >
+                                    <label for="ContactForm-email">
+                                        <span>{{- 'templates.contact.form.email' | t }}</span>
+                                        <sup aria-hidden="true">{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                    </label>
+                                </x-field>
+
+                                {%- if form.errors contains 'email' -%}
+                                    <small id="ContactForm-email-error">
+                                    <span class="visually-hidden">{{ 'accessibility.error' | t }}</span>
+                                    <span>{{- form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email -}}</span>
+                                    </small>
+                                {%- endif -%}
+                            </x-cell>
+
+                        {%- when 'phone' -%}
+                            <x-field {{ block.shopify_attributes }}>
+                                <input
+                                    type="tel"
+                                    id="ContactForm-phone"
+                                    autocomplete="tel"
+                                    name="contact[{{ 'templates.contact.form.phone' | t }}]"
+                                    pattern="[0-9\-]*"
+                                    value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}"
+                                    placeholder="{{ 'templates.contact.form.phone' | t }}"
+                                    {% if block.settings.requiredInput %}required aria-required="true"{% endif %}
+                                >
+                                <label for="ContactForm-phone">
+                                    <span>{{ 'templates.contact.form.phone' | t }}</span>
+                                    <sup aria-hidden="true">{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                </label>
+                            </x-field>
+
+                        {%- when 'ordernumber' -%}
+                            <x-field {{ block.shopify_attributes }}>
+                                <input type="text" id="order-number" class="fullwidth" name="contact[{{ 'openthinking.dictionary.word.order_number' | t | handleize }}]" placeholder="{{ 'openthinking.dictionary.word.order_number' | t }}" {% if block.settings.requiredInput %}required aria-required="true"{% endif %}>
+                                <label for="order-number">
+                                    <span>{{ 'openthinking.dictionary.word.order_number' | t }} </span>
+                                    <sup aria-hidden="true">{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                </label>
+                            </x-field>
+
+                        {%- when 'text' -%}
+                            <x-field {{ block.shopify_attributes }}>
+                                <input type="text" id="ContactFormText-{{ block.id }}" class="fullwidth" name="contact[{{ block.settings.text | handleize }}]" placeholder="{{ block.settings.text | escape }}" {% if block.settings.requiredInput %}required aria-required="true"{% endif %}>
+                                <label for="ContactFormText-{{ block.id }}">
+                                    <span>{{ block.settings.text | escape }}</span>
+                                    <sup aria-hidden="true">{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                </label>
+                            </x-field>
+
+                        {%- when 'url' -%}
+                            <x-field {{ block.shopify_attributes }}>
+                                <input type="url" id="ContactFormUrl-{{ block.id }}" class="fullwidth" name="contact[{{ block.settings.text | handleize }}]" placeholder="{{ block.settings.text | escape }}" pattern="https://.*" {% if block.settings.requiredInput %}required aria-required="true"{% endif %}>
+                                <label for="ContactFormUrl-{{ block.id }}">
+                                    <span>{{ block.settings.text | escape }}</span>
+                                    <sup aria-hidden="true">{% if block.settings.requiredInput %}*{% endif %}</sup>
+                                </label>
+                            </x-field>
+
+                        {%- when 'checkbox' -%}
+                            <x-cell {{ block.shopify_attributes }}>
+                                <input type="checkbox" id="ContactFormCheckbox-{{ block.id }}" name="contact[{{ block.settings.text | handleize }}]" {% if block.settings.requiredInput %}required aria-required="true"{% endif %}>
+                                <label for="ContactFormCheckbox-{{ block.id }}">{{ block.settings.text }}</label>
+                            </x-cell>
+
+                        {%- when 'message' -%}
+                            <x-cell {{ block.shopify_attributes }}>
+                                <label for="ContactForm-body" class="visually-hidden">{{- 'templates.contact.form.comment' | t -}}</label>
+                                <textarea
+                                    rows="10"
+                                    id="ContactForm-body"
+                                    name="contact[{{ 'templates.contact.form.comment' | t }}]"
+                                    placeholder="{{ 'templates.contact.form.comment' | t }}"
+                                    {% if block.settings.requiredInput %}required aria-required="true"{% endif %}
+                                >
+                                    {{- form.body -}}
+                                </textarea>
+                            </x-cell>
+
+                        {%- when 'button' -%}
+                            <x-cell {{ block.shopify_attributes }}>
+                                <button type="submit" class="button">{{ 'templates.contact.form.send' | t }}</button>
+                            </x-cell>
+
+                        {% endcase %}
+                    {% endfor -%}
+
+                </fieldset>
+
+            {%- endform -%}
+        </smart-form>
+    </component-loader>
+</x-grid>
+</section>
+</div>
+
+
+{% schema %}
+{
+  "name": "Contact page",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "show_content",
+        "label": "Show content",
+        "info": "You can add content to the center column from the contact page's content area. [Online store > Pages](https://admin.shopify.com/online_store/pages/)",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "select",
+        "id": "title_position",
+        "label": "Title position - desktop",
+        "default": "2",
+        "options": [
+            { "value": "row", "label": "Top" },
+            { "value": "2", "label": "Side" }
+        ]
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    {
+      "type": "liquid",
+      "name": "Custom Liquid",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "liquid",
+          "label": "Custom Liquid"
+        }
+      ]
+    },
+    {
+      "type": "name",
+      "name": "Name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "email",
+      "name": "Email",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "phone",
+      "name": "Phone number",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "ordernumber",
+      "name": "Order number",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Input",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Label",
+          "default": "Text input label"
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "url",
+      "name": "URL",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Input label",
+          "default": "URL"
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "name": "Checkbox",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "I have read and agree with terms and privacy policy."
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInput",
+          "label": "Required input",
+          "info": "Make the input required",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "message",
+      "name": "Message",
+      "limit": 1
+    },
+    {
+      "type": "button",
+      "name": "Send button",
+      "limit": 1
+    }
+  ]
+}
+{% endschema %}

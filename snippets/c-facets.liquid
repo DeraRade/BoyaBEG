@@ -1,0 +1,472 @@
+{% comment %}
+    Renders facets (filtering and sorting)
+
+    Accepts:
+    - results: {Object} Collection or Search object
+    - enable_filtering: {Boolean} Show filtering when true
+    - enable_sorting: {Boolean} Show sorting when true
+    - expand_by_default: {Boolean} Expand by default filter dropdowns when true
+
+    Usage:
+    {%- render 'facets', 
+        results: collection, 
+        enable_filtering: true, 
+        enable_sorting: true,
+        expand_by_default: true
+    -%}
+{% endcomment %}
+
+{%- liquid
+# === [ CORTEX FYI ] ===
+# This is a different approach to the DAWN implmentation
+# it derives from AC since it is better and more robust.
+    assign reset_filters_url = results.url
+    if reset_filters_url
+        if results.sort_by != ""
+            assign reset_filters_url = reset_filters_url | append: '?sort_by=' | append: results.sort_by
+        endif
+    else
+        assign terms = results.terms | escape
+        if results.types.size > 0
+            assign type = results.types | join: ','
+        endif
+        assign reset_filters_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: results.sort_by | append: '&type=' | append: type
+    endif
+
+# Global variables
+    assign default_presentation = 'text'
+    assign form_id = 'CoretexFiltersForm'
+
+    # Has active filters
+    assign hasActiveFilters = false
+    for filter in results.filters
+        if filter.active_values.size > 0
+            assign hasActiveFilters = true
+        endif
+    endfor
+
+# Load the CSS file for swatch
+    assign css_loaded = false
+    for filter in results.filters
+        if filter.presentation == 'swatch' and css_loaded == false
+            render 'inc-stylesheet', src: 'c-swatches.css'
+            assign css_loaded = true
+        endif
+    endfor
+-%}
+
+{% comment %}
+=== [ CORTEX FYI ] ===
+Both Filtering and Sorting must be within <facets-form> and <form>.
+
+🚨 Essential elements for AJAXifying the filter form.
+    - `<facets-form>`
+    - `data-facets-form-content` = Defines blocks of content that will be updated.
+    - `data-facets-form-link` = Defines links that need to be listened for interactions inside the component
+    - `data-facets-form-input` = Defines inputs that need to be updated inside the component.
+    - `id` = All focusable elements must have an unique `id` attribute!!! (inputs, buttons, links, etc.)
+{% endcomment %}
+<facets-form><form id="{{ form_id }}">
+
+    {%- comment -%}
+        ====== SORTING ======
+    {%- endcomment -%}
+    <section id="sortBySection" data-facets-form-content="sort-block">
+        <coretex-accordion class="accordion"> 
+        <details class="dm closex" open>
+            <summary class="dropdown-caret"><span class="cursor-pointer">{{ 'products.facets.sort_by_label' | t }}</span></summary>
+            <filter-container>
+                {%- assign sort_by = results.sort_by | default: results.default_sort_by -%}
+
+                <fieldset class="toggle-token custom">
+                    <ul class="no-style inside" x-flex direction="row" wrap="wrap">
+                        {%- for option in results.sort_options -%}
+                        <li class="toggle-token custom">
+                            <label for="sort-{{ option.value | escape }}">
+                                <input
+                                    name="sort_by"
+                                    data-facets-form-input
+                                    type="radio"
+                                    id="sort-{{ option.value | escape }}"
+                                    value="{{ option.value | escape }}"
+                                    {% if option.value == sort_by %}checked{% endif %}
+                                >
+                                <span data-menu-button-text>{{ option.name | escape }}</span>
+                            </label>
+                        </li>
+                        {%- endfor -%}
+                    </ul>
+                </fieldset>
+
+                <noscript>
+                    <button type="submit">{{ 'products.facets.sort_button' | t }}</button>
+                </noscript>
+            </filter-container>
+        </details>
+        </coretex-accordion>
+    </section>
+
+    {%- comment -%}
+        ====== FILTERS ====== 
+    {%- endcomment -%}
+    {%- if enable_filtering -%}
+        <section id="filterBySection" x-flex direction="column">
+        {%- for filter in results.filters -%}
+            {%- liquid
+                # The type of the filter 
+                assign presentation = filter.presentation | default: default_presentation
+                if presentation == 'image'
+                    # [Image] presentation, filter values display an image. 
+                    assign visual_layout_class = 'facets-layout facets-layout-grid facets-layout-grid--' | append: presentation
+                else
+                    # [Text] presentation, no additional visual display for filter values.
+                    # [Swatch] presentation, filter values display color or image patterns.
+                    assign visual_layout_class = 'facets-layout facets-layout-list facets-layout-list--' | append: presentation
+                endif
+
+                # Keep the selected values grouped together when operator is AND
+                assign sorted_values = filter.values
+                if filter.operator == 'AND'
+                  assign active_filter_values = filter.values | where: 'active', true
+                  assign inactive_filter_values = filter.values | where: 'active', false
+                  assign sorted_values = active_filter_values | concat: inactive_filter_values
+                endif
+            -%}
+
+            {%- comment -%}
+                === [ CORTEX FYI ] ===
+                All filter types except "Price range"
+            {%- endcomment -%}
+            {%- case filter.type -%}
+            {%- when 'boolean', 'list' -%}
+            <coretex-accordion class="accordion">
+                <details class="dm closex" data-facets-form-content="filter-block-{{ forloop.index }}" {% if expand_by_default %}open{% endif %}>
+                    <summary class="dropdown-caret"><span class="cursor-pointer">{{ filter.label | escape }}</span></summary>
+                    <filter-container>
+                        <fieldset class="toggle-token custom"><x-flex wrap="wrap">
+                            <legend>{{ filter.label | escape }}</legend>
+                            {% comment %}
+                                === [ CORTEX FYI ] ===
+                                ✋⚠️
+                                From now on we are inside a loop, everything added below 
+                                will be displayed for each `filter.value`
+                            {% endcomment %}
+                            {%- for value in sorted_values -%}
+                                {%- liquid
+                                    assign input_id = 'Filter-' | append: filter.param_name | escape | append: forloop.index
+                                    assign is_disabled = false
+                                    if value.count == 0 and value.active == false
+                                        assign is_disabled = true
+                                    endif
+                                -%}
+
+                                {%- # Label class -%}
+                                {%- capture label_class -%}
+                                {%- if is_disabled %}disabled{% endif %}{% if value.active -%} active{%- endif -%}
+                                {%- endcapture -%}
+
+                                {%- # Text value  -%}
+                                {%- capture text_value -%}
+                                <span>
+                                    <span>{{- value.label | escape }}</span> <sup class="count">{{- value.count -}}</sup>
+                                </span>
+
+                                <span class="visually-hidden">
+                                    {%- liquid
+                                        echo value.label | escape
+                                        echo '<sup class="count">'
+                                            if value.count == '1'
+                                                echo 'products.facets.product_count_simple.one' | t: count: value.count
+                                            else
+                                                echo 'products.facets.product_count_simple.other' | t: count: value.count
+                                            endif
+                                        echo '</sup>'
+                                    -%}
+                                </span>
+
+                              {%- endcapture -%}
+
+                                {%- comment -%}
+                                    === [ CORTEX FYI ] ===
+                                    Defines how to present the filter values, 
+                                    specifies the presentation of the filter.
+                                {%- endcomment -%}
+                                {% if presentation == 'swatch' %}
+
+                                    {%- # Swatches -%}
+                                    <x-flex direction="column" ai="center" jc="center" class="swatches no-style inside {{ label_class }}">
+                                        {%- render 'c-prod-swatch-input',
+                                            id: input_id,
+                                            type: 'checkbox',
+                                            name: value.param_name,
+                                            value: value.value,
+                                            product_form_id: form_id,
+                                            swatch: value.swatch,
+                                            checked: value.active,
+                                            disabled: is_disabled,
+                                            additional_props: 'data-facets-form-input',
+                                        -%}
+
+                                        {{ text_value }}
+                                    </x-flex>
+
+                                {% else %}
+
+                                    <label 
+                                        {% if has_visual_display %}x-grid columns="2" pi="center"{% endif %}  
+                                        for="{{ input_id }}"
+                                        class="labels {{ label_class -}}"
+                                    >
+
+                                        {% # General input %}
+                                        {%- comment -%}
+                                            === [ CORTEX FYI ] ===
+                                            ⚠️ Input below needs to have `data-facets-form-input` 
+                                            in order for it to be AJAXifed.
+                                        {%- endcomment -%}
+                                        <input
+                                            data-facets-form-input
+                                            type="checkbox"
+                                            name="{{ value.param_name }}"
+                                            value="{{ value.value }}"
+                                            id="{{ input_id }}"
+                                            {% if value.active %}checked{% endif %}
+                                            {% if is_disabled %}disabled{% endif %}
+                                        >
+
+                                        {%- 
+                                            liquid 
+                                            if presentation == 'image'
+
+                                                # Image type
+                                                if value.image 
+                                                    echo value.image | image_url: width: 300 | image_tag: class: 'facets__image', alt: value.alt
+                                                endif 
+
+                                            else
+
+                                                # Text type
+                                                echo text_value
+
+                                            endif 
+                                        -%}
+                                    </label>
+                                {% endif %}
+
+                            {%- endfor -%}
+                        </x-flex></fieldset>
+                    </filter-container>
+                </details>
+            </coretex-accordion>
+
+            {%- comment -%}
+                === [ CORTEX FYI ] ===
+                Price range only 
+            {%- endcomment -%}
+            {%- when 'price_range' -%}
+                {%- comment -%}
+                === [ CORTEX FYI ] ===
+                Because we have a different approach in regards to the price range, we have to still
+                use `currencies_using_comma_decimals` compared to Dawn. And that's OK!
+                {%- endcomment -%}
+                {%- liquid
+                    assign currencies_using_comma_decimals = 'ANG,ARS,BRL,BYN,BYR,CLF,CLP,COP,CRC,CZK,DKK,EUR,HRK,HUF,IDR,ISK,MZN,NOK,PLN,RON,RUB,SEK,UYU,VES,VND' | split: ','
+                    assign uses_comma_decimals = false
+                    if currencies_using_comma_decimals contains cart.currency.iso_code
+                      assign uses_comma_decimals = true
+                    endif
+                -%}
+                <coretex-accordion class="accordion">
+                <details class="dm closex" {% if expand_by_default %}open{% endif %}>
+                    <summary class="dropdown-caret"><span class="cursor-pointer">{{ filter.label | escape }}</span></summary>
+
+                    {%- comment -%}
+                        === [ CORTEX FYI ] ===
+                        Since the Price range is a component and it's inside an AJAXifed space 
+                        we need to wrap it inside a `<component-loader>`.
+                    {%- endcomment -%}
+                    <component-loader>
+                        <tc-range-slider data-facets-form-content="filter-block-{{ forloop.index }}" id="priceSlider" class="js" style="--jsDisplay:block; display:block; margin:6rem auto 3rem; width:fit-content"
+                            min="0" 
+                            {% if uses_comma_decimals %}
+                                max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                            {% else %}
+                                max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                            {% endif %}
+                
+                            {% if filter.min_value.value %}
+                                {% if uses_comma_decimals %}
+                                    value1="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                                {%- else -%}
+                                    value1="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                                {% endif %}
+                            {% else %}
+                                value1="0"
+                            {% endif %}
+                
+                            {% if filter.max_value.value %}
+                                {% if uses_comma_decimals %}
+                                    value2="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                                {%- else -%}
+                                    value2="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                                {% endif %}
+                            {% else %}
+                                {% if uses_comma_decimals %}
+                                    value2="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                                {% else %}
+                                    value2="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                                {% endif %}
+                            {% endif %}
+                
+                            generate-labels="true"
+                            mousewheel-disabled="true"
+                            round="0"
+                            step="5"
+                
+                            range-dragging="true"
+                
+                            pointers-min-distance="10"
+                            pointer-width="32px"
+                            pointer-height="32px"
+                            pointer-radius="100vw"
+    
+                            pointer-shadow="0 0px 5px rgba(0,0,0,0.3)"
+                            pointer-shadow-hover="0 0px 5px rgba(0,0,0,0.3)"
+                            pointer-shadow-focus="0 0px 10px rgba(0,0,0,0.45)"
+    
+                            slider-height="1rem"
+                
+                            moving-tooltip="true"
+                            moving-tooltip-units="&nbsp;{{ cart.currency.symbol }}"
+                            moving-tooltip-distance-to-pointer="40"
+                            moving-tooltip-width="50"
+                            moving-tooltip-height="32"
+                            moving-tooltip-radius="3rem"
+                            moving-tooltip-size="1rem"
+                        ></tc-range-slider>
+                        {% comment %} 
+                            === [ CORETEX FYI ] ===
+                            Inputs needed for <form>
+                            Hidden when JS is enabled, but still used by the ranger.
+                            Shown when NO JS and the user can interact with them.
+                        {% endcomment %}
+                        <div class="no-js">
+                        <label class="field__label" for="Mobile-Filter-{{ filter.label | escape }}-GTE">{{- 'products.facets.from' | t -}}</label>
+                        <span>{{ cart.currency.symbol }}</span>
+                        <input
+                            class="no-js"
+                            data-facets-form-input id="priceSlider-minor" 
+                            name="{{ filter.min_value.param_name }}"
+                            id="Mobile-Filter-{{ filter.label | escape }}-GTE"
+                            {%- if filter.min_value.value -%}
+                              {%- if uses_comma_decimals -%}
+                                value="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                              {%- else -%}
+                                value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                              {%- endif %}
+                            {%- endif -%}
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            inputmode="decimal"
+                            {%- if uses_comma_decimals -%}
+                              max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                            {%- else -%}
+                              max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                            {% endif %}
+                        >
+    
+                        <label for="Mobile-Filter-{{ filter.label | escape }}-LTE">{{- 'products.facets.to' | t -}}</label>
+                        <span class="field-currency">{{ cart.currency.symbol }}</span>
+                        <input
+                            class="no-js"
+                            data-facets-form-input id="priceSlider-major"
+                            name="{{ filter.max_value.param_name }}"
+                            id="Mobile-Filter-{{ filter.label | escape }}-LTE"
+                            {%- if filter.max_value.value -%}
+                              {%- if uses_comma_decimals -%}
+                                value="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                              {%- else -%}
+                                value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                              {%- endif %}
+                            {%- endif -%}
+                            type="number"
+                            min="0"
+                            inputmode="decimal"
+                            {%- if uses_comma_decimals -%}
+                              placeholder="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                              max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                            {%- else -%}
+                              placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                              max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                            {% endif %}
+                          >    
+                    </div>
+                    </component-loader>
+                </details>
+                </coretex-accordion>
+            {%- endcase -%}
+        {% endfor %}
+        </section>
+        
+    {%- endif -%}
+
+    {% if results.current_vendor or results.current_type %}
+        <input type="hidden" name="q" value="{{ results.current_vendor }}{{ results.current_type }}">
+      {% endif %}
+
+    {%- if results.terms -%}
+        <input type="hidden" name="q" value="{{ results.terms | escape }}">
+        <input name="options[prefix]" type="hidden" value="last">
+    {%- endif -%}
+
+{% comment %}
+=== [ CORTEX FYI ] ===
+    Both Filtering and Sorting must be within the <form>.
+{% endcomment %}
+
+<x-grid columns="2" ai="center" data-facets-form-content="clear-button" class="sticky-bottom" style="--sticky:var(--padding)">
+    <x-cell js="end" class="small-only">
+        <button id="facetsApplyFilters" role="button" class="has-icon" data-close> 
+            {%- render 'inc-icon', icon: 'settings' -%}
+            <span>{{- 'products.facets.apply' | t -}}</span>
+        </button>
+    </x-cell>
+
+    <x-cell js="start">
+        <a href="{{ reset_filters_url }}" id="facetsClearFilters" role="button" class="button has-icon" data-facets-form-link>
+            {%- render 'inc-icon', icon: 'arrow-refresh' -%}
+            <span>{{- 'products.facets.clear' | t -}}</span>
+        </a>
+    </x-cell>
+</x-grid>
+</form></facets-form>
+
+
+{% comment %}
+    === [ CORTEX FYI ] ===
+    The Submit button can be placed outside the form if the <form id> 
+    is declared inside the <button>'s form="" attribute. 
+{% endcomment %}
+<x-flex direction="row" ai="center">
+
+    {% comment %}
+    === [ CORTEX FYI ] ===
+    Since the whole area is AJAXifed this button can be hidden 
+    with `.no-js` or <noscript> and only shown for users with NO JS.
+    {% endcomment %}
+    <noscript>
+    <x-cell span="1">
+        <button class="has-icon is-pill fullwidth" form="{{ form_id }}">
+            {%- render 'inc-icon', icon: 'settings' -%}
+            <span>{{- 'products.facets.apply' | t -}}</span>
+        </button>
+    </x-cell>
+
+    <x-cell>
+        <a href="{{ reset_filters_url }}" role="button" class="button has-icon is-pill" data-facets-form-link>
+            {{- 'products.facets.clear' | t -}}
+        </a>
+    </x-cell>
+    </noscript>
+</x-flex>

@@ -1,0 +1,43 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "ls-events",
+      "blocks": {
+        "event1": {
+          "type": "event",
+          "settings": {
+            "expand_by_default": true
+          }
+        },
+        "event2": {
+          "type": "event",
+          "settings": {}
+        },
+        "event3": {
+          "type": "event",
+          "settings": {
+            "expired": true
+          }
+        }
+      },
+      "block_order": [
+        "event1",
+        "event2",
+        "event3"
+      ],
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

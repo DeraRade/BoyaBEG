@@ -1,0 +1,205 @@
+{%- render 'inc-stylesheet', src: 'c-marquee.css' -%}
+
+{%- capture style -%}
+--maskBlur: 10px;
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+
+{{- section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--align:' | append: ';' -}}
+{{- section.settings.fontSize | prepend: '--fontSize: var(--type-' | append: ');' -}}
+{{- section.settings.fontSizeMob | prepend: '--fontSizeMob: var(--type-' | append: ');' -}}
+{%- endcapture -%}
+
+{%- if section.settings.text != blank -%}
+
+<section
+    class="marquee mask inline-both"
+	style="{{ style | strip_newlines | strip }}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %} 
+	data-section-id="{{ section.id }}"
+>
+    {%- if request.design_mode -%}<component-loader>{%- endif -%} 
+    <coretex-marquee start
+        reverse="{{ section.settings.direction }}"
+        speed="{{ section.settings.speed }}"
+        pause="{{ section.settings.pause }}"
+        {%- if section.settings.image -%}image="true"{%- endif -%}
+        style="{{ style | strip_newlines | strip }}"
+    >
+        {%- for i in (1..15) -%}
+        <div class="projectile" {% unless forloop.first %}aria-hidden="true"{% endunless %}>
+            <span>
+                {%- if section.settings.link != blank -%}
+                    <a href="{{ section.settings.link }}" {% unless forloop.first %} aria-hidden="true" tabindex="-1"{% endunless %}>
+                {%- endif -%}
+
+                {%- if section.settings.image -%}
+                    <x-flex ai="center" jc="center" style="gap:var(--inlineSpace)">
+                        <x-cell>{{ section.settings.text }}</x-cell>
+                        <x-cell>
+                            {%- liquid
+                                assign img = section.settings.image
+                                assign width = 70
+                                assign widths = '20,30,40,50,60,70'
+                                assign mediaLoader = true
+                                assign class = 'noRadius'
+                                assign loading = 'lazy'
+    
+                                render 'inc-img', img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true, class: class, loading: loading
+                            -%}
+                        </x-cell>
+                    </x-flex>
+                {%- else -%}
+                    <x-cell>{{ section.settings.text }}</x-cell>
+                {%- endif -%}
+
+                {%- if section.settings.link != blank -%}</a>{%- endif -%}
+            </span>            
+        </div>
+        {%- endfor -%}
+    </coretex-marquee>
+    {%- if request.design_mode -%}</component-loader>{%- endif -%}
+</section>
+{%- endif -%}
+
+{% schema %}
+	{
+		"name": "Marquee",
+		"class": "marquee-walker",
+		"disabled_on": {
+			"groups": ["aside"]
+		},
+		"presets": [
+			{ "name": "Marquee", "category": "Content" }
+		],
+		"settings": [
+			{
+				"type": "text",
+				"id": "text",
+				"label": "Text",
+				"default": "Announce something here"
+			},
+			{
+				"type": "image_picker",
+				"id": "image",
+				"label": "Image icon",
+				"info": "60 x 60 px recommended"
+			},
+			{
+				"type": "url",
+				"id": "link",
+				"label": "Link"
+			},
+			{
+				"type": "select",
+				"id": "direction",
+				"label": "Direction",
+				"default": "false",
+				"options": [
+					{
+						"value": "false",
+						"label": "Right to left"
+					},
+					{
+						"value": "true",
+						"label": "Left to right"
+					}
+				]
+			},
+			{
+				"type": "range",
+				"label": "Speed",
+				"id": "speed",
+				"min": 10,
+				"max": 100,
+				"step": 5,
+				"default": 40
+			},
+			{
+				"type": "checkbox",
+				"id": "pause",
+				"label": "Pause on hover",
+				"default": true
+			},
+			{
+				"type": "header",
+				"content": "Text"
+			},
+			{
+				"type": "range",
+				"id": "fontSize",
+				"label": "Size - desktop",
+				"min": 1,
+				"max": 30,
+				"step": 1,
+				"default": 6
+			},
+			{
+				"type": "range",
+				"id": "fontSizeMob",
+				"label": "Size - mobile",
+				"min": 1,
+				"max": 30,
+				"step": 1,
+				"default": 6
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		]
+	}
+{% endschema %}

@@ -1,0 +1,200 @@
+{% comment %}
+
+    Accepts:
+    component: 'dialog' | 'button'
+    type: 'country' | 'language'
+    icons: true | false
+
+    Usage:
+    {%- render 'global-localization', component: 'dialog', type: 'language', icons: true -%}
+    {%- render 'global-localization', component: 'button', type: 'language', icons: true  -%}
+
+{% endcomment %}
+
+{%-  if component == 'dialog' -%} <component-loader>{% endif -%}
+{%- case type -%}
+
+    <x-cell class="large-only">
+        <button class="is-custom has-icon" data-open="#searchBox">
+          {%- render 'inc-icon', icon: 'search' -%}
+          <span class="txtState">{{ 'general.search.search' | t }}</span>
+        </button>
+      </x-cell>
+    
+{%- comment -%}
+    Language selector
+{%- endcomment -%}
+{%- when 'language' -%}
+    {%- if component == 'button' -%}
+        <localization-form class="no-js-hidden">
+            {%- form 'localization', id: 'HeaderLanguageForm', class: 'localization-form' -%}
+                {%- for language in localization.available_languages -%}
+                    {%- liquid
+                        case language.iso_code
+                        when 'es'
+                            assign item_label = 'ESP'
+                        when 'en'
+                            assign item_label = 'ENG'
+                        else
+                            assign item_label = language.iso_code | upcase
+                        endcase
+                    -%}
+                    {%- if language.iso_code == localization.language.iso_code -%}
+                        <span class="lang-active">{{ item_label }}</span>
+                    {%- else -%}
+                        <a href="#" role="button" data-value="{{ language.iso_code }}" class="is-custom has-icon lang-inactive">{{ item_label }}</a>
+                    {%- endif -%}
+                    {%- unless forloop.last -%}<span class="lang-sep" aria-hidden="true">|</span>{%- endunless -%}
+                {%- endfor -%}
+                <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}">
+            {%- endform -%}
+        </localization-form>
+    {%- endif -%}
+
+{%- comment -%}
+    Country/region selector 
+{%- endcomment -%}
+{%- when 'country' -%}
+
+    {%- # Renders the button to open the dialog -%} 
+    {%- if component == 'button' -%}
+        <button class="is-custom has-icon crl" data-open="#countryBox" style="gap:0">
+            {%- liquid 
+                if icons
+                render 'inc-icon', icon: 'globe' 
+                endif
+            -%}
+            <span class="visually-hidden">{{ 'localization.country_label' | t }}:</span>
+            <span>
+                <country-name>{{- localization.country.name }} | </country-name>
+                <country-currency>
+                    <currency-iso>{{ localization.country.currency.iso_code }}</currency-iso>
+                    <currency-symbol>{{ localization.country.currency.symbol -}}</currency-symbol>
+                </country-currency>
+            </span>  
+            <x-cell class="noHide">{% render 'inc-icon', icon: 'chevron-down' %}</x-cell>
+        </button>
+
+    {%- # Renders the dialog -%} 
+    {%- else -%}
+
+{%- liquid
+    assign currencies = localization.available_countries | map: 'currency' | map: 'iso_code' | uniq
+    assign popular_countries = localization.available_countries | where: 'popular?' | sort: 'name'
+  
+    assign show_country_filter = false
+    if localization.available_countries.size > 9
+        assign show_country_filter = true
+    endif
+  
+    assign show_popular_countries = false
+    if localization.available_countries.size > 9 and popular_countries.size > 1
+        assign show_popular_countries = true
+    endif
+-%}
+
+<coretex-dialog
+    id="countryBox" 
+    class="coretex-dialog"
+    data-section-id="{{ section.id }}"
+    tabindex="-1"
+>
+    <dialog aria-label="Localization modal" dialog-position="bottom center">
+        <dialog-wrapper x-flex direction="column">
+            <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                <h2 class="h6" style="--hMargin:0">{{ 'localization.country_label' | t }}</h2>
+                <form>
+                    <button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+                        <span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+                        {%- render 'inc-icon', icon: 'x-close' -%}
+                    </button>
+                </form>
+            </header>
+
+            <main>
+                <component-loader>
+                <localization-form class="no-js-hidden">
+                    {%- form 'localization', id: 'OverlayCountryForm', class: 'localization-form' -%}
+                        <h3 class="visually-hidden" id="OverlayCountryLabel">{{ 'localization.country_label' | t }}</h3>
+                        {% # This displays the search input to search thru the countries. %}
+                        {%- if show_country_filter -%}
+                        <country-search x-flex direction="row" ai="center">
+                                <label class="visually-hidden" for="country-filter-input">{{ 'localization.search' | t }}</label>
+                                <input
+                                    class="country-filter fullwidth"
+                                    id="country-filter-input"
+                                    type="search"
+                                    name="country_filter"
+                                    value=""
+                                    placeholder="{{ 'localization.search' | t }}"
+                                    role="combobox"
+                                    aria-owns="country-results"
+                                    aria-controls="country-results"
+                                    aria-haspopup="listbox"
+                                    aria-autocomplete="list"
+                                    autocorrect="off"
+                                    autocomplete="off"
+                                    autocapitalize="off"
+                                    spellcheck="false"
+                                    autofocus
+                                >
+                                <button type="reset" class="is-custom has-icon hidden">
+                                    <span class="visually-hidden">{{ 'general.search.reset' | t }}</span>
+                                    {%- render 'inc-icon', icon: 'x-close' -%}
+                                </button>
+                        </country-search>
+                        {%- endif -%}
+
+                        {% # If the show popular countries option is activated %}
+                        {%- if show_popular_countries -%}
+                        <ul class="no-style inside popular-list">
+                            {%- for country in popular_countries -%}
+                            <li class="localization-item" tabindex="-1" {% if country.iso_code == localization.country.iso_code %}aria-current="true"{% endif %}>
+                                <a href="#" id="{{ country.name }}"
+                                    {% if country.iso_code == localization.country.iso_code %}aria-current="true"{% endif %}
+                                    data-value="{{ country.iso_code }}"
+                                    class="no-style"
+                                >
+                                    <span class="country">{{- country.name }}</span>
+                                    <span class="{% if currencies.size < 2 %}hidden{% endif %}">{{ country.currency.iso_code }}{{ country.currency.symbol -}}</span>
+                                </a>
+                            </li>
+                            {%- endfor -%}
+                        </ul>
+                        {%- endif -%}
+
+                        {% # This displays the list of available countries %}
+                        <ul class="no-style inside localization-list" x-flex direction="column">
+                            {%- for country in localization.available_countries -%}
+                            <li class="localization-item onHover" tabindex="-1" {% if country.iso_code == localization.country.iso_code %}aria-current="true"{% endif %}>
+                                <a href="#" id="{{ country.name }}"
+                                    {% if country.iso_code == localization.country.iso_code %}aria-current="true" tabindex="-1"{% endif %}
+                                    data-value="{{ country.iso_code }}"
+                                    class="no-style"
+                                >
+                                    <span class="country">{{- country.name }}</span>
+                                    <span class="currency{% if currencies.size < 2 %} hidden{% endif %}">
+                                        <span class="isoCode">{{ country.currency.iso_code }}</span>
+                                        <span class="symbol">{{ country.currency.symbol -}}</span>
+                                    </span>
+                                </a>
+                            </li>
+                            {%- endfor -%}
+                        </ul>
+
+                        {% # This is needed for the form %}
+                        <input type="hidden" name="country_code" value="{{ localization.country.iso_code }}">
+                    {%- endform -%}
+                </localization-form>
+                </component-loader>
+            </main>
+        </dialog-wrapper>
+    </dialog>
+</coretex-dialog>
+    {%- endif -%}
+{%- endcase -%}
+
+{%-  if component == 'dialog' -%} 
+{%- render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer' -%}
+</component-loader>
+{%- endif -%}

@@ -1,0 +1,1068 @@
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .boya-newsletter-{{ ai_gen_id }} {
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-weight: {{ block.settings.body_font.weight }};
+    background: {{ block.settings.background_color }};
+    color: {{ block.settings.text_color }};
+    max-width: {{ block.settings.max_width }}px;
+    margin: 0 auto;
+    padding: {{ block.settings.padding }}px;
+    width: {{ block.settings.desktop_width_percent }}%;
+  }
+
+  .boya-newsletter-{{ ai_gen_id }} h2 {
+    font-family: {{ block.settings.heading_font.family }}, {{ block.settings.heading_font.fallback_families }};
+    font-weight: {{ block.settings.heading_font.weight }};
+    font-size: {{ block.settings.heading_size }}px;
+    letter-spacing: {{ block.settings.heading_letter_spacing }}em;
+    margin-bottom: {{ block.settings.heading_margin }}px;
+    {% if block.settings.heading_uppercase %}text-transform: uppercase;{% endif %}
+  }
+
+  .boya-newsletter-{{ ai_gen_id }} .boya-required-note-{{ ai_gen_id }} {
+    font-size: {{ block.settings.note_size }}px;
+    color: {{ block.settings.label_color }};
+    margin-bottom: {{ block.settings.note_margin }}px;
+  }
+
+  .boya-newsletter-{{ ai_gen_id }} .asterisk {
+    color: {{ block.settings.required_color }};
+  }
+
+  .boya-field-{{ ai_gen_id }} {
+    margin-bottom: {{ block.settings.field_gap }}px;
+  }
+
+  .boya-field-{{ ai_gen_id }} label,
+  .boya-field-group-{{ ai_gen_id }} strong {
+    display: block;
+    font-size: {{ block.settings.label_size }}px;
+    font-weight: {{ block.settings.label_weight }};
+    letter-spacing: {{ block.settings.label_letter_spacing }}em;
+    {% if block.settings.label_uppercase %}text-transform: uppercase;{% endif %}
+    color: {{ block.settings.label_color }};
+    margin-bottom: {{ block.settings.label_margin }}px;
+  }
+
+  .boya-field-{{ ai_gen_id }} input[type="email"],
+  .boya-field-{{ ai_gen_id }} input[type="text"] {
+    width: 100%;
+    padding: {{ block.settings.input_padding }}px {{ block.settings.input_padding_horizontal }}px;
+    border: {{ block.settings.input_border_width }}px solid {{ block.settings.input_border_color }};
+    border-radius: {{ block.settings.input_border_radius }}px;
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-size: {{ block.settings.input_font_size }}px;
+    color: {{ block.settings.text_color }};
+    background: {{ block.settings.input_background }};
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .boya-field-{{ ai_gen_id }} input[type="email"]:focus,
+  .boya-field-{{ ai_gen_id }} input[type="text"]:focus {
+    border-color: {{ block.settings.input_border_focus }};
+  }
+
+  .boya-field-group-{{ ai_gen_id }} {
+    margin-bottom: {{ block.settings.field_gap }}px;
+  }
+
+  .boya-field-group-{{ ai_gen_id }} ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: {{ block.settings.radio_gap }}px;
+  }
+
+  .boya-field-group-{{ ai_gen_id }} li {
+    display: flex;
+    align-items: center;
+    gap: {{ block.settings.radio_label_gap }}px;
+  }
+
+  .boya-field-group-{{ ai_gen_id }} input[type="radio"] {
+    accent-color: {{ block.settings.radio_color }};
+    width: {{ block.settings.radio_size }}px;
+    height: {{ block.settings.radio_size }}px;
+    cursor: pointer;
+  }
+
+  .boya-field-group-{{ ai_gen_id }} li label {
+    font-size: {{ block.settings.radio_label_size }}px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: {{ block.settings.text_color }};
+    cursor: pointer;
+    margin: 0;
+  }
+
+  /* ── BUTTON ── */
+  .boya-btn-{{ ai_gen_id }} {
+    display: inline-block;
+    {% if block.settings.button_full_width %}
+      width: 100%;
+    {% else %}
+      width: auto;
+    {% endif %}
+    padding: {{ block.settings.button_padding }}px {{ block.settings.button_padding_horizontal }}px;
+    background: {{ block.settings.button_bg }};
+    color: {{ block.settings.button_text_color }};
+    border: {{ block.settings.button_border_width }}px solid {{ block.settings.button_border_color }};
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-size: {{ block.settings.button_font_size }}px;
+    font-weight: {{ block.settings.button_font_weight }};
+    letter-spacing: {{ block.settings.button_letter_spacing }}em;
+    {% if block.settings.button_uppercase %}text-transform: uppercase;{% endif %}
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    margin-top: {{ block.settings.button_margin_top }}px;
+  }
+
+  .boya-btn-{{ ai_gen_id }}:hover {
+    background: {{ block.settings.button_bg_hover }};
+    color: {{ block.settings.button_text_hover }};
+    border-color: {{ block.settings.button_border_hover }};
+  }
+
+  /* ── Wrapper for button centering ── */
+  .boya-submit-wrap-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: center;
+  }
+
+  .boya-response-{{ ai_gen_id }} {
+    margin-top: {{ block.settings.field_gap }}px;
+    padding: {{ block.settings.input_padding }}px;
+    border-radius: {{ block.settings.input_border_radius }}px;
+    font-size: {{ block.settings.input_font_size }}px;
+  }
+
+  .boya-response-{{ ai_gen_id }}.success {
+    background: {{ block.settings.success_bg }};
+    color: {{ block.settings.success_color }};
+  }
+
+  .boya-response-{{ ai_gen_id }}.error {
+    background: {{ block.settings.error_bg }};
+    color: {{ block.settings.error_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .boya-newsletter-{{ ai_gen_id }} {
+      padding: {{ block.settings.padding | times: 0.7 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="boya-newsletter-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div id="mc_embed_shell-{{ ai_gen_id }}">
+    <div id="mc_embed_signup-{{ ai_gen_id }}">
+      <form
+        action="{{ block.settings.mailchimp_action_url }}"
+        method="post"
+        id="mc-embedded-subscribe-form-{{ ai_gen_id }}"
+        name="mc-embedded-subscribe-form"
+        class="validate"
+        target="_blank"
+      >
+        <div id="mc_embed_signup_scroll-{{ ai_gen_id }}">
+
+          {% if block.settings.heading != blank %}
+            <h2>{{ block.settings.heading }}</h2>
+          {% endif %}
+
+          {% if block.settings.show_required_note %}
+            <div class="boya-required-note-{{ ai_gen_id }}">
+              <span class="asterisk">*</span> {{ block.settings.required_note_text }}
+            </div>
+          {% endif %}
+
+          <!-- ── Email (obavezno) ── -->
+          <div class="mc-field-group boya-field-{{ ai_gen_id }}">
+            <label for="mce-EMAIL-{{ ai_gen_id }}">
+              {{ block.settings.email_label }}
+              {% if block.settings.email_required %}<span class="asterisk">*</span>{% endif %}
+            </label>
+            <input
+              type="email"
+              name="EMAIL"
+              class="required email"
+              id="mce-EMAIL-{{ ai_gen_id }}"
+              required
+              value=""
+            >
+          </div>
+
+          <!-- ── First name ── -->
+          {% if block.settings.show_first_name %}
+            <div class="mc-field-group boya-field-{{ ai_gen_id }}">
+              <label for="mce-FNAME-{{ ai_gen_id }}">
+                {{ block.settings.first_name_label }}
+                {% if block.settings.first_name_required %}<span class="asterisk">*</span>{% endif %}
+              </label>
+              <input
+                type="text"
+                name="FNAME"
+                class="{% if block.settings.first_name_required %}required {% endif %}text"
+                id="mce-FNAME-{{ ai_gen_id }}"
+                {% if block.settings.first_name_required %}required{% endif %}
+                value=""
+              >
+            </div>
+          {% endif %}
+
+          <!-- ── Last name ── -->
+          {% if block.settings.show_last_name %}
+            <div class="mc-field-group boya-field-{{ ai_gen_id }}">
+              <label for="mce-LNAME-{{ ai_gen_id }}">
+                {{ block.settings.last_name_label }}
+                {% if block.settings.last_name_required %}<span class="asterisk">*</span>{% endif %}
+              </label>
+              <input
+                type="text"
+                name="LNAME"
+                class="{% if block.settings.last_name_required %}required {% endif %}text"
+                id="mce-LNAME-{{ ai_gen_id }}"
+                {% if block.settings.last_name_required %}required{% endif %}
+                value=""
+              >
+            </div>
+          {% endif %}
+
+          <!-- ══════════════════════════════════════════════════════════════════ -->
+          <!-- ── MMERGE3 — Tipo de boletín                                    -->
+          <!-- Label: español  |  Value → Mailchimp: English (ne menjati!)     -->
+          <!-- ══════════════════════════════════════════════════════════════════ -->
+          {% if block.settings.show_group_1 %}
+            <div class="mc-field-group input-group boya-field-group-{{ ai_gen_id }}">
+              <strong>{{ block.settings.group_1_label }}</strong>
+              <ul>
+                {% if block.settings.group_1_option_1_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE3"
+                      value="{{ block.settings.group_1_option_1_value }}"
+                      id="mce-MMERGE3-{{ ai_gen_id }}-1"
+                    >
+                    <label for="mce-MMERGE3-{{ ai_gen_id }}-1">{{ block.settings.group_1_option_1_label }}</label>
+                  </li>
+                {% endif %}
+                {% if block.settings.group_1_option_2_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE3"
+                      value="{{ block.settings.group_1_option_2_value }}"
+                      id="mce-MMERGE3-{{ ai_gen_id }}-2"
+                    >
+                    <label for="mce-MMERGE3-{{ ai_gen_id }}-2">{{ block.settings.group_1_option_2_label }}</label>
+                  </li>
+                {% endif %}
+                {% if block.settings.group_1_option_3_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE3"
+                      value="{{ block.settings.group_1_option_3_value }}"
+                      id="mce-MMERGE3-{{ ai_gen_id }}-3"
+                    >
+                    <label for="mce-MMERGE3-{{ ai_gen_id }}-3">{{ block.settings.group_1_option_3_label }}</label>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <!-- ══════════════════════════════════════════════════════════════════ -->
+          <!-- ── MMERGE5 — Idioma                                              -->
+          <!-- Label: español  |  Value → Mailchimp: English (ne menjati!)     -->
+          <!-- ══════════════════════════════════════════════════════════════════ -->
+          {% if block.settings.show_group_2 %}
+            <div class="mc-field-group input-group boya-field-group-{{ ai_gen_id }}">
+              <strong>{{ block.settings.group_2_label }}</strong>
+              <ul>
+                {% if block.settings.group_2_option_1_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE5"
+                      value="{{ block.settings.group_2_option_1_value }}"
+                      id="mce-MMERGE5-{{ ai_gen_id }}-1"
+                    >
+                    <label for="mce-MMERGE5-{{ ai_gen_id }}-1">{{ block.settings.group_2_option_1_label }}</label>
+                  </li>
+                {% endif %}
+                {% if block.settings.group_2_option_2_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE5"
+                      value="{{ block.settings.group_2_option_2_value }}"
+                      id="mce-MMERGE5-{{ ai_gen_id }}-2"
+                    >
+                    <label for="mce-MMERGE5-{{ ai_gen_id }}-2">{{ block.settings.group_2_option_2_label }}</label>
+                  </li>
+                {% endif %}
+                {% if block.settings.group_2_option_3_label != blank %}
+                  <li>
+                    <input
+                      type="radio"
+                      name="MMERGE5"
+                      value="{{ block.settings.group_2_option_3_value }}"
+                      id="mce-MMERGE5-{{ ai_gen_id }}-3"
+                    >
+                    <label for="mce-MMERGE5-{{ ai_gen_id }}-3">{{ block.settings.group_2_option_3_label }}</label>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <!-- ── Responses ── -->
+          <div id="mce-responses-{{ ai_gen_id }}" class="clear">
+            <div class="response boya-response-{{ ai_gen_id }} error" id="mce-error-response-{{ ai_gen_id }}" style="display: none;"></div>
+            <div class="response boya-response-{{ ai_gen_id }} success" id="mce-success-response-{{ ai_gen_id }}" style="display: none;"></div>
+          </div>
+
+          <!-- ── Anti-bot (ne uklanjati) ── -->
+          <div aria-hidden="true" style="position: absolute; left: -5000px;">
+            <input
+              type="text"
+              name="{{ block.settings.mailchimp_bot_field }}"
+              tabindex="-1"
+              value=""
+            >
+          </div>
+
+          <!-- ── Submit ── -->
+          <div class="clear boya-submit-wrap-{{ ai_gen_id }}">
+            <input
+              type="submit"
+              name="subscribe"
+              id="mc-embedded-subscribe-{{ ai_gen_id }}"
+              class="button boya-btn-{{ ai_gen_id }}"
+              value="{{ block.settings.submit_button_text }}"
+            >
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Newsletter signup",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Mailchimp settings"
+    },
+    {
+      "type": "text",
+      "id": "mailchimp_action_url",
+      "label": "Form action URL",
+      "info": "Primer: https://boyaporcelana.us5.list-manage.com/subscribe/post?u=59dcef8e87b751a9a48806ed0&id=d79371216d&f_id=005741edf0"
+    },
+    {
+      "type": "text",
+      "id": "mailchimp_bot_field",
+      "label": "Bot field name",
+      "default": "b_59dcef8e87b751a9a48806ed0_d79371216d",
+      "info": "Anti-bot polje iz Mailchimp forme — ne menjati"
+    },
+
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Suscríbete a nuestro boletín"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_required_note",
+      "label": "Show required fields note",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "required_note_text",
+      "label": "Required note text",
+      "default": "campo obligatorio"
+    },
+
+    {
+      "type": "header",
+      "content": "Email field"
+    },
+    {
+      "type": "text",
+      "id": "email_label",
+      "label": "Label",
+      "default": "Correo electrónico"
+    },
+    {
+      "type": "checkbox",
+      "id": "email_required",
+      "label": "Required",
+      "default": true
+    },
+
+    {
+      "type": "header",
+      "content": "First name field"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_first_name",
+      "label": "Show",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "first_name_label",
+      "label": "Label",
+      "default": "Nombre"
+    },
+    {
+      "type": "checkbox",
+      "id": "first_name_required",
+      "label": "Required",
+      "default": false
+    },
+
+    {
+      "type": "header",
+      "content": "Last name field"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_last_name",
+      "label": "Show",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "last_name_label",
+      "label": "Label",
+      "default": "Apellido"
+    },
+    {
+      "type": "checkbox",
+      "id": "last_name_required",
+      "label": "Required",
+      "default": false
+    },
+
+    {
+      "type": "header",
+      "content": "── MMERGE3: Tipo de boletín"
+    },
+    {
+      "type": "paragraph",
+      "content": "Label = špansko ime koje korisnik vidi. Value = engleski string koji ide Mailchimpu — ne menjati!"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_group_1",
+      "label": "Show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "group_1_label",
+      "label": "Question label",
+      "default": "Tipo de boletín"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_1_label",
+      "label": "Option 1 label (español)",
+      "default": "Boya Studio"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_1_value",
+      "label": "Option 1 value → Mailchimp (ne menjati)",
+      "default": "Boya Studio"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_2_label",
+      "label": "Option 2 label (español)",
+      "default": "Calendario de talleres"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_2_value",
+      "label": "Option 2 value → Mailchimp (ne menjati)",
+      "default": "Workshops schedule"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_3_label",
+      "label": "Option 3 label (español)",
+      "default": "Ambos"
+    },
+    {
+      "type": "text",
+      "id": "group_1_option_3_value",
+      "label": "Option 3 value → Mailchimp (ne menjati)",
+      "default": "Both"
+    },
+
+    {
+      "type": "header",
+      "content": "── MMERGE5: Idioma"
+    },
+    {
+      "type": "paragraph",
+      "content": "Label = špansko ime koje korisnik vidi. Value = engleski string koji ide Mailchimpu — ne menjati!"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_group_2",
+      "label": "Show",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "group_2_label",
+      "label": "Question label",
+      "default": "Idioma"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_1_label",
+      "label": "Option 1 label (español)",
+      "default": "Inglés"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_1_value",
+      "label": "Option 1 value → Mailchimp (ne menjati)",
+      "default": "English"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_2_label",
+      "label": "Option 2 label (español)",
+      "default": "Español"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_2_value",
+      "label": "Option 2 value → Mailchimp (ne menjati)",
+      "default": "Español"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_3_label",
+      "label": "Option 3 label (ostaviti prazno ako nije potrebno)"
+    },
+    {
+      "type": "text",
+      "id": "group_2_option_3_value",
+      "label": "Option 3 value → Mailchimp"
+    },
+
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "submit_button_text",
+      "label": "Text",
+      "default": "Suscribirse"
+    },
+
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max width",
+      "min": 400,
+      "max": 1000,
+      "step": 20,
+      "unit": "px",
+      "default": 560
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "label": "Padding",
+      "min": 10,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Labels",
+      "default": "#444444"
+    },
+    {
+      "type": "color",
+      "id": "required_color",
+      "label": "Required indicator (*)",
+      "default": "#813e35"
+    },
+    {
+      "type": "color",
+      "id": "input_background",
+      "label": "Input background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Input border",
+      "default": "#cccccc"
+    },
+    {
+      "type": "color",
+      "id": "input_border_focus",
+      "label": "Input border focus",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "button_bg",
+      "label": "Button background",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_hover",
+      "label": "Button hover background",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover",
+      "label": "Button hover text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "Button border",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "button_border_hover",
+      "label": "Button hover border",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "radio_color",
+      "label": "Radio button color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "success_bg",
+      "label": "Success background",
+      "default": "#d4edda"
+    },
+    {
+      "type": "color",
+      "id": "success_color",
+      "label": "Success text",
+      "default": "#155724"
+    },
+    {
+      "type": "color",
+      "id": "error_bg",
+      "label": "Error background",
+      "default": "#f8d7da"
+    },
+    {
+      "type": "color",
+      "id": "error_color",
+      "label": "Error text",
+      "default": "#721c24"
+    },
+
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font",
+      "default": "assistant_n4"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "heading_letter_spacing",
+      "label": "Heading letter spacing",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.1,
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "heading_uppercase",
+      "label": "Heading uppercase",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "heading_margin",
+      "label": "Heading margin bottom",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font",
+      "default": "assistant_n4"
+    },
+    {
+      "type": "range",
+      "id": "label_size",
+      "label": "Label size",
+      "min": 10,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 13
+    },
+    {
+      "type": "range",
+      "id": "label_weight",
+      "label": "Label weight",
+      "min": 400,
+      "max": 700,
+      "step": 100,
+      "default": 500
+    },
+    {
+      "type": "range",
+      "id": "label_letter_spacing",
+      "label": "Label letter spacing",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.1,
+      "default": 0.1
+    },
+    {
+      "type": "checkbox",
+      "id": "label_uppercase",
+      "label": "Label uppercase",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "label_margin",
+      "label": "Label margin bottom",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "note_size",
+      "label": "Note size",
+      "min": 10,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "note_margin",
+      "label": "Note margin bottom",
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+
+    {
+      "type": "header",
+      "content": "Input style"
+    },
+    {
+      "type": "range",
+      "id": "input_font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "input_padding",
+      "label": "Padding vertical",
+      "min": 6,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "input_padding_horizontal",
+      "label": "Padding horizontal",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "input_border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+
+    {
+      "type": "header",
+      "content": "Button style"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_full_width",
+      "label": "Full width",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "button_font_weight",
+      "label": "Font weight",
+      "min": 400,
+      "max": 700,
+      "step": 100,
+      "default": 700
+    },
+    {
+      "type": "range",
+      "id": "button_letter_spacing",
+      "label": "Letter spacing",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.1,
+      "default": 0.1
+    },
+    {
+      "type": "checkbox",
+      "id": "button_uppercase",
+      "label": "Uppercase",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "button_padding",
+      "label": "Padding vertical",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "label": "Padding horizontal",
+      "min": 16,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "button_border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "button_margin_top",
+      "label": "Margin top",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "field_gap",
+      "label": "Field gap",
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "radio_gap",
+      "label": "Radio group gap",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "radio_label_gap",
+      "label": "Radio label gap",
+      "min": 4,
+      "max": 16,
+      "step": 2,
+      "unit": "px",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "radio_size",
+      "label": "Radio button size",
+      "min": 12,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "radio_label_size",
+      "label": "Radio label size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Newsletter signup"
+    }
+  ]
+}
+{% endschema %}

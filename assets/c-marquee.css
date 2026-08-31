@@ -1,0 +1,45 @@
+coretex-marquee { display: grid }
+coretex-marquee:focus-within { outline: var(--a11yOutline); outline-offset: var(--a11yOffset); box-shadow: var(--a11yShadow) }
+
+.marquee {
+    --marqueeLateralSpace: var(--space-15);
+ 
+    font-size: var(--fontSize, inherit);
+    width: 100%; 
+    overflow: hidden
+}
+.marquee a.no-style:hover { text-decoration: none!important }
+.marquee span { display: block; margin: 0; text-align: center; min-width: var(--marqueeMinWidth) }
+.marquee span:not(:has(img)) { padding-inline: var(--marqueeLateralSpace) }
+.marquee img { --marqueeImg: 35px; max-height: var(--marqueeImg) }
+
+/* min-with fix for short words */
+@media (min-width: 777px)  { .marquee { --marqueeMinWidth: 85px } }
+@media (min-width: 1700px) { .marquee { --marqueeMinWidth: 110px } }
+@media (min-width: 2000px) { .marquee { --marqueeMinWidth: 150px } }
+@media (min-width: 2500px) { .marquee { --marqueeMinWidth: 200px } }
+
+@supports (overflow:clip) { .marquee { overflow-x: clip; overflow-y: visible } .projectile { line-height: 2.5ex } }
+@media (max-width:777px) { .marquee { font-size: var(--fontSizeMob, inherit) } }
+
+@media (prefers-reduced-motion:no-preference) {
+    coretex-marquee[start] { grid: auto / auto-flow max-content; min-width: min-content }
+    coretex-marquee[start] .projectile { animation: coretexMarquee var(--coretexSpeed, 0s) linear infinite }
+    [dir="rtl"] coretex-marquee[start] .projectile { animation: coretexMarqueeRTL var(--coretexSpeed, 0s) linear infinite }
+}
+
+@media (prefers-reduced-motion:reduce) { 
+    coretex-marquee { display: flex; justify-content: center; text-align: center; } 
+    coretex-marquee span:first-of-type { display: contents; max-width: 100vw }
+    coretex-marquee span:not(:first-of-type) { display: none }
+
+    .marquee coretex-marquee .projectile:not(:first-of-type) { display: none }
+}
+
+coretex-marquee:not([start]) span:first-of-type { display: block; max-width: 100vw; line-height: initial }
+coretex-marquee:not([start]) span:not(:first-of-type) { display: none }
+coretex-marquee[pause="true"]:where(:hover,:focus-visible) .projectile { animation-play-state: paused }
+coretex-marquee[reverse="true"] .projectile { animation-direction: reverse }
+
+@keyframes coretexMarquee { from { transform: translateX(0) } to { transform: translateX(calc(-100% * var(--tlf, 1))) } }
+@keyframes coretexMarqueeRTL { from { transform: translateX(0) } to { transform: translateX(calc(100% * var(--tlf, 1))) } }

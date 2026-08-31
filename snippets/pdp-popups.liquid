@@ -1,0 +1,102 @@
+{%- comment -%} --- [ Pop-up ] --- {%- endcomment -%}
+{%- assign popups = section.blocks | where: 'type', 'popup' -%}
+{%- for block in popups -%}
+	<component-loader>
+        <coretex-dialog id="x{{ block.id }}Box" class="coretex-dialog" data-nosdm data-section-id="{{ section.id }}">
+			<dialog aria-label="{{ block.settings.page.title | escape }} modal" dialog-position="center" data-lenis-prevent>
+				<dialog-wrapper aria-label="{{ block.settings.page.title | escape }} modal" x-flex direction="column">
+					<header x-flex direction="row" ai="center" jc="between" class="sticky">
+						<h2 class="h6" style="--hMargin:0">
+							{%- liquid
+								if block.settings.page != null
+									echo block.settings.page.title
+								else
+									echo block.settings.heading | default: null
+								endif
+							-%}
+						</h2>
+						<form>
+							<button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+								<span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+								{%- render 'inc-icon', icon: 'x-close' -%}
+							</button>
+						</form>
+					</header>
+
+					<main class="rte">
+						{%- liquid
+							echo block.settings.page.content
+							echo block.settings.content
+							echo block.settings.liquid
+						-%}
+					</main>
+				</dialog-wrapper>
+			</dialog>
+		</coretex-dialog>
+    </component-loader>
+{%- endfor -%}
+
+{%- comment -%} --- [ Size chart pop-up ] --- {%- endcomment -%}
+{%- assign block_variant_picker = section.blocks | where: 'type', 'variant_picker' | first -%}
+{%- if block_variant_picker and block_variant_picker.settings.size_chart != blank -%}
+	<component-loader>
+        <coretex-dialog id="sizechart-{{ block_variant_picker.id }}Box" class="coretex-dialog" data-nosdm data-section-id="{{ section.id }}">
+			<dialog aria-label="Size chart modal" dialog-position="bottom right" data-lenis-prevent>
+				<dialog-wrapper aria-label="Size chart modal" x-flex direction="column">
+					<header x-flex direction="row" ai="center" jc="between" class="sticky">
+						<h2 class="h6" style="--hMargin:0">{{ block_variant_picker.settings.size_chart.title }}</h2>
+						<form>
+							<button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+								<span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+								{%- render 'inc-icon', icon: 'x-close' -%}
+							</button>
+						</form>
+					</header>
+
+					<main class="rte">{{ block_variant_picker.settings.size_chart.content }}</main>
+				</dialog-wrapper>
+			</dialog>
+	    </coretex-dialog>
+    </component-loader>
+{%- endif -%}
+
+{%- comment -%} --- [ Image zoom dialog ] --- {%- endcomment -%}
+{%- if section.settings.imageZoom -%}
+	<component-loader>
+        <coretex-zoom-dialog id="imagezoom-{{ section.id }}-Box" class="coretex-dialog coretex-zoom-dialog" data-nosdml>
+			<dialog aria-label="Image chart modal" dialog-position="bottom right" data-lenis-prevent>
+				<dialog-wrapper aria-label="Media zoom modal" x-flex direction="column">
+					<header x-flex direction="row" ai="center" jc="end" class="sticky">
+						<form>
+							<button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+								<span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+								{%- render 'inc-icon', icon: 'x-close' -%}
+							</button>
+						</form>
+					</header>
+
+					<main>
+						<ul class="no-style" x-flex direction="column" order="1">
+							{%- for media in product.media -%}
+								{%- if media.media_type == 'image' -%}
+									<li data-zoom-target="{{ section.id }}-{{ media.id }}">
+										{%- liquid
+											assign img = media.preview_image
+											assign width = 2080
+											assign widths = '750,950,1280,1426,1646,1946,2080'
+											assign alt = media.preview_image.alt | default: product.title | escape
+											assign mediaLoader = true
+											assign loading = 'lazy'
+
+											render 'inc-img', img: img, width: width, widths: widths, alt: alt, mediaLoader: mediaLoader, loading: loading
+										-%}
+									</li>
+								{%- endif -%}
+							{% endfor %}
+						</ul>
+					</main>
+				</dialog-wrapper>
+			</dialog>
+	    </coretex-zoom-dialog>
+    </component-loader>
+{%- endif -%}

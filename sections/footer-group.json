@@ -1,0 +1,89 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "menu_UTn3hT": {
+          "type": "menu",
+          "disabled": true,
+          "settings": {
+            "menu": "main-menu",
+            "span": "4",
+            "alignment": "center",
+            "spanCell": "1",
+            "spanCellMobile": "2"
+          }
+        },
+        "socials_97YUbL": {
+          "type": "socials",
+          "settings": {
+            "heading": "Síguenos",
+            "type": "icon",
+            "alignment": "center",
+            "span": "8",
+            "spanMobile": "8"
+          }
+        }
+      },
+      "block_order": [
+        "menu_UTn3hT",
+        "socials_97YUbL"
+      ],
+      "settings": {
+        "debug": false,
+        "marginTop": 7,
+        "marginBottom": 5,
+        "paddingTop": 5,
+        "paddingBottom": 8,
+        "global_color_scheme": true,
+        "color_scheme": "scheme-bfaa0123-1850-4274-9fa3-ce69f61b97ef"
+      }
+    },
+    "sub-footer": {
+      "type": "footer-bottom",
+      "blocks": {
+        "copyright": {
+          "type": "copyright",
+          "settings": {
+            "copyright": ""
+          }
+        },
+        "policies": {
+          "type": "policies",
+          "settings": {
+            "legalMenu": "",
+            "alignment": "left"
+          }
+        },
+        "powered": {
+          "type": "powered",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "copyright",
+        "policies",
+        "powered"
+      ],
+      "settings": {
+        "global_color_scheme": false,
+        "color_scheme": "coretex-1"
+      }
+    }
+  },
+  "order": [
+    "footer",
+    "sub-footer"
+  ]
+}

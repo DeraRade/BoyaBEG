@@ -1,0 +1,190 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+--gridGap: {{ section.settings.logoPadding | prepend: 'var(--space-' | append: ');' }}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+padding-inline: var(--layoutInline);
+{%- endcapture -%}
+
+<section
+	class="logo-list"
+	style="{{- style | strip_newlines | strip -}}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+    {%- liquid 
+        assign heading = section.settings.heading
+        assign nav = false
+        assign attributes = section.settings.heading_alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'js="' | append: '"'
+        assign stealth = section.settings.stealthMode
+
+        render 'c-section-head', heading: heading, nav: nav, attributes: attributes, stealth: stealth
+    -%}
+
+    <x-flex span="1" wrap="wrap" ai="center" jc="{{ section.settings.alignment }}" class="logos">
+        {%- for block in section.blocks -%}
+            <x-cell {{ block.shopify_attributes }}>
+                {% if block.settings.link != blank -%}
+                    <a href="{{ block.settings.link }}" class="no-style" {%- if block.settings.newTab == true -%}rel="nofollow noopener noreferrer" target="_blank"{%- endif -%}>
+                {%- endif %}
+
+                {%- liquid
+                    assign img = block.settings.image
+                    assign width = 900
+                    assign widths = '200,300,400,500,750,900'
+                    assign mediaLoader = true
+                    assign class = 'noRadius'
+                    render 'inc-img', img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true, class: class
+                -%}
+
+                {% if block.settings.link != blank %}</a>{% endif %}
+            </x-cell>
+        {%- endfor -%}
+    </x-flex>
+</section>
+
+{% schema %}
+	{
+		"name": "Logo list",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "Logo list",
+                "category": "Visual",
+				"blocks": [
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" }
+				]
+			}
+		],
+		"settings": [
+            {
+                "type": "checkbox",
+                "id": "stealthMode",
+                "label": "Show header on hover - desktop",
+                "default": false
+            },
+			{
+				"type": "text",
+				"id": "heading",
+				"label": "Heading",
+                "default": "Logo list",
+				"info": "Leave blank to remove heading."
+			},
+            {
+                "type": "text_alignment",
+                "id": "heading_alignment",
+                "label": "Heading alignment",
+                "default": "left"
+            },
+            {
+                "type": "header",
+                "content": "Spacing"
+            },
+			{
+				"type": "select",
+				"id": "alignment",
+				"label": "Logo alignment",
+				"default": "start",
+				"options": [
+					{ "value": "start", "label": "Left" },
+					{ "value": "center", "label": "Center" },
+                    { "value": "between", "label": "Space between" },
+                    { "value": "around", "label": "Space around" }
+				]
+			},
+			{
+				"type": "range",
+				"label": "Space between logos",
+				"id": "logoPadding",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 1
+			},
+            {
+              "type": "range",
+              "id": "marginTop",
+              "label": "Margin top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "marginBottom",
+              "label": "Margin bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "paddingTop",
+              "label": "Padding top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "paddingBottom",
+              "label": "Padding bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "header",
+              "content": "Appearance"
+            },
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "logo_image",
+				"name": "Logo",
+                "limit": 10,
+				"settings": [
+					{
+						"type": "image_picker",
+						"id": "image",
+						"label": "Image"
+					},
+					{
+						"type": "url",
+						"id": "link",
+						"label": "Link"
+					},
+					{
+						"type": "checkbox",
+						"id": "newTab",
+						"label": "Open link in tab",
+						"default": false
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

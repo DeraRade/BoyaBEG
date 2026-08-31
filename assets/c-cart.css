@@ -1,0 +1,151 @@
+#cartBox dialog-wrapper, coretex-cart, .coretex-cart { height: 100% }
+
+coretex-cart { 
+    --buttonMargin: 0;
+    --inputMargin: 0;
+
+    display: block;
+    container: coretex-cart / inline-size;
+}
+
+[coretex-page="cart"] #mainContent > .cart-page { padding: var(--layoutInline) }
+
+.cart-page coretex-cart[empty="true"] { margin-block: var(--space-8) }
+coretex-cart[empty="true"] a { text-decoration: underline; padding-block: var(--space-2) }
+
+html.js-ajax-cart-processing coretex-cart cart-body { opacity: 0.5; cursor: wait }
+
+coretex-cart { --gap: var(--space-10) }
+coretex-cart cart-item { --gap: var(--space-3) }
+coretex-cart cart-item .price { --gap: 0 }
+
+coretex-cart .meta :where(.vendor,.title) { display: block }
+
+dialog-wrapper section.empty { height: 100% }
+
+dialog-wrapper section.empty x-flex {
+    flex-direction: column;
+    place-content: center;
+    height: 100%;
+	gap: var(--space-2);
+}
+
+/* Quantity input */
+coretex-cart ajax-cart-quantity {
+    --buttonPadding: var(--space-2);
+    --buttonMargin: 0;
+    --inputMargin: 0;
+    --gap: 0;
+}
+
+coretex-cart ajax-cart-quantity input {
+    --inputBg: transparent;
+    --inputBgHover: transparent;
+    --inputBgActive: transparent;
+    --inputAlign: center;
+    --inputWidth: var(--space-6);
+    --inputPadding: 0;
+    --inputBorderWidth: 0;
+    aspect-ratio: 1 / 1;
+}
+
+coretex-cart ajax-cart-quantity button { align-self: center }
+
+coretex-cart .ogPrice { font-size: smaller; color: var(--colorFaded) }
+coretex-cart d.small { font-size: smaller }
+coretex-cart dt { display: inline }
+coretex-cart dd { margin-inline-start: 0; display: inline; } 
+
+coretex-cart cart-footer { --gap: var(--space-3) }
+
+coretex-cart .payment-icons { --iconSize: 2.7rem } 
+
+
+
+/*** Shopify Quick buy button */ 
+.cart__dynamic-checkout-buttons { margin-block: var(--space-1) }
+
+shopify-accelerated-checkout-cart {
+    --shopify-accelerated-checkout-button-block-size: 42px;
+    --shopify-accelerated-checkout-button-inline-size: 42px;
+    --shopify-accelerated-checkout-button-border-radius: var(--globalRadius);
+    --shopify-accelerated-checkout-button-box-shadow: none;
+    --shopify-accelerated-checkout-inline-alignment: flex-start;
+    --shopify-accelerated-checkout-row-gap: var(--margin);
+    --shopify-accelerated-checkout-skeleton-background-color: rgb(128 128 128 / 0.4);
+    --shopify-accelerated-checkout-skeleton-animation-opacity-start: 1;
+    --shopify-accelerated-checkout-skeleton-animation-opacity-end: 0.5;
+    --shopify-accelerated-checkout-skeleton-animation-duration: 4s;
+    --shopify-accelerated-checkout-skeleton-animation-timing-function: ease;
+}
+
+
+coretex-cart .smaller { display: inline-block; line-height: 1.2; margin-block-start: var(--space-1) }
+coretex-cart .product-option { padding-block: var(--space-1) }
+
+/* accordion Tabs */
+coretex-cart .tabs coretex-accordion details.closex summary { padding-block-end: 0 }
+
+@container coretex-cart (width <= 500px) {
+    .coretex-cart { --gap: var(--space-7) var(--space-1) }
+    .coretex-cart :is(.cart-items, cart-footer) { grid-column: 1 / -1; }
+    #cartBox .coretex-cart cart-footer { 
+        display: block; 
+        position: sticky; 
+        inset-block-end: 0;
+        margin-block-start: auto;
+        padding: var(--padding);
+        border-radius: var(--radius);
+        background: var(--bgColor);
+        max-height: 330px;
+    }
+}
+
+/* Free Shipping component */
+coretex-cart cart-shipping { display: block; position: relative; margin-block-end: var(--margin) }
+
+coretex-cart cart-shipping progress[value] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    background: var(--progressBg);
+    display: block;
+    margin: 0 auto;
+    border-radius: 100vw;
+    height: 0.5rem;
+    width: 100%;
+}
+
+coretex-cart cart-shipping progress[value]::-webkit-progress-bar { border-radius: 100vw; background: var(--progressBg) }
+coretex-cart cart-shipping progress[value]::-webkit-progress-value { border-radius: 100vw; background: var(--progressFg) }
+coretex-cart cart-shipping progress[value]::-moz-progress-bar { border-radius: 100vw; background: var(--progressFg) }
+
+/* Discount */
+coretex-cart cart-discount {
+    .working { display: none }
+
+    .discount-error:empty { display: none }
+    .discount-error:not(:empty) { display: block }
+
+    &[data-working] { 
+        .default { display: none }
+        .working { display: inline }
+        .discount-apply { opacity: 0.6; cursor: not-allowed }
+        .discount-code-input { opacity: 0.6 }
+    }
+}
+
+/*** Announcement bar */
+coretex-cart cart-announcement {
+    display: block;
+    position: relative;
+
+    &[highlight="true"] {
+        background: var(--cartNoticeBg, var(--accentBg));
+        color: var(--cartNoticeColor, var(--accentColor));
+        border: var(--globalBorderWidth) solid var(--accentBorderColor);
+        padding: var(--padding);
+        border-radius: var(--globalRadius);
+    }
+}

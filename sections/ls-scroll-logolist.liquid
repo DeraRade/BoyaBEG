@@ -1,0 +1,237 @@
+{%- render 'inc-stylesheet', src: 'c-marquee.css' -%}
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+--maskBlur: 10px;
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+    
+{{ section.settings.logoPadding | prepend: '--gap: var(--space-' | append: ');' }}
+{{ section.settings.heading_alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--align:' | append: ';' }}
+{{ section.settings.logoWidth | prepend: '--logoWidth:' | append: 'px;' }}
+{%- endcapture -%}
+
+<section
+	class="logo-list scrolling"
+	style="{{- style | strip_newlines | strip -}}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+
+    {%- liquid
+        # Section heading
+        assign heading = section.settings.heading
+        assign nav = false
+        # assign attributes = 'direction="column" direction-s="row" wrap="wrap" ai-s="start"'
+        assign attributes = section.settings.heading_alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'js="' | append: '"'
+        assign stealth = section.settings.stealthMode
+
+        render 'c-section-head', heading: heading, nav: nav, attributes: attributes, stealth: stealth
+    -%}
+
+    {%- if request.design_mode -%}<component-loader>{%- endif -%} 
+	<coretex-marquee start
+		speed="{{ section.settings.speed }}"
+		reverse="{{ section.settings.direction }}"
+		pause="{{ section.settings.pause }}"
+		image="true"
+        class="mask inline-both blur"
+        style="{{ style | strip_newlines | strip }}"
+	>
+		{%- for i in (1..10) -%}
+			<x-flex
+				direction="row"
+				ai="center"
+				class="projectile"
+				{% unless forloop.first %} aria-hidden="true" {% endunless %}
+			>
+				{% for block in section.blocks %}
+					<span {{ block.shopify_attributes }}>
+						{% if block.settings.link != blank -%}
+							<a href="{{ block.settings.link }}" class="no-style" {%- if block.settings.newTab == true -%}rel="nofollow noopener noreferrer" target="_blank"{%- endif -%}>
+						{%- endif %}
+
+						{%- liquid
+							assign img = block.settings.image
+							assign width = 900
+							assign widths = '200,300,400,500,750,900'
+							assign mediaLoader = true
+                            assign class = 'noRadius'
+
+							render 'inc-img', img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true, class: class
+						-%}
+						{% if block.settings.link != blank %}</a>{% endif %}
+					</span>
+				{% endfor %}
+			</x-flex>
+		{%- endfor -%}
+	</coretex-marquee>
+    {%- if request.design_mode -%}</component-loader>{%- endif -%} 
+</section>
+
+{% schema %}
+	{
+		"name": "Scrolling logo list",
+		"disabled_on": { "groups": ["header", "aside"] },
+		"presets": [
+			{
+				"name": "Scrolling logo list",
+                "category": "Visual",
+				"blocks": [
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" },
+					{ "type": "logo_image" }
+				]
+			}
+		],
+		"settings": [
+            {
+                "type": "checkbox",
+                "id": "stealthMode",
+                "label": "Show header on hover - desktop",
+                "default": false
+            },
+			{
+				"type": "text",
+				"id": "heading",
+				"label": "Heading",
+				"info": "Leave blank to remove heading."
+			},
+            {
+                "type": "text_alignment",
+                "id": "heading_alignment",
+                "label": "Alignment",
+                "default": "left"
+            },
+			{
+				"type": "range",
+				"label": "Logo max width",
+				"id": "logoWidth",
+				"min": 60,
+				"max": 200,
+				"step": 10,
+                "unit": "px",
+				"default": 60
+			},
+			{
+				"type": "select",
+				"id": "direction",
+				"label": "Scroll direction",
+				"default": "false",
+				"options": [
+					{ "value": "false", "label": "Right to left" },
+					{ "value": "true", "label": "Left to right" }
+				]
+			},
+			{
+				"type": "range",
+				"label": "Scrolling speed",
+				"id": "speed",
+				"min": 20,
+				"max": 200,
+				"step": 5,
+				"default": 100
+			},
+			{
+				"type": "checkbox",
+				"id": "pause",
+				"label": "Pause scrolling on hover",
+				"default": true
+			},
+            {
+                "type": "header",
+                "content": "Spacing"
+            },
+			{
+				"type": "range",
+				"label": "Space between logos",
+				"id": "logoPadding",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 1
+			},
+            {
+              "type": "range",
+              "id": "marginTop",
+              "label": "Margin top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "marginBottom",
+              "label": "Margin bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "paddingTop",
+              "label": "Padding top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "range",
+              "id": "paddingBottom",
+              "label": "Padding bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 3
+            },
+            {
+              "type": "header",
+              "content": "Appearance"
+            },
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "logo_image",
+				"name": "Logo",
+                "limit": 15,
+				"settings": [
+					{
+						"type": "image_picker",
+						"id": "image",
+						"label": "Image"
+					},
+					{
+						"type": "url",
+						"id": "link",
+						"label": "Link"
+					},
+					{
+						"type": "checkbox",
+						"id": "newTab",
+						"label": "Open link in tab",
+						"default": false
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

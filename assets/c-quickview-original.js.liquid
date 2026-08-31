@@ -1,0 +1,477 @@
+/**
+ * Scalable Quick View Component
+ * Uses Section Rendering API with option_values for high-variant products
+ * Compliant with Shopify requirements for products with 250+ variants
+ */
+import CoretexDialog from "{{ 'c-dialog.js' | asset_url }}";
+
+export default class CoretexQuickview extends CoretexDialog {
+    constructor() {
+        super();
+        
+        // State management
+        this.state = {
+            form: null,
+            productUrl: null,
+            productHandle: null,
+            isUpdating: false,
+            variantData: null
+        };
+        
+        // Bind methods
+        this._handleVariantChange = this._handleVariantChange.bind(this);
+        this._handleDialogClosed = this._handleDialogClosed.bind(this);
+        this._handleDocumentClick = this._handleDocumentClick.bind(this);
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this._initializeQuickView();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._cleanup();
+    }
+
+    // Initialize all quick view functionality
+    _initializeQuickView() {
+        this._cacheFetchContainer();
+        this._setupEventDelegation();
+        this._setupCleanupListeners();
+    }
+
+    // Clean up all event listeners
+    _cleanup() {
+        this.removeEventListener('dialog:closed', this._handleDialogClosed);
+        document.removeEventListener('click', this._handleDocumentClick);
+    }
+
+    // Setup event delegation for dynamic quick view buttons
+    _setupEventDelegation() {
+        document.addEventListener('click', this._handleDocumentClick);
+        
+        // Remove default dialog behavior for quick view triggers
+        this.triggerElements.forEach(trigger => {
+            if (trigger.hasAttribute('data-qv-handle')) {
+                trigger.removeEventListener('click', this.openDialog);
+            }
+        });
+    }
+
+    // Handle clicks on quick view triggers anywhere in the document
+    _handleDocumentClick(event) {
+        const trigger = event.target.matches(`[data-open="#${this.id}"][data-qv-handle]`) 
+            ? event.target 
+            : event.target.closest(`[data-open="#${this.id}"][data-qv-handle]`);
+            
+        if (!trigger) return;
+        
+        event.preventDefault();
+        const handle = trigger.getAttribute('data-qv-handle');
+        if (handle) {
+            this._loadProduct(handle);
+        }
+    }
+
+    // Setup listeners for dialog cleanup
+    _setupCleanupListeners() {
+        this.addEventListener('dialog:closed', this._handleDialogClosed);
+    }
+
+    // Clear content and reset state when dialog closes
+    _handleDialogClosed() {
+        if (this.fetchContainer) {
+            this.fetchContainer.innerHTML = '';
+        }
+        
+        this._resetState();
+    }
+
+    // Reset component state
+    _resetState() {
+        this.state = {
+            form: null,
+            productUrl: null,
+            productHandle: null,
+            isUpdating: false,
+            variantData: null
+        };
+    }
+
+    // Cache DOM reference to fetch container
+    _cacheFetchContainer() {
+        this.fetchContainer = this.querySelector('#qvContent');
+        
+        if (!this.fetchContainer) {
+            console.warn('CoretexQuickview: No #qvContent fetch container found');
+        }
+    }
+
+    // Main method to load and display product in quick view
+    async _loadProduct(handle, optionValues = null) {
+        if (!this.fetchContainer) {
+            console.error('CoretexQuickview: Fetch container not found');
+            return;
+        }
+
+        // Skip fetch if same product already loaded
+        if (this.state.productHandle === handle && !optionValues) {
+            this.open();
+            return;
+        }
+
+        this.state.productUrl = `/products/${handle}`;
+        this.state.productHandle = handle;
+        
+        try {
+            const content = await this._fetchProductContent(handle, optionValues);
+            this._renderContent(content);
+            this._initializeForm();
+            this.open();
+        } catch (error) {
+            this._showError(error.message);
+        }
+    }
+
+    // Fetch product content from Section Rendering API
+    async _fetchProductContent(handle, optionValues = null) {
+        let url = `/products/${handle}?section_id=x-quickview`;
+        
+        if (optionValues) {
+            url += `&option_values=${optionValues}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch product: ${response.status}`);
+        }
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const section = doc.querySelector('.shopify-section');
+        
+        if (!section) {
+            throw new Error('Product content not found');
+        }
+        
+        return section.innerHTML;
+    }
+
+    // Render fetched content in the dialog
+    _renderContent(content) {
+        this.fetchContainer.innerHTML = content;
+    }
+
+    // Show error message in dialog
+    _showError(message) {
+        this.fetchContainer.innerHTML = `<div class="error">Failed to load product details. Please try again.</div>`;
+        this.open();
+        console.error('CoretexQuickview:', message);
+    }
+
+
+    // Initialize form functionality after content is loaded
+    _initializeForm() {
+        if (!this.fetchContainer) return;
+
+        this.state.form = this.fetchContainer.querySelector('form[data-type="add-to-cart-form"]');
+        if (!this.state.form) {
+            console.error('CoretexQuickview: No product form found');
+            return;
+        }
+
+        this._setupCartHandling();
+        this._setupVariantHandling();
+        this._parseVariantData();
+        this._updateFormState();
+        this._setInitialFocus();
+    }
+
+    // Set initial focus for accessibility
+    _setInitialFocus() {
+        const titleLink = this.fetchContainer.querySelector('.qvTitle');
+        if (titleLink) {
+            setTimeout(() => titleLink.focus(), 100);
+        }
+    }
+
+    // Parse variant data from JSON script
+    _parseVariantData() {
+        const dataScript = this.fetchContainer.querySelector('.variant-picker-data');
+        if (dataScript) {
+            try {
+                this.state.variantData = JSON.parse(dataScript.textContent);
+            } catch (error) {
+                console.warn('CoretexQuickview: Failed to parse variant data:', error);
+                this.state.variantData = null;
+            }
+        }
+    }
+
+    // Setup variant selection handlers
+    _setupVariantHandling() {
+        if (!this.state.form) return;
+
+        const selectors = this.state.form.querySelectorAll('.optionValueSelector');
+        selectors.forEach(selector => {
+            selector.removeEventListener('change', this._handleVariantChange);
+            selector.addEventListener('change', this._handleVariantChange);
+        });
+    }
+
+    // Handle variant selection changes
+    async _handleVariantChange(event) {
+        if (this.state.isUpdating) return;
+
+        const changedInput = event.target;
+        if (!changedInput.classList.contains('optionValueSelector')) return;
+
+        // Skip processing for single-variant products
+        if (!this.state.variantData?.hasVariants) return;
+
+        this.state.isUpdating = true;
+
+        try {
+            const { optionValues, targetUrl } = this._collectSelectedOptions();
+            
+            if (targetUrl !== this.state.productUrl) {
+                this.state.productUrl = targetUrl;
+            }
+            
+            const content = await this._fetchProductContent(
+                this._extractHandleFromUrl(targetUrl),
+                optionValues
+            );
+            
+            this._renderContent(content);
+            this._initializeForm();
+            
+        } catch (error) {
+            console.error('CoretexQuickview: Error handling variant change', error);
+        } finally {
+            setTimeout(() => {
+                this.state.isUpdating = false;
+            }, 100);
+        }
+    }
+
+    // Collect selected option values and determine target URL
+    _collectSelectedOptions() {
+        const selectors = this.state.form.querySelectorAll('.optionValueSelector');
+        const selectedOptionValueIds = [];
+        let targetUrl = this.state.productUrl;
+
+        selectors.forEach(selector => {
+            const selectedOption = this._getSelectedOption(selector);
+            
+            if (selectedOption) {
+                const optionValueId = selectedOption.dataset.optionValueId;
+                if (optionValueId) {
+                    selectedOptionValueIds.push(optionValueId);
+                }
+
+                const productUrl = selectedOption.dataset.productUrl;
+                if (productUrl && productUrl !== this.state.productUrl) {
+                    targetUrl = productUrl;
+                }
+            }
+        });
+
+        return {
+            optionValues: selectedOptionValueIds.join(','),
+            targetUrl
+        };
+    }
+
+    // Get selected option from a selector element
+    _getSelectedOption(selector) {
+        if (selector.type === 'radio') {
+            return selector.checked ? selector : null;
+        } else if (selector.tagName === 'SELECT') {
+            return selector.options[selector.selectedIndex] || null;
+        }
+        return null;
+    }
+
+    // Extract product handle from URL
+    _extractHandleFromUrl(url) {
+        return url.split('/products/')[1]?.split('?')[0];
+    }
+
+    // Setup cart form submission handling
+    _setupCartHandling() {
+        if (!this.state.form) return;
+
+        const submitButton = this.state.form.querySelector('.qv__atc');
+        if (!submitButton) return;
+
+        const originalButtonText = submitButton.querySelector('span')?.textContent || '';
+
+        // Check if cart is in redirect mode
+        const ajaxCartForm = this.state.form.closest('ajax-cart-product-form');
+        const cartType = ajaxCartForm?.getAttribute('cart-type');
+        
+        if (cartType === 'redirect') {
+            this._setupRedirectCartHandling(submitButton);
+        } else if (window.liquidAjaxCart) {
+            this._setupLiquidAjaxCartHandling(submitButton, originalButtonText);
+        } else {
+            this._setupFallbackCartHandling(submitButton, originalButtonText);
+        }
+    }
+
+    // Setup handling for cart-type="redirect"
+    _setupRedirectCartHandling(submitButton) {
+        this.state.form.addEventListener('submit', () => {
+            // For redirect mode, just show loading state
+            // The form will submit normally and redirect to cart page
+            this._setButtonLoading(submitButton, true);
+            // Don't try to close the dialog - the page will redirect
+        });
+    }
+
+    // Setup handling for liquidAjaxCart
+    _setupLiquidAjaxCartHandling(submitButton, originalText) {
+        let processingInterval;
+
+        this.state.form.addEventListener('submit', () => {
+            this._setButtonLoading(submitButton, true);
+            
+            processingInterval = setInterval(() => {
+                if (!window.liquidAjaxCart.processing) {
+                    clearInterval(processingInterval);
+                    this._setButtonLoading(submitButton, false, originalText);
+                    setTimeout(() => this.close(), 300);
+                }
+            }, 50);
+        });
+
+        this.addEventListener('dialog:closed', () => {
+            if (processingInterval) {
+                clearInterval(processingInterval);
+            }
+        });
+    }
+
+    // Setup fallback cart handling
+    _setupFallbackCartHandling(submitButton, originalText) {
+        this.state.form.addEventListener('submit', () => {
+            this._setButtonLoading(submitButton, true);
+        });
+
+        this.state.form.addEventListener('ajax:success', () => {
+            this._setButtonLoading(submitButton, false, originalText);
+            setTimeout(() => this.close(), 300);
+        });
+
+        this.state.form.addEventListener('ajax:error', () => {
+            this._setButtonLoading(submitButton, false, originalText);
+        });
+    }
+
+
+    // Set button loading state
+    _setButtonLoading(button, isLoading, originalText = '') {
+        const span = button?.querySelector('span');
+        if (!span) return;
+
+        if (isLoading) {
+            button.disabled = true;
+            span.textContent = window.variantStrings?.loading || 'Adding...';
+        } else {
+            button.disabled = false;
+            span.textContent = originalText || window.variantStrings?.addToCart || 'Add to cart';
+        }
+    }
+
+    // Update form state based on variant selection
+    _updateFormState() {
+        if (!this.state.form) return;
+
+        const submitButton = this.state.form.querySelector('.qv__atc');
+        const variantIdInput = this.state.form.querySelector('input[name="id"]');
+        
+        if (!submitButton) return;
+
+        if (this.state.variantData) {
+            this._updateMultiVariantState(submitButton, variantIdInput);
+        } else if (variantIdInput) {
+            this._updateSingleVariantState(submitButton, variantIdInput);
+        }
+        
+        this._updateVariantImage();
+    }
+
+    // Update state for multi-variant products
+    _updateMultiVariantState(submitButton, variantIdInput) {
+        const { selectedVariantId, selectedVariantAvailable } = this.state.variantData;
+        const hasValidVariant = selectedVariantId && selectedVariantId !== '';
+
+        if (variantIdInput) {
+            variantIdInput.value = selectedVariantId || '';
+        }
+
+        const span = submitButton.querySelector('span');
+        if (hasValidVariant && selectedVariantAvailable) {
+            submitButton.disabled = false;
+            span.textContent = window.variantStrings?.addToCart || 'Add to cart';
+        } else if (hasValidVariant) {
+            submitButton.disabled = true;
+            span.textContent = window.variantStrings?.soldOut || 'Sold out';
+        } else {
+            submitButton.disabled = true;
+            span.textContent = window.variantStrings?.unavailable || 'Unavailable';
+        }
+    }
+
+    // Update state for single-variant products
+    _updateSingleVariantState(submitButton, variantIdInput) {
+        const hasVariantId = variantIdInput.value && variantIdInput.value !== '';
+        const isDisabled = submitButton.hasAttribute('disabled');
+
+        if (hasVariantId && !isDisabled) {
+            submitButton.disabled = false;
+        }
+    }
+
+    // Update variant image when selection changes
+    _updateVariantImage() {
+        if (!this.state.variantData) return;
+
+        const imageElement = this.fetchContainer.querySelector('img[id^="QvImage-"]');
+        if (!imageElement) return;
+
+        const newImageUrl = this.state.variantData.selectedVariantImage || 
+                           this.state.variantData.productFeaturedImage;
+        
+        if (newImageUrl && imageElement.src !== newImageUrl) {
+            this._preloadAndUpdateImage(imageElement, newImageUrl);
+        }
+    }
+
+    // Preload new image before updating
+    _preloadAndUpdateImage(imageElement, newImageUrl) {
+        const newImg = new Image();
+        
+        newImg.onload = () => {
+            imageElement.src = newImageUrl;
+            
+            const widths = [300, 600];
+            const srcsetParts = widths.map(width => {
+                const url = newImageUrl.replace(/width=\d+/, `width=${width}`);
+                return `${url} ${width}w`;
+            });
+            imageElement.srcset = srcsetParts.join(', ');
+        };
+        
+        newImg.onerror = () => {
+            console.warn('CoretexQuickview: Failed to load variant image:', newImageUrl);
+        };
+        
+        newImg.src = newImageUrl;
+    }
+}
+
+if (!customElements.get('coretex-quickview')) customElements.define('coretex-quickview', CoretexQuickview);

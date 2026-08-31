@@ -1,0 +1,39 @@
+{%- comment -%}
+  Global Quick View Dialog
+  Single instance used across the entire site
+{%- endcomment -%}
+
+{%- liquid
+  render 'inc-script', src: 'c-quickview-dialog.js', loading: 'module'
+  render 'inc-script', src: 'c-prod-card-picker.js', loading: 'module'
+  render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer'
+-%}
+
+<component-loader>
+    <coretex-quickview-dialog 
+        id="quickView"
+	    class="coretex-dialog"
+	    style="{{ dialogMaxW }} {{ section.settings.dialogWidth | prepend: '--dialogW:' }}; {{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-align:' | append: ';' }}"
+	    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	    data-section-id="{{ section.id }}"
+    >
+        <dialog aria-label="Quickview modal">
+            <dialog-wrapper aria-label="Quickview modal" x-flex direction="column">
+                <header class="close-button text-end sticky">
+                    <form>
+                        <button formmethod="dialog" class="is-custom is-circle has-icon" style="--jsDisplay:flex" data-close>
+                            <span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+                            {%- render 'inc-icon', icon: 'x-close' -%}
+                        </button>
+                    </form>
+                </header>
+                
+                <main>
+                    <coretex-fetch id="qvContent" loading="eager" loading-class="is-loading">
+                        <div class="qvSkeleton">{{ 'accessibility.loading' | t }}</div>
+                    </coretex-fetch>
+                </main>
+            </dialog-wrapper>
+        </dialog>
+    </coretex-quickview-dialog>
+</component-loader>

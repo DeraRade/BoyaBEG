@@ -1,0 +1,243 @@
+{%- comment -%}
+  === [ CORETEX FYI ] ===
+      To prevent using yet another file in /layouts/
+      all the HTML structure is in this file.
+
+      Below we declare that this won't use any specific layout.
+{%- endcomment -%}
+{% layout none %}
+
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}" dir="{%- render 'inc-dir' -%}">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    >
+    {% render 'global-meta' %}
+
+    <script>
+      document.documentElement.className = 'js';
+    </script>
+
+    <!-- START content_for_header -->
+    {{ content_for_header }}
+    <!-- END content_for_header -->
+
+    {%- liquid
+      echo 'skelet.css' | asset_url | stylesheet_tag
+      render 'global-css'
+
+      if settings.useCustomFonts
+        render 'global-fonts'
+      endif
+
+      render 'inc-imap'
+      echo 'app.css' | asset_url | stylesheet_tag
+    -%}
+
+{%- style -%}
+    #app { padding: var(--layoutInline) }
+
+    header .logo img { max-width: 120px }
+
+    gift-card {
+        --hSize: 2.4rem;
+        --hMargin: 0;
+
+        --inputPadding: 0;
+        --inputMargin: 0;
+        --inputRadius: 0;
+        --inputAlign: start;
+        --inputBg: transparent;
+        --inputBorder: 0;
+
+        --gap: 0;
+
+        display: block;
+        box-shadow: 0px 7px 10px rgb(0 0 0 / .1);
+        border-radius: var(--space-4);
+        padding: var(--space-4);
+        max-width: 550px;
+        max-height: 310px;
+        width: 100%;
+        height: 100%;
+        background: var(--bgColor);
+        border: 1px solid #d3d3d3;
+    }
+
+    gift-card img { width: 121px }
+    gift-card #qr-code img { width: 121px; border-radius: 0 }
+
+    .expires, .expired { display: block; text-align: start; margin-block-start: var(--space-3) }
+
+    @media only screen and (min-width: 777px) {
+        gift-card {
+            transform: perspective(1500px) translateY(-10%) rotateY(20deg) rotateX(25deg);
+            transition: all 800ms var(--easeOutBack);
+            box-shadow: 0px 10px 20px rgb(0 0 0 / .2)
+        }
+
+        gift-card:where(:hover,:focus-visible,:focus-within) { transform: none; box-shadow: 0px 5px 7px rgb(0 0 0 / .1) }
+    }
+
+    @media (max-width: 777px) {
+        gift-card { 
+            --hSize: 1.5rem;
+            padding: var(--space-3);
+            border-radius: var(--space-3);
+        } 
+
+        gift-card img { width: 80px }
+    }
+
+    @media only print { 
+        .noprint { display: none }
+        gift-card { border: 1px solid #000000 }
+        gift-card #qr-code img { width: 130px }
+    }
+{%- endstyle -%}
+
+    {%- capture the_logo -%}
+        <a href="{{ shop.url }}" target="_blank" rel="noopener" class="button is-custom">
+        {%- liquid
+            assign img = section.settings.logo | default: shop.brand.logo
+            if img == blank 
+                echo shop.name | prepend: '<h1>' | append: '</h1>'
+
+            else
+
+                assign width = 800
+                assign widths = '100,200,400,600,800'
+                assign alt = shop.name | escape
+                assign class = 'noRadius'
+
+                render 'inc-img', img: img, width: width, widths: widths, alt: alt, mediaLoader: false, class: class
+
+            endif
+        -%}
+        </a>
+    {%- endcapture  -%}
+
+</head>
+<body id="pageBody" 
+    coretex-page="giftCard"
+>
+    <a href="#mainContent" class="button is-primary visually-hidden-focus skipTo">{{- 'accessibility.skip_to_text' | t -}}</a>
+
+    <div id="app">
+
+        <header id="header">
+            <x-flex direction="column" jc="between" ai="center">
+                <x-cell class="logo">
+                    {{ the_logo }}
+                </x-cell>
+            </x-flex>
+        </header>
+
+        <main id="mainContent" class="center-axyz">
+
+            <gift-card>
+                <x-grid columns="2" class="fullheight">
+                    <x-cell>{{ the_logo }}</x-cell>
+
+                    <x-cell>
+                        <h2 class="h2 text-end">
+                            {%- liquid
+                                if settings.currency_code_enabled
+                                    echo gift_card.balance | money_with_currency
+                                else
+                                    echo gift_card.balance | money
+                                endif 
+                            -%}
+                        </h2>
+                    </x-cell>
+                    
+                    <x-cell ps="end start">
+                        <small class="block text-start">{{ 'gift_cards.issued.gift_card_code' | t }}</small>
+                        <input type="text" id="giftCardCode" class="is-blank" value="{{ gift_card.code | format_code }}" readonly>
+
+                        {%- if gift_card.expires_on -%}
+                            <x-cell class="expires">
+                                {%- assign gift_card_expiration_date = gift_card.expires_on | date: '%B %e, %Y' -%}
+                                <small>{{ 'gift_cards.issued.expiration_date' | t: expires_on: gift_card_expiration_date }}</small>
+                            </x-cell>
+                        {%- endif -%}
+        
+                        {%- if gift_card.enabled == false or gift_card.expired -%}
+                            <x-cell class="expired">
+                                <small>{{ 'gift_cards.issued.expired' | t }}</small>
+                            </x-cell>
+                        {%- endif -%}
+                    </x-cell>
+                    
+                    <x-cell ps="end">
+                        <div id="qr-code" data-identifier="{{ gift_card.qr_identifier }}"></div>
+                    </x-cell>
+                </x-grid>
+            </gift-card>
+
+        </main>
+
+        <footer>
+            {%- comment -%} How to use gift card {%- endcomment -%}
+            <p class="text-center">{{ 'gift_cards.issued.how_to_use_gift_card' | t }}</p>
+
+            <div class="noprint text-center">
+                <ul class="inline no-style inside-">
+
+                    {%- comment -%} Gift card buttons {%- endcomment -%}
+                    <li><a href="{{ shop.url }}" target="_blank" rel="noopener" class="button is-custom text-normal">{{ 'gift_cards.issued.shop_link' | t }}</a></li>
+
+                    <li><button type="button" class="is-blank text-normal" onclick="window.print();">{{ 'openthinking.dictionary.phrase.print_giftcard' | t }}</button></li>
+
+                    {%- comment -%} Apple Wallet passes {%- endcomment -%}
+                    {%- if gift_card.pass_url -%}
+                    <li>
+                        <a href="{{ gift_card.pass_url }}" class="gift_card__apple-wallet no-print noRadius">
+                            <img
+                                src="{{ 'gift-card/add-to-apple-wallet.svg' | shopify_asset_url }}"
+                                width="120"
+                                height="40"
+                                alt="{{ 'gift_cards.issued.add_to_apple_wallet' | t }}"
+                                loading="lazy"
+                            >
+                        </a>
+                    </li>
+                    {%- endif -%}
+                </ul>
+            </div>
+        </footer>
+
+    </div>
+
+  </body>
+</html>
+
+{{ 'vendor/qrcode.js' | shopify_asset_url | script_tag }}
+
+<script>
+var string = { qrImageAlt: {{ 'gift_cards.issued.qr_image_alt' | t | json }} };
+
+document.addEventListener('DOMContentLoaded', function() {
+    new QRCode( document.querySelector('#qr-code'), {
+        text: document.querySelector('#qr-code').dataset.identifier,
+        width: 128, height: 128,
+        imageAltText: string.qrImageAlt
+    });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Gift card",
+  "settings": [
+    {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "Logo"
+    }
+  ]
+}
+{% endschema %}

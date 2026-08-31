@@ -1,0 +1,196 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+{%- capture placeholder_logo -%} 
+<svg width="100%" height="333" xmlns="http://www.w3.org/2000/svg" class="dynamicSVGLogo">
+    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">
+        {{ shop.name }}
+    </text>
+</svg>
+{%- endcapture -%}
+
+<section x-flex jc="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" ai="{{ section.settings.alignItems }}"
+    class="hero-logo{% if section.settings.overlay %} fixed{% endif %}"
+    style="{{- style | strip_newlines | strip -}}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+    <x-cell class="logo-wrap" style="{{ section.settings.size | prepend: '--width:' | append: '%;' }}{{ section.settings.sizeMob | prepend: '--widthMob:' | append: '%;' }}">
+        {%- if section.settings.url != nil -%}<a href="{{ section.settings.url }}">{%- endif -%}
+        {%- liquid 
+            assign img = section.settings.image
+            if img != blank
+
+                assign img = section.settings.image
+                assign width = 1426
+                assign widths = '200,300,400,500,750,1000,1280,1426'
+                assign mediaLoader = false
+                assign class = 'noRadius'
+            
+                render 'inc-img' img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true, class: class
+
+            elsif section.settings.logoSVG != empty
+                echo section.settings.logoSVG
+
+            else 
+                # If no image or SVG is set, show a placeholder
+                echo placeholder_logo
+            endif
+        -%}
+
+        {%- if section.settings.url != nil -%}</a>{%- endif -%}
+    </x-cell>
+</section>
+
+{% schema %}
+{
+  "name": "Hero logo",
+  "disabled_on": { "groups": ["aside"] },
+  "presets": [ { "name": "Hero logo", "category": "Banners" } ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Logo"
+    },
+    {
+        "type": "textarea",
+        "id": "logoSVG",
+        "label": "SVG",
+        "info": "SVG code only. If an image is selected, this SVG settings will be overridden.",
+        "visible_if": "{{ section.settings.image == blank }}"
+    },
+    {
+        "type": "url",
+        "id": "url",
+        "label": "Link",
+        "info": "Link to a page or external URL."
+    },
+    {
+      "type": "header",
+      "content": "Size"
+    },
+    {
+        "type": "range",
+        "label": "Desktop",
+        "id": "size",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "unit": "%",
+        "default": 95
+    },
+    {
+        "type": "range",
+        "label": "Mobile",
+        "id": "sizeMob",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "unit": "%",
+        "default": 95
+    },
+    {
+      "type": "header",
+      "content": "Alignment"
+    },
+    {
+        "type": "checkbox",
+        "id": "overlay",
+        "label": "Overlay",
+        "default": false,
+        "info": "Overlay the logo on top of the content beneath it and keep it fixed during scrolling."
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Horizontal",
+        "default": "center"
+    },
+    {
+        "type": "select",
+        "id": "alignItems",
+        "label": "Vertical",
+        "default": "start",
+        "visible_if": "{{ section.settings.overlay == true }}",
+        "options": [
+            { "value": "start", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "end", "label": "Bottom" }
+        ]
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+    {
+      "type": "range",
+      "id": "marginTop",
+      "label": "Margin top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "marginBottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

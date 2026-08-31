@@ -1,0 +1,159 @@
+/*
+=== [ CORETEX FYI ] ===
+    Implementation docs in coretex `pdp-slider.js.liquid`
+*/
+
+import CoretexSlider from "{{ 'c-slider.js' | asset_url }}"
+
+if (!customElements.get('media-gallery')) {
+    customElements.define('media-gallery', 
+        class MediaGallery extends CoretexSlider {
+
+        constructor() { 
+            super();
+
+            // === [ CORETEX FYI ] === 
+            // Define custom options to pass to the parent class
+            this.customOptions = {
+                watchDrag: (emblaApi, event) => {
+                    // === [ CORETEX FYI ] ===
+                    // The event parameter here is a TouchEvent or MouseEvent
+                    // Using event.target to check if the user is interacting with the 3D element
+                    if (event.target.matches('model-viewer')) return false; // cancel the Embla drag event on model-viewer
+
+                    // Allow the Embla drag event
+                    return true
+                }
+            };
+        }
+        
+        async connectedCallback() {
+            this.thumbsNode = this.querySelector('[control-thumbs]'); // Thumbnails
+            this.elements = { viewer: this.querySelector('[id^="GalleryViewer"]') }; // used by setActiveMedia()
+
+            await super.connectedCallback(this.customOptions); // === [ CORETEX FYI ] === wait for the carousel to be initialized, also pass the custom options
+
+            super.init(); // initialize coretex-slider 
+            this.init(); // initialize this
+        }
+
+        init() {
+            this.embla.on('select', this.scrollIntoView.bind(this)); // Scroll into view when the slide is selected
+
+            this.embla.on('select', this.handleActiveMedia.bind(this)); // Play media when the slide is selected
+            this.handleActiveMedia(); // Call once initially to play media in the first slide
+
+            this.thumbnails();
+        }
+
+        // Thumbnails
+        thumbnails() {
+            if (!this.thumbsNode) return;
+
+            const thumbnails = Array.from(this.thumbsNode.children);
+            const scrollToThumbnail = (index) => {
+                const thumb = thumbnails[index];
+                const offset = thumb.offsetLeft + thumb.offsetWidth / 2 - this.thumbsNode.clientWidth / 2;
+                this.thumbsNode.scrollTo({
+                    left: offset,
+                    behavior: 'smooth'
+                });
+            };
+
+            thumbnails.forEach((thumb, index) => {
+                thumb.addEventListener('click', () => this.embla.scrollTo(index));
+            });
+
+            const updateThumbnails = () => {
+                const selectedIndex = this.embla.selectedScrollSnap();
+                thumbnails.forEach((thumb, index) => {
+                    thumb.classList.toggle('is-selected', index === selectedIndex);
+                });
+                scrollToThumbnail(selectedIndex);
+            };
+
+            this.embla.on('select', updateThumbnails);
+            updateThumbnails();
+        }
+
+        static pauseAllMedia() {
+            document.querySelectorAll('.js-youtube').forEach((video) => {
+                video.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            });
+            document.querySelectorAll('.js-vimeo').forEach((video) => {
+                video.contentWindow.postMessage('{"method":"pause"}', '*');
+            });
+            document.querySelectorAll('video').forEach((video) => video.pause());
+            document.querySelectorAll('product-model').forEach((model) => {
+                if (model.modelViewerUI) model.modelViewerUI.pause();
+            });
+        }
+
+        // Function to play media on the active slide
+        playActiveMedia(activeItem) {
+            // first check if the slider is active
+            if(this.isSliderActive) {
+                MediaGallery.pauseAllMedia();
+                //window.pauseAllMedia(); // pause all media
+
+                const deferredMedia = activeItem.querySelector('deferred-media');
+                if (deferredMedia) {
+                    deferredMedia.loadContent(false);
+                    const video = deferredMedia.querySelector('video');
+                    
+                    if (video && video.hasAttribute('autoplay') && video.paused) {
+                        // Ensure video is muted if autoplay is desired
+                        video.muted = true;
+                        video.play().catch(error => {
+                            console.error('Video playback failed:', error);
+                        });
+                    }
+                }
+            } 
+        }
+
+        // Function to get the active item and play the media
+        handleActiveMedia() {
+            const selectedIndex = this.embla.selectedScrollSnap();
+            const activeItem = this.embla.slideNodes()[selectedIndex];
+            if (activeItem) this.playActiveMedia(activeItem);
+        }
+
+        scrollIntoView(mediaId) {
+            let activeMedia;
+
+            if (mediaId) {
+                activeMedia = this.elements.viewer.querySelector(`[data-media-id="${mediaId}"]`) || this.elements.viewer.querySelector('[data-media-id]');
+            } else {
+                activeMedia = this.querySelector('.is-snapped');
+            }
+
+            const activeMediaRect = activeMedia.getBoundingClientRect();
+            // Don't scroll if the image is already in view
+            if (activeMediaRect.top > -0.5) return;
+            const top = activeMediaRect.top + window.scrollY;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+
+        // Triggered in `t-product.js -> product-info.js` 
+        // Handles media selection when the media type is "Stacked"
+        // This is required when the slider is disabled, and we need to manually set the active media.
+        // The currently selected media is prepended to the top of the media gallery
+        // and scrolled into view to ensure it's immediately visible to the user.
+        setActiveMedia(mediaId) {
+            // Only run if the slider is inactive
+            if (!this.isSliderActive) {
+                const activeMedia = this.elements.viewer.querySelector(`[data-media-id="${mediaId}"]`) || this.elements.viewer.querySelector('[data-media-id]');
+                if (!activeMedia) return;
+    
+                // Prepend currenctly selected media to the top of the gallery
+                activeMedia.parentElement.firstChild !== activeMedia && activeMedia.parentElement.prepend(activeMedia);
+
+                // Scroll into view when the slide is selected
+                this.scrollIntoView(mediaId);
+            }
+
+        }
+
+    });
+}

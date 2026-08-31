@@ -1,0 +1,235 @@
+{% style %}
+.collections-page { padding: var(--layoutInline) }
+.collections-page .title > span:not(.off) { word-break: break-word }
+
+.collections-list {
+	--scrollAlignItems: start;
+	--scrollChildMinWidth: 150px;
+	--hMargin: 0;
+	--gap: var(--space-2);
+}
+
+.collections-list [x-grid] { --grid-mm: var(--scrollChildMinWidth), 1fr }
+.collection-images li:empty { display: none }
+.header-title { margin-block-end: var(--space-3) }
+
+.collections-grid :where(component-loader, media-loader, picture) { display: contents }
+.collections-grid img { height: 100%; object-fit: cover; aspect-ratio: 1 / 1 }
+.collections-grid .title { font-size: var(--fontSize); padding: var(--padding) }
+{% endstyle %}
+
+{%- liquid
+	case section.settings.sort
+		when 'products_high', 'products_low'
+			assign collections = collections | sort: 'all_products_count'
+		when 'date', 'date_reversed'
+			assign collections = collections | sort: 'published_at'
+	endcase
+
+	if section.settings.sort == 'products_high' or section.settings.sort == 'date_reversed' or section.settings.sort == 'alphabetical_reversed'
+		assign collections = collections | reverse
+	endif
+
+	case section.settings.layout
+		when 'list'
+			assign layout = 'list'
+			assign layout_class = 'collections-list'
+		when 'grid'
+			assign layout = 'grid'
+			assign layout_class = 'collections-grid'
+	endcase
+
+    assign grid_columns = section.settings.grid_columns
+    assign grid_gap = section.settings.grid_gap | prepend: 'var(--space-' | append: ');'
+-%}
+
+<section class="collections-page {{ layout_class }}">
+	<h1 class="h1 page-title">{{ collection.title | escape }}</h1>
+
+	{%- paginate collections by section.settings.items_per_page -%}
+		{% comment %}
+			=== [ CORETEX FYI ] ===
+			About the <infinity-scroll> component.
+
+			Mandatory:
+			- coretex-container: the container with inside the loop with product/blog card.
+			- coretex-pagination: the container for the pagination link. Keep in mind that the pagination link has to have only 1 <a> with the next page link.
+			- coretex-loading: {{ 'accessibility.loading' | t }}
+			- the next link <a> has to have only a <span coretex-loading-more>
+		{% endcomment %}
+		<infinity-scroll coretex-container="#ajaxContainer" coretex-pagination="#ajaxPagination" coretex-loading="{{ 'accessibility.loading' | t }}">
+			<component-loader>
+				{%- if layout == 'list' -%}
+					<x-flex direction="column" class="collections" id="ajaxContainer">
+				{%- else -%}
+					<x-grid columns="{{ grid_columns }}" columns-m="3" columns-s="2" class="collections" id="ajaxContainer" style="--gap: {{ grid_gap }}">
+				{%- endif -%}
+
+				{%- for collection in collections -%}
+					{%- if collection.all_products_count > 0 -%}
+						{%- if layout == 'list' -%}
+							{%- # LIST -%}
+							<a href="{{ collection.url }}" title="{{ collection.title | escape }}">
+								<x-grid columns="10" columns-s="5" class="header-title">
+									<span class="count">{{ collection.all_products_count }}</span>
+									<x-cell span="3" span-s="2">
+										<h2 class="h6 text-normal title">{{ collection.title | escape }}</h2>
+									</x-cell>
+									<x-cell span="8.." span-s="4.." class="text-end">{{ 'sections.collection_list.view_all' | t }}</x-cell>
+								</x-grid>
+
+								{%- liquid
+									if collection.image.src
+										assign img = collection.image.src
+									elsif collection.products.size > 0 and collection.products.first.featured_media
+										assign img = collection.products.first.featured_media.preview_image.src
+									else
+										assign img = null
+									endif
+								-%}
+
+								<ul x-grid columns="10" class="no-style inside collection-images overflow">
+									{%- assign images_displayed = 0 -%}
+									{%- for product in collection.products -%}
+										<li>
+											{%- liquid
+												if images_displayed < 10
+													if product.featured_image
+														assign img = product.featured_image.src
+														render 'inc-img', img: img, widths: '180,360,480,640,768,1024', sizes: '(min-width: 777px) calc(12.25vw - 9px), calc(23.7vw - 7px)', fallback: true
+														assign images_displayed = images_displayed | plus: 1
+													endif
+												else
+													break
+												endif
+											-%}
+										</li>
+									{%- endfor -%}
+								</ul>
+							</a>
+
+							{%- # GRID -%}
+						{%- elsif layout == 'grid' -%}
+							<a href="{{ collection.url }}" title="{{ collection.title | escape }}" x-grid columns="stack">
+								<h2 class="h6 text-normal title onHover" x-flex style="gap: var(--padding)">
+                                    <span>{{ collection.title | escape }}</span>
+                                    <span class="off large-only">{{ 'sections.collection_list.view_all' | t }}</span>
+                                </h2>
+                                <x-cell>{%- render 'inc-img', img: collection.featured_image, widths: '180,360,480,640,768,1024', fallback: true -%}</x-cell>
+							</a>
+						{%- endif -%}
+					{%- endif -%}
+				{%- endfor -%}
+
+				{%- if layout == 'list' -%}</x-flex>{%- else -%}</x-grid>{%- endif -%}
+			</component-loader>
+
+			{% comment %}
+				PAGINATION
+			{% endcomment %}
+			{%- render 'c-pagination', paginate: paginate, mode: 'infinity' -%}
+		</infinity-scroll>
+	{%- endpaginate -%}
+</section>
+
+{% schema %}
+	{
+		"name": "Collections list page",
+		"settings": [
+			{
+				"type": "select",
+				"id": "layout",
+				"label": "Layout",
+				"default": "list",
+				"options": [
+					{
+						"value": "grid",
+						"label": "Grid"
+					},
+					{
+						"value": "list",
+						"label": "List"
+					}
+				]
+			},
+            {
+                "type": "header",
+                "content": "Grid",
+                "visible_if": "{{ section.settings.layout == 'grid' }}"
+            },
+            {
+                "type": "range",
+                "id": "grid_columns",
+                "label": "Columns - desktop",
+                "min": 2,
+                "max": 6,
+                "step": 1,
+                "default": 5,
+                "visible_if": "{{ section.settings.layout == 'grid' }}"
+            },
+            {
+                "type": "range",
+                "id": "grid_gap",
+                "label": "Gap",
+                "min": 0,
+                "max": 30,
+                "step": 1,
+                "default": 2,
+                "visible_if": "{{ section.settings.layout == 'grid' }}"
+            },
+			{
+				"type": "checkbox",
+				"id": "show_description",
+				"label": "Show description",
+                "info": "Applies only to layout of type list.",
+				"default": true,
+                "visible_if": "{{ section.settings.layout == 'grid' }}"
+			},
+            {
+                "type": "header",
+                "content": "Pagination"
+            },
+			{
+				"type": "range",
+				"label": "Items per page",
+				"id": "items_per_page",
+				"min": 4,
+				"max": 30,
+				"step": 2,
+				"default": 8
+			},
+			{
+				"type": "select",
+				"id": "sort",
+				"label": "Sort by",
+				"default": "alphabetical",
+				"options": [
+					{
+						"value": "alphabetical",
+						"label": "Alphabetically, A-Z"
+					},
+					{
+						"value": "alphabetical_reversed",
+						"label": "Alphabetically, Z-A"
+					},
+					{
+						"value": "date_reversed",
+						"label": "Date, new to old"
+					},
+					{
+						"value": "date",
+						"label": "Date, old to new"
+					},
+					{
+						"value": "products_high",
+						"label": "Product count, high to low"
+					},
+					{
+						"value": "products_low",
+						"label": "Product count, low to high"
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

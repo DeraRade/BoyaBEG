@@ -1,0 +1,164 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "about-contents": {
+      "type": "p-about",
+      "disabled": true,
+      "settings": {}
+    },
+    "s_hero": {
+      "type": "ls-hero",
+      "blocks": {
+        "title": {
+          "type": "text",
+          "settings": {
+            "text": "{{ page.title }}",
+            "fontFamily": "fontFamily",
+            "fontSize": 5,
+            "fontSizeMob": 2,
+            "marginTop": 2
+          }
+        },
+        "content": {
+          "type": "text",
+          "settings": {
+            "text": "Use this space to introduce your business to your customers. Share your company's story, mission, and values.",
+            "fontFamily": "hFontFamily",
+            "fontSize": 13,
+            "fontSizeMob": 5,
+            "enableCharWidth": true,
+            "charWidth": 60,
+            "marginTop": 4
+          }
+        },
+        "button": {
+          "type": "button",
+          "disabled": true,
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "title",
+        "content",
+        "button"
+      ],
+      "settings": {
+        "media_height_uncropped": true,
+        "media_height": 60,
+        "media_width_full": false,
+        "media_center": true,
+        "media_height_uncropped_mob": false,
+        "media_height_mob": 90,
+        "sticky": true,
+        "overlay": true,
+        "metaOrder": "3",
+        "direction": "column",
+        "position": "top left",
+        "directionMob": "column",
+        "positionMob": "top center",
+        "paddingInline": true,
+        "mixBlend": true
+      }
+    },
+    "s_hero_text": {
+      "type": "ls-hero-text",
+      "blocks": {
+        "title": {
+          "type": "text",
+          "settings": {
+            "text": "<p>{{ page.title }}</p>",
+            "fontSize": 5,
+            "fontSizeMob": 4,
+            "enableCharWidth": true,
+            "charWidth": 10
+          }
+        },
+        "content": {
+          "type": "text",
+          "settings": {
+            "fontSize": 12,
+            "fontSizeMob": 4,
+            "textIndent": 12,
+            "enableCharWidth": true,
+            "charWidth": 72
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "content"
+      ],
+      "settings": {
+        "direction": "row",
+        "paddingInline": true,
+        "marginTop": 10,
+        "marginBottom": 7,
+        "paddingTop": 4,
+        "paddingBottom": 4,
+        "color_scheme": "coretex-1"
+      }
+    },
+    "s_multicolumn": {
+      "type": "ls-multicolumn",
+      "blocks": {
+        "image_1": {
+          "type": "image",
+          "settings": {}
+        },
+        "image_2": {
+          "type": "image",
+          "settings": {}
+        },
+        "image_3": {
+          "type": "image",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "image_1",
+        "image_2",
+        "image_3"
+      ],
+      "settings": {
+        "columns": "3",
+        "columnsMob": "2"
+      }
+    },
+    "ls_links": {
+      "type": "ls-links",
+      "settings": {
+        "menu": "main-menu",
+        "separator": "emdash",
+        "direction": "row",
+        "count": "hover",
+        "countType": "index",
+        "fontFamily": "fontFamily",
+        "fontBold": true,
+        "alignment": "center",
+        "fontSize": 11,
+        "fontSizeMob": 9,
+        "marginTop": 0,
+        "marginBottom": 0,
+        "paddingTop": 8,
+        "paddingBottom": 8,
+        "global_color_scheme": true,
+        "color_scheme": "coretex-1"
+      }
+    }
+  },
+  "order": [
+    "about-contents",
+    "s_hero",
+    "s_hero_text",
+    "s_multicolumn",
+    "ls_links"
+  ]
+}

@@ -1,0 +1,33 @@
+{% comment %}
+    This is the clock component's core.
+
+    Accepts:
+    - block = {required} - Block settings containing time configuration
+
+    Usage:
+	{%- render 'c-clock', block: block -%}
+{% endcomment %}
+
+<component-loader><coretex-clock
+    data-format="{{ block.settings.time_format | default: '24' }}"
+    data-timezone="{{ block.settings.timezone | default: 'auto' }}"
+    data-custom-timezone="{{ block.settings.custom_timezone | escape }}"
+    data-show-date="{{ block.settings.show_date | default: true }}"
+    data-date-format="{{ block.settings.date_format | default: 'dd/mm/yyyy' }}"
+    data-show-location="{{ block.settings.show_location | default: false }}"
+    data-location-name="{{ block.settings.location_name | escape }}"
+>
+    <x-flex class="clock-display" direction="{{ direction }}">
+        {% if block.settings.show_date != false %}
+        <x-cell class="date"><span class="date-text">01/01/2025</span></x-cell>
+        {% endif %}
+        <x-cell class="time"><span class="time-text">11:11</span></x-cell>
+        {% if block.settings.show_location != false %}
+        <x-cell class="timezone-location">
+            {% if block.settings.show_location != false and block.settings.location_name != blank %}
+            <span class="location-text">{{ block.settings.location_name }}</span>
+            {% endif %}
+        </x-cell>
+        {% endif %}
+    </x-flex>
+</coretex-clock></component-loader>

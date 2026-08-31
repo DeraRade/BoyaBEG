@@ -1,0 +1,15 @@
+/* Debug grid */
+x-grid:has(debug-line) { position: relative }
+x-grid:has(debug-line) > *:not(debug-line) { z-index: 1; position: relative }
+
+debug-line {
+    display: grid;
+    gap: inherit;
+    grid-template-columns: inherit;
+    grid-template-rows: inherit;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+debug-line > x-cell { background: rgb(255 193 203 / 0.4) }

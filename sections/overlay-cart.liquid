@@ -1,0 +1,82 @@
+{%- render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer' -%}
+
+<coretex-dialog id="cartBox" data-fire="{{ settings.cart_auto_open_drawer }}" class="coretex-dialog" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %} data-section-id="{{ section.id }}">
+    <dialog aria-label="Cart modal" dialog-position="{{ section.settings.dialogPosition }}" data-lenis-prevent>
+        <dialog-wrapper aria-label="Cart modal" x-flex direction="column">
+            <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                <h2 class="h6" style="--hMargin:0">{{ 'sections.cart.title' | t }}</h2>
+                <form id="coretex-cart-drawer-close-form">
+                    <button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+                        <span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+                        {%- render 'inc-icon', icon: 'x-close' -%}
+                    </button>
+                </form>
+            </header>
+
+            <main>
+                {%- render 'c-cart', location: 'drawer' -%}
+            </main>
+
+        </dialog-wrapper>
+    </dialog>
+</coretex-dialog>
+
+{% schema %}
+{
+  "name": "Cart",
+  "class": "main-cart",
+  "enabled_on": { "groups": ["aside"] },
+  "limit": 1,
+  "settings": [
+    {
+      "type": "select",
+      "id": "dialogPosition",
+      "label": "Position",
+      "default": "bottom center",
+      "options": [
+        {
+          "value": "top left",
+          "label": "Top left"
+        },
+        {
+          "value": "top center",
+          "label": "Top center"
+        },
+        {
+          "value": "top right",
+          "label": "Top right"
+        },
+        {
+          "value": "bottom left",
+          "label": "Bottom left"
+        },
+        {
+          "value": "bottom center",
+          "label": "Bottom center"
+        },
+        {
+          "value": "bottom right",
+          "label": "Bottom right"
+        }
+      ]
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

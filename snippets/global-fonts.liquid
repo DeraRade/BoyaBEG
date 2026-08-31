@@ -1,0 +1,25 @@
+{%- comment -%}
+    Use this file to add your custom fonts.
+    Follow the step-by-step guide at https://docs.openthinking.net/themes/etheryx/kb/fonts/
+
+    The code below must be modified to work with your selected font.
+    Use our Font Face Generator to generate the necessary code: https://openthinking.app/x/font-face-generator/
+
+    Be sure to enable "Enable custom fonts" under "Typography", in the Theme settings.
+{%- endcomment -%}
+
+<link rel="dns-prefetch" href="https://webfonts.fontstand.com">
+
+{%- comment -%} Load font CSS the standard way so it always applies on screen. The
+   non-blocking media="print" + onload trick could leave the stylesheet stuck on
+   "print" in Safari (onload not firing) → Cera Pro never applied → fallback shown. {%- endcomment -%}
+<link rel="stylesheet" href="https://webfonts.fontstand.com/WF-099542-313b6f23cc2f7e63386da69f14f8ea11.css" type="text/css"/>
+<link rel="stylesheet" href="https://webfonts.fontstand.com/WF-099542-31ac4a8c7f91478b333430855231a18d.css" type="text/css"/>
+
+<style>
+:root {
+  --fontFamily: "Cera Pro Regular";
+  --hFontFamily: "Cera Pro Bold";
+  --logoFontFamily: "Cera Pro Bold"!important;
+}
+</style>

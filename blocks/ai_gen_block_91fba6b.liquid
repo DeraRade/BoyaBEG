@@ -1,0 +1,972 @@
+{% doc %}
+  @prompt
+    Skcija sa fotografijom ili video u punoj širini. Dugme može da se pozicionira na četvrtina horizontalne sredine. Postoji opcija da iznad dugmeta dodaju heading i subheading. Svaki element ima svoja grafička podešavanja. Opcija izbora grafičke šeme (customs i global), Ako već nisi podesio. Dugme treba da ide unutar medije., Dodaj podešavanje za zaobljenost dugmeta. Tekst dugmeta je underlined bez mogućnosti promene. Dodaj da to može da se menja. Pozicije dugmeta neka budu na osminama horizontalne sredine., Dodaj u opcije teksta Bold-italic-underlined opcije, Tekst dugmeta je i dalje podvučen bez mogučnosti promene. Ne želim podvučen tekst, Dodaj mogućnost vertikalnog podešavanja mesta dugmeta u procentima (100 pozicija, 50% je sredina), Gornja ivica dugmeta je zakucana na gornju ivicu sekcije i podešavanje ne ne spuštaju. Pritom je default vrednos 50% a dugme nije na sredini., Svaka vrednost vertikalne pozicije dugmeta preko 50% čini dugme nevidljivim umesto da ga diže na gore. Vrednosti ispod 50% rade dobro i spuštaju dugme na niže., Dodaj podešavanje veličine dugmeta (visina, širina), Treba mi da su 0 vrednosti za dimenzije dugmeta 20% manje nego što su sada., Najmanje dimenzije dugmeta su i dalje iste. Treba mi mogućnost da dimenzije budu 20% kraće nego sada.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-fullwidth-media-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    display: block;
+    overflow: hidden;
+  }
+
+  .ai-fullwidth-media-container-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: {{ block.settings.section_height_mobile }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .ai-fullwidth-media-container-{{ ai_gen_id }} {
+      height: {{ block.settings.section_height_desktop }}px;
+    }
+  }
+
+  .ai-fullwidth-media-image-{{ ai_gen_id }},
+  .ai-fullwidth-media-video-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-fullwidth-media-placeholder-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-fullwidth-media-placeholder-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    max-width: 500px;
+    max-height: 500px;
+  }
+
+  .ai-fullwidth-media-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: {{ block.settings.overlay_color }};
+    opacity: {{ block.settings.overlay_opacity }};
+    pointer-events: none;
+  }
+
+  .ai-fullwidth-media-content-{{ ai_gen_id }} {
+    position: absolute;
+    top: {{ block.settings.button_vertical_position }}%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    padding: 20px;
+    transform: translateY(-50%);
+  }
+
+  .ai-fullwidth-media-text-wrapper-{{ ai_gen_id }} {
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+  }
+
+  .ai-fullwidth-media-heading-{{ ai_gen_id }} {
+    margin: 0 0 {{ block.settings.heading_spacing }}px;
+    color: {{ block.settings.heading_color }};
+    font-size: {{ block.settings.heading_size_mobile }}px;
+    font-weight: {{ block.settings.heading_weight }};
+    {% if block.settings.heading_italic %}
+      font-style: italic;
+    {% else %}
+      font-style: normal;
+    {% endif %}
+    {% if block.settings.heading_underline %}
+      text-decoration: underline;
+    {% else %}
+      text-decoration: none;
+    {% endif %}
+    line-height: 1.2;
+  }
+
+  @media screen and (min-width: 750px) {
+    .ai-fullwidth-media-heading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size_desktop }}px;
+    }
+  }
+
+  .ai-fullwidth-media-subheading-{{ ai_gen_id }} {
+    margin: 0 0 {{ block.settings.subheading_spacing }}px;
+    color: {{ block.settings.subheading_color }};
+    font-size: {{ block.settings.subheading_size_mobile }}px;
+    font-weight: {{ block.settings.subheading_weight }};
+    {% if block.settings.subheading_italic %}
+      font-style: italic;
+    {% else %}
+      font-style: normal;
+    {% endif %}
+    {% if block.settings.subheading_underline %}
+      text-decoration: underline;
+    {% else %}
+      text-decoration: none;
+    {% endif %}
+    line-height: 1.4;
+  }
+
+  @media screen and (min-width: 750px) {
+    .ai-fullwidth-media-subheading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.subheading_size_desktop }}px;
+    }
+  }
+
+  .ai-fullwidth-media-button-container-{{ ai_gen_id }} {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    {% if block.settings.button_horizontal_position == '0' %}
+      justify-content: flex-start;
+    {% elsif block.settings.button_horizontal_position == '12.5' %}
+      justify-content: flex-start;
+      padding-left: 12.5%;
+    {% elsif block.settings.button_horizontal_position == '25' %}
+      justify-content: flex-start;
+      padding-left: 25%;
+    {% elsif block.settings.button_horizontal_position == '37.5' %}
+      justify-content: flex-start;
+      padding-left: 37.5%;
+    {% elsif block.settings.button_horizontal_position == '50' %}
+      justify-content: center;
+    {% elsif block.settings.button_horizontal_position == '62.5' %}
+      justify-content: flex-end;
+      padding-right: 37.5%;
+    {% elsif block.settings.button_horizontal_position == '75' %}
+      justify-content: flex-end;
+      padding-right: 25%;
+    {% elsif block.settings.button_horizontal_position == '87.5' %}
+      justify-content: flex-end;
+      padding-right: 12.5%;
+    {% elsif block.settings.button_horizontal_position == '100' %}
+      justify-content: flex-end;
+    {% endif %}
+    margin-top: {{ block.settings.button_top_spacing }}px;
+  }
+
+  .ai-fullwidth-media-button-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    {% if block.settings.button_width > 0 %}
+      min-width: {{ block.settings.button_width | plus: 80 }}px;
+      padding-left: {{ block.settings.button_padding_horizontal }}px;
+      padding-right: {{ block.settings.button_padding_horizontal }}px;
+    {% else %}
+      padding-left: {{ block.settings.button_padding_horizontal | times: 0.64 | round }}px;
+      padding-right: {{ block.settings.button_padding_horizontal | times: 0.64 | round }}px;
+    {% endif %}
+    {% if block.settings.button_height > 0 %}
+      min-height: {{ block.settings.button_height | plus: 40 }}px;
+      padding-top: {{ block.settings.button_padding_vertical }}px;
+      padding-bottom: {{ block.settings.button_padding_vertical }}px;
+    {% else %}
+      padding-top: {{ block.settings.button_padding_vertical | times: 0.64 | round }}px;
+      padding-bottom: {{ block.settings.button_padding_vertical | times: 0.64 | round }}px;
+    {% endif %}
+    background-color: {{ block.settings.button_bg_color }};
+    color: {{ block.settings.button_text_color }};
+    border: {{ block.settings.button_border_width }}px solid {{ block.settings.button_border_color }};
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: {{ block.settings.button_font_size }}px;
+    font-weight: {{ block.settings.button_font_weight }};
+    cursor: pointer;
+    transition: all 0.3s ease;
+    {% if block.settings.button_text_italic %}
+      font-style: italic;
+    {% else %}
+      font-style: normal;
+    {% endif %}
+    {% if block.settings.button_text_underline %}
+      text-decoration: underline !important;
+    {% else %}
+      text-decoration: none !important;
+    {% endif %}
+  }
+
+  .ai-fullwidth-media-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_bg_hover_color }};
+    color: {{ block.settings.button_text_hover_color }};
+    border-color: {{ block.settings.button_border_hover_color }};
+    {% if block.settings.button_text_underline %}
+      text-decoration: underline !important;
+    {% else %}
+      text-decoration: none !important;
+    {% endif %}
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-fullwidth-media-button-{{ ai_gen_id }} {
+      {% if block.settings.button_width_mobile > 0 %}
+        min-width: {{ block.settings.button_width_mobile | plus: 80 }}px;
+        padding-left: {{ block.settings.button_padding_horizontal_mobile }}px;
+        padding-right: {{ block.settings.button_padding_horizontal_mobile }}px;
+      {% else %}
+        padding-left: {{ block.settings.button_padding_horizontal_mobile | times: 0.64 | round }}px;
+        padding-right: {{ block.settings.button_padding_horizontal_mobile | times: 0.64 | round }}px;
+      {% endif %}
+      {% if block.settings.button_height_mobile > 0 %}
+        min-height: {{ block.settings.button_height_mobile | plus: 40 }}px;
+        padding-top: {{ block.settings.button_padding_vertical_mobile }}px;
+        padding-bottom: {{ block.settings.button_padding_vertical_mobile }}px;
+      {% else %}
+        padding-top: {{ block.settings.button_padding_vertical_mobile | times: 0.64 | round }}px;
+        padding-bottom: {{ block.settings.button_padding_vertical_mobile | times: 0.64 | round }}px;
+      {% endif %}
+      background-color: {{ block.settings.button_bg_color_mobile }};
+      color: {{ block.settings.button_text_color_mobile }};
+      border: {{ block.settings.button_border_width_mobile }}px solid {{ block.settings.button_border_color_mobile }};
+      border-radius: {{ block.settings.button_border_radius_mobile }}px;
+      font-size: {{ block.settings.button_font_size_mobile }}px;
+      font-weight: {{ block.settings.button_font_weight_mobile }};
+      {% if block.settings.button_text_italic_mobile %}
+        font-style: italic;
+      {% else %}
+        font-style: normal;
+      {% endif %}
+      {% if block.settings.button_text_underline_mobile %}
+        text-decoration: underline !important;
+      {% else %}
+        text-decoration: none !important;
+      {% endif %}
+    }
+  }
+
+  {% if block.settings.color_scheme == 'custom' %}
+    .ai-fullwidth-media-{{ ai_gen_id }} {
+      background-color: {{ block.settings.custom_bg_color }};
+    }
+  {% endif %}
+{% endstyle %}
+
+<fullwidth-media-{{ ai_gen_id }}
+  class="ai-fullwidth-media-{{ ai_gen_id }} color-{{ block.settings.color_scheme }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="ai-fullwidth-media-container-{{ ai_gen_id }}">
+    {% if block.settings.media_type == 'image' %}
+      {% if block.settings.image %}
+        <img
+          src="{{ block.settings.image | image_url: width: 2000 }}"
+          alt="{{ block.settings.image.alt | escape }}"
+          loading="lazy"
+          width="{{ block.settings.image.width }}"
+          height="{{ block.settings.image.height }}"
+          class="ai-fullwidth-media-image-{{ ai_gen_id }}"
+        >
+      {% else %}
+        <div class="ai-fullwidth-media-placeholder-{{ ai_gen_id }}">
+          {{ 'hero-apparel-1' | placeholder_svg_tag }}
+        </div>
+      {% endif %}
+    {% elsif block.settings.media_type == 'video' %}
+      {% if block.settings.video %}
+        <video
+          class="ai-fullwidth-media-video-{{ ai_gen_id }}"
+          autoplay
+          muted
+          loop
+          playsinline
+        >
+          <source src="{{ block.settings.video.sources[1].url }}" type="{{ block.settings.video.sources[1].mime_type }}">
+        </video>
+      {% else %}
+        <div class="ai-fullwidth-media-placeholder-{{ ai_gen_id }}">
+          {{ 'hero-apparel-1' | placeholder_svg_tag }}
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% if block.settings.show_overlay %}
+      <div class="ai-fullwidth-media-overlay-{{ ai_gen_id }}"></div>
+    {% endif %}
+
+    <div class="ai-fullwidth-media-content-{{ ai_gen_id }}">
+      <div class="ai-fullwidth-media-text-wrapper-{{ ai_gen_id }}">
+        {% if block.settings.heading != blank %}
+          <h2 class="ai-fullwidth-media-heading-{{ ai_gen_id }}">
+            {{ block.settings.heading }}
+          </h2>
+        {% endif %}
+
+        {% if block.settings.subheading != blank %}
+          <div class="ai-fullwidth-media-subheading-{{ ai_gen_id }}">
+            {{ block.settings.subheading }}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if block.settings.button_text != blank %}
+        <div class="ai-fullwidth-media-button-container-{{ ai_gen_id }}">
+          <a
+            href="{{ block.settings.button_link }}"
+            class="ai-fullwidth-media-button-{{ ai_gen_id }}"
+          >
+            {{ block.settings.button_text }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</fullwidth-media-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class FullwidthMedia{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        const video = this.querySelector('.ai-fullwidth-media-video-{{ ai_gen_id }}');
+        if (video) {
+          video.play().catch(function(error) {
+            console.log('Video autoplay failed:', error);
+          });
+        }
+      }
+    }
+
+    customElements.define('fullwidth-media-{{ ai_gen_id }}', FullwidthMedia{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Mediji u punoj širini",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Mediji"
+    },
+    {
+      "type": "select",
+      "id": "media_type",
+      "label": "Tip medija",
+      "options": [
+        {
+          "value": "image",
+          "label": "Fotografija"
+        },
+        {
+          "value": "video",
+          "label": "Video"
+        }
+      ],
+      "default": "image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Fotografija"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video"
+    },
+    {
+      "type": "range",
+      "id": "section_height_desktop",
+      "label": "Visina na desktopu",
+      "min": 300,
+      "max": 1000,
+      "step": 50,
+      "unit": "px",
+      "default": 600
+    },
+    {
+      "type": "range",
+      "id": "section_height_mobile",
+      "label": "Visina na mobilnom",
+      "min": 200,
+      "max": 800,
+      "step": 50,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "header",
+      "content": "Overlay"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_overlay",
+      "label": "Prikaži overlay",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Boja overlay-a",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "Providnost overlay-a",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.3
+    },
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Tekst"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Boja",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "heading_size_desktop",
+      "label": "Veličina na desktopu",
+      "min": 20,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Veličina na mobilnom",
+      "min": 16,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "select",
+      "id": "heading_weight",
+      "label": "Debljina fonta",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normalna"
+        },
+        {
+          "value": "500",
+          "label": "Srednja"
+        },
+        {
+          "value": "600",
+          "label": "Polu-bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "checkbox",
+      "id": "heading_italic",
+      "label": "Italic",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "heading_underline",
+      "label": "Podvučen tekst",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "heading_spacing",
+      "label": "Razmak ispod",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Subheading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "Tekst"
+    },
+    {
+      "type": "color",
+      "id": "subheading_color",
+      "label": "Boja",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "subheading_size_desktop",
+      "label": "Veličina na desktopu",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "subheading_size_mobile",
+      "label": "Veličina na mobilnom",
+      "min": 12,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "subheading_weight",
+      "label": "Debljina fonta",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normalna"
+        },
+        {
+          "value": "500",
+          "label": "Srednja"
+        },
+        {
+          "value": "600",
+          "label": "Polu-bold"
+        }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "checkbox",
+      "id": "subheading_italic",
+      "label": "Italic",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "subheading_underline",
+      "label": "Podvučen tekst",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "subheading_spacing",
+      "label": "Razmak ispod",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Dugme"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Tekst"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Link"
+    },
+    {
+      "type": "range",
+      "id": "button_vertical_position",
+      "label": "Vertikalna pozicija",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "select",
+      "id": "button_horizontal_position",
+      "label": "Horizontalna pozicija",
+      "options": [
+        {
+          "value": "0",
+          "label": "0% (Levo)"
+        },
+        {
+          "value": "12.5",
+          "label": "12.5%"
+        },
+        {
+          "value": "25",
+          "label": "25%"
+        },
+        {
+          "value": "37.5",
+          "label": "37.5%"
+        },
+        {
+          "value": "50",
+          "label": "50% (Centar)"
+        },
+        {
+          "value": "62.5",
+          "label": "62.5%"
+        },
+        {
+          "value": "75",
+          "label": "75%"
+        },
+        {
+          "value": "87.5",
+          "label": "87.5%"
+        },
+        {
+          "value": "100",
+          "label": "100% (Desno)"
+        }
+      ],
+      "default": "50"
+    },
+    {
+      "type": "range",
+      "id": "button_top_spacing",
+      "label": "Razmak od teksta",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "button_width",
+      "label": "Dodatna širina",
+      "min": 0,
+      "max": 240,
+      "step": 10,
+      "unit": "px",
+      "default": 0,
+      "info": "0 = automatska širina"
+    },
+    {
+      "type": "range",
+      "id": "button_height",
+      "label": "Dodatna visina",
+      "min": 0,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "default": 0,
+      "info": "0 = automatska visina"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_text_italic",
+      "label": "Italic",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "button_text_underline",
+      "label": "Podvučen tekst",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Boja pozadine",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_hover_color",
+      "label": "Boja pozadine na hover",
+      "default": "#f0f0f0"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Boja teksta",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_hover_color",
+      "label": "Boja teksta na hover",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Veličina fonta",
+      "min": 12,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "button_font_weight",
+      "label": "Debljina fonta",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normalna"
+        },
+        {
+          "value": "500",
+          "label": "Srednja"
+        },
+        {
+          "value": "600",
+          "label": "Polu-bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical",
+      "label": "Vertikalni padding",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "label": "Horizontalni padding",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Zaobljenost ivica",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "button_border_width",
+      "label": "Debljina ivice",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "Boja ivice",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_border_hover_color",
+      "label": "Boja ivice na hover",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Dugme - mobilno"
+    },
+    {
+      "type": "range",
+      "id": "button_width_mobile",
+      "label": "Dodatna širina",
+      "min": 0,
+      "max": 240,
+      "step": 10,
+      "unit": "px",
+      "default": 0,
+      "info": "0 = automatska širina"
+    },
+    {
+      "type": "range",
+      "id": "button_height_mobile",
+      "label": "Dodatna visina",
+      "min": 0,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "default": 0,
+      "info": "0 = automatska visina"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical_mobile",
+      "label": "Vertikalni padding",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal_mobile",
+      "label": "Horizontalni padding",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "button_font_size_mobile",
+      "label": "Veličina fonta",
+      "min": 12,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "button_font_weight_mobile",
+      "label": "Debljina fonta",
+      "options": [
+        { "value": "400", "label": "Normalna" },
+        { "value": "500", "label": "Srednja" },
+        { "value": "600", "label": "Polu-bold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius_mobile",
+      "label": "Zaobljenost ivica",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "button_border_width_mobile",
+      "label": "Debljina ivice",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color_mobile",
+      "label": "Boja pozadine",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color_mobile",
+      "label": "Boja teksta",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color_mobile",
+      "label": "Boja ivice",
+      "default": "#000000"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_text_italic_mobile",
+      "label": "Italic",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "button_text_underline_mobile",
+      "label": "Podvučen tekst",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Šema boja"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Šema",
+      "options": [
+        {
+          "value": "coretex-1",
+          "label": "Global 1"
+        },
+        {
+          "value": "coretex-2",
+          "label": "Global 2"
+        },
+        {
+          "value": "coretex-3",
+          "label": "Global 3"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "coretex-1"
+    },
+    {
+      "type": "color",
+      "id": "custom_bg_color",
+      "label": "Custom boja pozadine",
+      "default": "#f2ede8"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Mediji u punoj širini"
+    }
+  ]
+}
+{% endschema %}

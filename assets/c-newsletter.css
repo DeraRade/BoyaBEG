@@ -1,0 +1,29 @@
+coretex-newsletter.coretex-dialog {
+    --hMargin: 0;
+    --pMargin: 0;
+    --inputMargin: 0;
+
+    --dialogH: fit-content;
+    --buttonMargin: 0;
+    --dialogPadding: 0;
+
+    @media (width < 777px) {
+        --dialogW: 100%!important
+    }
+
+    &:not(.hasFormStatus) {
+        #newsletter-form-block > *:not(.image) { padding-inline: var(--padding) }
+        #newsletter-form-block > *:last-child:not(.image) { padding-block-end: var(--padding) }
+    }
+
+    header { padding: var(--space-1) }
+    &:has(.image:first-child,.heading) header { position: fixed; inset-inline-end: 0; inset-block-start: 0 }
+
+    .close-button button.is-custom { --buttonBg: rgb(var(--bgRGB) / .2); --buttonPadding: var(--space-1) }
+    .imageContain img { max-height: 500px; width: 100%; object-fit: cover; object-position: center }
+
+    #newsletter-success { --gap: var(--space-2); --iconSize: var(--type-6) }
+    [data-form-status] { margin-block: var(--padding) }
+
+    &.hasFormStatus header { position: absolute; inset-inline-end: var(--space-1); inset-block: var(--space-1); align-self: center }
+}

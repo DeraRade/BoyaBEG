@@ -1,0 +1,93 @@
+{%- if product.available -%}
+    {% assign product_form_id = 'quickBuyFrom-' | append: product.id %}
+    <ajax-cart-product-form cart-type="{{ settings.cart_type }}">
+
+    {%- form 'product', product, id: product_form_id -%}
+
+        {%- liquid
+            assign has_variants = false
+            if product.variants.size > 1
+                assign has_variants = true
+            endif
+
+            # Checks how many available (in stock) variants a product has
+            assign available_variants_count = 0
+
+            for variant in product.variants
+                if variant.available
+                    assign available_variants_count = available_variants_count | plus: 1
+                endif
+            endfor 
+
+            # Check if product has preorder tag
+            # Preorder tag (normalize + handle spelling variants)
+            assign pre_order = false
+            assign tags_csv = product.tags | join: ',' | downcase
+            if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+                assign pre_order = true
+            endif
+        -%}
+
+        {%- comment -%} Variant select {%- endcomment -%}
+        <div class="select{% unless has_variants %} hidden{% endunless -%}">
+            <x-select {% if settings.card_quick_buy_pop %}data-pop{% endif %}>
+                <label for="quickSelector-{{ product.id }}" class="visually-hidden" hidden>{{ 'products.product.choose_product_options' | t: product_name: product.title | escape }}</label>
+                <select name="id" id="quickSelector-{{ product.id }}" class="quickSelector" required>
+                    {%- if available_variants_count > 1 -%}<option disabled selected value>[ {{ 'products.product.choose_options' | t }} ]</option>{%- endif -%} 
+                    {%- for variant in product.variants -%}
+                        {%- if variant.available -%}
+                            <option value="{{ variant.id }}" 
+                                data-option="{{ variant.title }}"
+                                data-price="{{ variant.price | money | escape }}" 
+                                {% if available_variants_count == 1 and variant == product.selected_or_first_available_variant %}selected{% endif %}
+                            >
+                                {{ variant.title }} - {{ variant.price | money | escape }}
+                            </option>
+                        {%- endif -%}
+                    {%- endfor -%}
+                </select>
+                <x-cell>{%- render 'inc-icon', icon: 'chevron-down' -%}</x-cell>
+            </x-select>
+        </div>
+
+        {%- comment -%} Form button {%- endcomment -%}
+        <x-cell {% if product.variants.size == 1 %}span="row"{%endif%}>
+            <button x-grid columns="stack" ai="center"
+                id="ProductSubmitButton-{{ product.id }}"
+                type="submit"
+                name="add"
+                class="add-2-cart {% unless settings.card_quick_buy_pop %}is-custom{% endunless %} text-normal"
+                {% if product.selected_or_first_available_variant.available == false or quantity_rule_soldout or product.selected_or_first_available_variant == null %}disabled{% endif %}
+            >
+                <span class="cta">
+                    {%- liquid 
+                        if product.selected_or_first_available_variant == null
+                            echo 'products.product.unavailable' | t
+                        elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout
+                            echo 'products.product.sold_out' | t
+                        else
+                            unless pre_order
+                                echo 'products.product.add_to_cart' | t
+                            else
+                                echo 'openthinking.dictionary.word.preorder' | t
+                            endunless
+                        endif 
+                    -%}
+                </span>
+                
+                {%- # loading indicator when adding to cart via ajax cart -%}
+                <load-spinner class="loading__spinner hidden" aria-label="{{ 'accessibility.loading' | t }}"></load-spinner>
+            </button>
+            {%- # Ajax cart errors -%}
+            <div data-ajax-cart-errors="form"></div>
+        </x-cell>
+
+    {% endform %}
+
+    </ajax-cart-product-form>
+
+{%- else -%}
+    <button class="is-custom soldout-cart" disabled>
+        <span class="cartPriceAdd">{{ 'products.product.sold_out' | t }}</span>
+    </button>
+{%- endif -%}

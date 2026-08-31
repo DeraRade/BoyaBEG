@@ -1,0 +1,255 @@
+{% doc %}
+  @prompt
+    Blok u koji ću moći da ubacim navigaciju . Da mogu da mu biram boju pozadine, centralizaciju elemenata i visinu.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-nav-container-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.height }}px 0;
+  }
+
+  .ai-nav-wrapper-{{ ai_gen_id }} {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: {{ block.settings.vertical_alignment }};
+    justify-content: {{ block.settings.horizontal_alignment }};
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .ai-nav-menu-{{ ai_gen_id }} {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: {{ block.settings.menu_spacing }}px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ai-nav-menu-item-{{ ai_gen_id }} {
+    margin: 0;
+  }
+
+  .ai-nav-menu-link-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+    font-size: {{ block.settings.font_size }}px;
+    transition: color 0.3s ease;
+  }
+
+  .ai-nav-menu-link-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.text_hover_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-nav-wrapper-{{ ai_gen_id }} {
+      justify-content: {{ block.settings.mobile_alignment }};
+    }
+
+    .ai-nav-menu-{{ ai_gen_id }} {
+      gap: {{ block.settings.mobile_menu_spacing }}px;
+    }
+
+    .ai-nav-menu-link-{{ ai_gen_id }} {
+      font-size: {{ block.settings.mobile_font_size }}px;
+    }
+  }
+{% endstyle %}
+
+<nav-block-{{ ai_gen_id }} class="ai-nav-container-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-nav-wrapper-{{ ai_gen_id }}">
+    {% if block.settings.menu != blank %}
+      <ul class="ai-nav-menu-{{ ai_gen_id }}">
+        {% for link in block.settings.menu.links %}
+          <li class="ai-nav-menu-item-{{ ai_gen_id }}">
+            <a href="{{ link.url }}" class="ai-nav-menu-link-{{ ai_gen_id }}">
+              {{ link.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div style="color: {{ block.settings.text_color }}; font-size: 14px; opacity: 0.6;">
+        Izaberite meni u podešavanjima bloka
+      </div>
+    {% endif %}
+  </div>
+</nav-block-{{ ai_gen_id }}>
+
+{% schema %}
+{
+  "name": "Navigation block",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Menu"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "Height",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment",
+      "label": "Horizontal alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Right"
+        },
+        {
+          "value": "space-between",
+          "label": "Space between"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "Vertical alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Bottom"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "menu_spacing",
+      "label": "Menu item spacing",
+      "min": 5,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f2ede8"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#5b5048"
+    },
+    {
+      "type": "color",
+      "id": "text_hover_color",
+      "label": "Text hover",
+      "default": "#813e35"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Mobile"
+    },
+    {
+      "type": "select",
+      "id": "mobile_alignment",
+      "label": "Alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "mobile_menu_spacing",
+      "label": "Menu item spacing",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "mobile_font_size",
+      "label": "Font size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Navigation block"
+    }
+  ],
+  "tag": null
+}
+{% endschema %}

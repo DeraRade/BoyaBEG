@@ -1,0 +1,292 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+{{ section.settings.card_crop_ratio | prepend: '--cardRatio:' | append: ';' }}
+{{ section.settings.card_crop_fit | prepend: '--cardFit:' | append: ';' }}
+{{ section.settings.card_crop_position | prepend: '--cardPosition:' | append: ';' }}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+{% liquid
+    assign grid_columns = section.settings.grid_columns
+    assign grid_gap = section.settings.grid_gap | prepend: 'var(--space-' | append: ');'
+
+    # Check if overlayContent is enabled
+    if section.settings.overlayContent
+        assign overlayContent = 'stack'
+    else
+        assign overlayContent = '1'
+    endif
+
+    # Enable text blend mode
+    assign mixBlend = nil
+    if section.settings.mixBlend and section.settings.overlayContent
+        assign mixBlend = 'mixBlend'
+    endif
+%}
+
+<section
+	class="feat-collections"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+	{%- liquid
+        # Section heading 
+        assign heading = section.settings.heading 
+        assign description = section.settings.description
+        assign attributes = 'wrap-s="wrap"'
+        assign stealth = section.settings.stealthMode
+        assign url = section.settings.url | default: routes.collections_url
+        assign url_label = section.settings.label
+        assign addpad = section.settings.paddingInline
+
+        if heading != empty
+            render 'c-section-head', heading: heading, description: description, url: url, url_label: url_label, attributes: attributes, stealth: stealth, addpad: addpad
+        endif
+    -%}
+
+    <x-grid columns="{{ grid_columns }}" columns-m="3" columns-s="2" style="--gap: {{ grid_gap }}">
+        {%- for collection in section.settings.collection_list -%}
+            {%- if collection.all_products_count > 0 -%}
+            <a href="{{ collection.url }}" title="{{ collection.title | escape }}" class="onHover" x-grid columns="{{ overlayContent }}">
+                <h2 class="h6 text-normal title {{ mixBlend }}" x-flex style="gap: var(--padding)" order="2">
+                    <span>{{ collection.title | escape }}</span>
+                    <span class="off large-only">{{ 'sections.collection_list.view_all' | t }}</span>
+                </h2>
+                <x-cell order="1">{%- render 'inc-img', img: collection.featured_image, width: 1024, widths: '180,360,480,640,768,1024', fallback: true -%}</x-cell>
+            </a>
+            {% endif %}
+        {% else %}
+            {%- for i in (1..grid_columns) -%}
+                <a href="{{ collection.url }}" x-grid columns="{{ overlayContent }}">
+                    <h2 class="h6 text-normal title {{ mixBlend }}" x-flex style="gap: var(--padding)">
+                        <span>{{ 'openthinking.onboarding.title' | t }}</span>
+                        <span class="off large-only">{{ 'sections.collection_list.view_all' | t }}</span>
+                    </h2>
+                    <x-cell>{%- render 'inc-img', img: nil, fallback: true, ph: true -%}</x-cell>
+                </a>
+            {%- endfor -%}
+        {% endfor %}
+    </x-grid>
+
+</section>
+
+{% schema %}
+{
+  "name": "Collection list",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    { "name": "Collection list", "category": "Collections" }
+  ],
+  "settings": [
+    {
+        "type": "header",
+        "content": "Header"
+    },
+    {
+        "type": "checkbox",
+        "id": "stealthMode",
+        "label": "Show header on hover - desktop",
+        "default": false
+    },
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Featured collection",
+        "info": "Leave blank to remove"
+    },
+    {
+        "type": "text",
+        "id": "description",
+        "label": "Description"
+    },
+    {
+        "type": "url",
+        "id": "url",
+        "label": "URL"
+    },
+    {
+        "type": "text",
+        "id": "label",
+        "label": "Label",
+        "default": "View all"
+    },
+    {
+        "type": "header",
+        "content": "Grid"
+    },
+    {
+        "type": "range",
+        "id": "grid_columns",
+        "label": "Columns - desktop",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "default": 4
+    },
+    {
+        "type": "range",
+        "id": "grid_gap",
+        "label": "Gap",
+        "min": 0,
+        "max": 7,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "select",
+        "id": "card_crop_ratio",
+        "label": "Aspect ratio",
+        "default": "4/5",
+        "options": [
+            {
+                "value": "1/1",
+                "label": "1:1 (square)"
+            },
+            {
+                "value": "4/5",
+                "label": "4:5 (vertical)"
+            },
+            {
+                "value": "3/4",
+                "label": "3:4 (standard portrait)"
+            },
+            {
+                "value": "2/3",
+                "label": "2:3 (portrait photo)"
+            }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "card_crop_fit",
+        "label": "Crop style",
+        "info": "Choose how the media fits within the card: 'Wide' crops to fill the space, 'None' keeps the original media dimensions.",
+        "default": "cover",
+        "options": [
+            {
+                "value": "cover",
+                "label": "Wide"
+            },
+            {
+                "value": "contain",
+                "label": "None"
+            }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "card_crop_position",
+        "label": "Crop position",
+        "info": "Select the focal point for cropping the media within the card.",
+        "default": "center",
+        "options": [
+            {
+                "value": "center top",
+                "label": "Top"
+            },
+            {
+                "value": "center",
+                "label": "Center"
+            },
+            {
+                "value": "center bottom",
+                "label": "Bottom"
+            }
+        ]
+    },
+    {
+        "type": "checkbox",
+        "id": "overlayContent",
+        "label": "Overlay text on media",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Content"
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Collections",
+      "info": "Empty collections will not be displayed.",
+      "limit": 12
+    },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+    {
+        "type": "range",
+        "id": "marginTop",
+        "label": "Margin top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingTop",
+        "label": "Padding top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "mixBlend",
+        "label": "Enable text blend mode",
+        "info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+        "default": false,
+        "visible_if": "{{ section.settings.overlayContent == true }}"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

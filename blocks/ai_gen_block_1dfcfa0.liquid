@@ -1,0 +1,482 @@
+{% doc %}
+  @prompt
+    Mapa sa lokacijom prodavnice
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-store-map-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-store-map-container-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: {{ block.settings.layout }};
+    gap: {{ block.settings.gap }}px;
+    align-items: stretch;
+  }
+
+  .ai-store-map-info-{{ ai_gen_id }} {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: {{ block.settings.info_padding }}px;
+    background-color: {{ block.settings.info_bg_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+  }
+
+  .ai-store-map-heading-{{ ai_gen_id }} {
+    margin: 0;
+    font-size: {{ block.settings.heading_size }}px;
+    font-family: var(--fontFamily);
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-store-map-address-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ai-store-map-address-{{ ai_gen_id }} p {
+    margin: 0;
+    color: {{ block.settings.text_color }};
+    line-height: 1.6;
+  }
+
+  .ai-store-map-contact-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ai-store-map-contact-item-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+  }
+
+  .ai-store-map-contact-item-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.link_hover_color }};
+  }
+
+  .ai-store-map-icon-{{ ai_gen_id }} {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .ai-store-map-phone-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-store-map-phone-icons-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ai-store-map-icon-link-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+  }
+
+  .ai-store-map-icon-link-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.link_hover_color }};
+  }
+
+  .ai-store-map-hours-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ai-store-map-hours-{{ ai_gen_id }} h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-family: var(--fontFamily);
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-store-map-hours-{{ ai_gen_id }} p {
+    margin: 0;
+    color: {{ block.settings.text_color }};
+    line-height: 1.6;
+  }
+
+  .ai-store-map-frame-{{ ai_gen_id }} {
+    flex: 1;
+    min-height: {{ block.settings.map_height }}px;
+    border-radius: {{ block.settings.border_radius }}px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ai-store-map-frame-{{ ai_gen_id }} iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .ai-store-map-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ai-store-map-placeholder-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    max-width: 400px;
+    max-height: 400px;
+  }
+
+  .ai-store-map-empty-state-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-store-map-container-{{ ai_gen_id }} {
+      flex-direction: column;
+    }
+
+    .ai-store-map-frame-{{ ai_gen_id }} {
+      min-height: {{ block.settings.map_height_mobile }}px;
+    }
+  }
+{% endstyle %}
+
+<store-location-map-{{ ai_gen_id }}
+  class="ai-store-map-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="ai-store-map-container-{{ ai_gen_id }}">
+    <div class="ai-store-map-info-{{ ai_gen_id }}">
+      {% if block.settings.heading != blank %}
+        <h2 class="ai-store-map-heading-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+      {% endif %}
+
+      {% if block.settings.address != blank %}
+        <div class="ai-store-map-address-{{ ai_gen_id }}">
+          {{ block.settings.address }}
+        </div>
+      {% endif %}
+
+      <div class="ai-store-map-contact-{{ ai_gen_id }}">
+        {% if block.settings.phone != blank %}
+          {% assign whatsapp_number = block.settings.phone | remove: ' ' | remove: '+' | remove: '-' | remove: '(' | remove: ')' %}
+          <div class="ai-store-map-phone-{{ ai_gen_id }}">
+            <div class="ai-store-map-phone-icons-{{ ai_gen_id }}">
+              <a
+                href="tel:{{ block.settings.phone }}"
+                class="ai-store-map-icon-link-{{ ai_gen_id }}"
+                aria-label="Pozovite {{ block.settings.phone }}"
+              >
+                <svg
+                  class="ai-store-map-icon-{{ ai_gen_id }}"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </a>
+              <a
+                href="https://wa.me/{{ whatsapp_number }}"
+                class="ai-store-map-icon-link-{{ ai_gen_id }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp {{ block.settings.phone }}"
+              >
+                <svg
+                  class="ai-store-map-icon-{{ ai_gen_id }}"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path>
+                </svg>
+              </a>
+            </div>
+            <span>{{ block.settings.phone }}</span>
+          </div>
+        {% endif %}
+
+        {% if block.settings.email != blank %}
+          <a
+            href="mailto:{{ block.settings.email }}"
+            class="ai-store-map-contact-item-{{ ai_gen_id }}"
+          >
+            <svg
+              class="ai-store-map-icon-{{ ai_gen_id }}"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>{{ block.settings.email }}</span>
+          </a>
+        {% endif %}
+      </div>
+
+      {% if block.settings.hours != blank %}
+        <div class="ai-store-map-hours-{{ ai_gen_id }}">
+          <h3>{{ block.settings.hours_heading }}</h3>
+          {{ block.settings.hours }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="ai-store-map-frame-{{ ai_gen_id }}">
+      {% if block.settings.map_embed != blank %}
+        {{ block.settings.map_embed }}
+      {% else %}
+        <div class="ai-store-map-placeholder-{{ ai_gen_id }}">
+          {{ 'image' | placeholder_svg_tag }}
+          <div class="ai-store-map-empty-state-{{ ai_gen_id }}">
+            Dodajte Google Maps kod za prikaz mape
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</store-location-map-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class StoreLocationMap{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.style.display = 'block';
+      }
+    }
+
+    customElements.define('store-location-map-{{ ai_gen_id }}', StoreLocationMap{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Mapa prodavnice",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Informacije o prodavnici"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Naslov",
+      "default": "Posetite nas"
+    },
+    {
+      "type": "richtext",
+      "id": "address",
+      "label": "Adresa",
+      "default": "<p>Ulica Primer 123<br>11000 Beograd<br>Srbija</p>"
+    },
+    {
+      "type": "text",
+      "id": "phone",
+      "label": "Telefon",
+      "default": "+381 11 123 4567"
+    },
+    {
+      "type": "text",
+      "id": "email",
+      "label": "Email",
+      "default": "info@prodavnica.com"
+    },
+    {
+      "type": "header",
+      "content": "Radno vreme"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "hours_heading",
+      "label": "Naslov",
+      "default": "Radno vreme"
+    },
+    {
+      "type": "richtext",
+      "id": "hours",
+      "label": "Radno vreme",
+      "default": "<p>Ponedeljak - Petak: 9:00 - 18:00<br>Subota: 10:00 - 16:00<br>Nedelja: Zatvoreno</p>"
+    },
+    {
+      "type": "header",
+      "content": "Mapa"
+    },
+    {
+      "type": "html",
+      "id": "map_embed",
+      "label": "Google Maps kod"
+    },
+    {
+      "type": "range",
+      "id": "map_height",
+      "label": "Visina mape - desktop",
+      "min": 300,
+      "max": 700,
+      "step": 25,
+      "unit": "px",
+      "default": 450
+    },
+    {
+      "type": "range",
+      "id": "map_height_mobile",
+      "label": "Visina mape - mobilno",
+      "min": 150,
+      "max": 500,
+      "step": 25,
+      "unit": "px",
+      "default": 300
+    },
+    {
+      "type": "header",
+      "content": "Raspored"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Raspored",
+      "options": [
+        {
+          "value": "row",
+          "label": "Informacije levo"
+        },
+        {
+          "value": "row-reverse",
+          "label": "Informacije desno"
+        }
+      ],
+      "default": "row"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Razmak",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Širina na desktopu",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Stil"
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "label": "Padding sekcije",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "info_padding",
+      "label": "Padding informacija",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Zaobljenost ivica",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Veličina naslova",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 28
+    },
+    {
+      "type": "color",
+      "id": "info_bg_color",
+      "label": "Pozadina informacija",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Boja teksta",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "link_hover_color",
+      "label": "Boja linka na hover",
+      "default": "#666666"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Mapa prodavnice"
+    }
+  ]
+}
+{% endschema %}

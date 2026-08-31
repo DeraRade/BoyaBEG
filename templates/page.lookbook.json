@@ -1,0 +1,94 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "ls-collage",
+      "blocks": {
+        "text": {
+          "type": "text",
+          "settings": {
+            "span": 2
+          }
+        },
+        "image1": {
+          "type": "image",
+          "settings": {
+            "span": 4
+          }
+        },
+        "image2": {
+          "type": "image",
+          "settings": {
+            "span": 2
+          }
+        },
+        "image3": {
+          "type": "image",
+          "settings": {
+            "span": 3
+          }
+        },
+        "image4": {
+          "type": "image",
+          "settings": {
+            "span": 3
+          }
+        },
+        "image5": {
+          "type": "image",
+          "settings": {
+            "span": 1
+          }
+        },
+        "image6": {
+          "type": "image",
+          "settings": {
+            "span": 1
+          }
+        },
+        "image7": {
+          "type": "image",
+          "settings": {
+            "span": 8
+          }
+        },
+        "image8": {
+          "type": "image",
+          "settings": {
+            "span": 5
+          }
+        },
+        "image9": {
+          "type": "image",
+          "settings": {
+            "span": 3
+          }
+        }
+      },
+      "block_order": [
+        "text",
+        "image1",
+        "image2",
+        "image3",
+        "image4",
+        "image5",
+        "image6",
+        "image7",
+        "image8",
+        "image9"
+      ],
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

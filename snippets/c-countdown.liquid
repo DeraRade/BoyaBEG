@@ -1,0 +1,39 @@
+{% comment %}
+    This is the countdown's core.
+
+    Accepts:
+    - now = {required}
+    - timezone = {required}
+    - then = {required}
+    - message = {required}
+    - show_weeks = {optional}
+    - show_seconds = {optional}
+
+    Usage:
+	{%- render 'c-countdown', block: block -%}
+{% endcomment %}
+
+<component-loader>
+<coretex-countdown
+    {% if block.settings.now == 'auto' and block.settings.timezone == blank %}
+    data-now="{{ "now" | date: "%Y-%m-%dT%H:%M:%S" }}"
+    {% else %}
+    data-timezone="{{ block.settings.timezone }}"
+    {% endif %}
+    data-date="{{ block.settings.date | escape }}" 
+    data-time="{{ block.settings.time | escape }}"
+    data-message="{{ block.settings.final_message | escape }}" 
+    data-weeks="{{ block.settings.show_weeks }}"
+    data-seconds="{{ block.settings.show_seconds }}"
+>
+    <x-flex class="timer">
+        {% if block.settings.show_weeks == true %}<x-cell class="weeks"><span class="date">00 {{ 'openthinking.countdown.weeks' | t }}</span></x-cell>{% endif %}
+        <x-cell class="days"><span class="date">00 {{ 'openthinking.countdown.days' | t }}</span></x-cell>
+        <x-cell class="hours"><span class="date">00 {{ 'openthinking.countdown.hours' | t }}</span></x-cell>
+        <x-cell class="mins"><span class="date">00 {{ 'openthinking.countdown.minutes' | t }}</span></x-cell>
+        {% if block.settings.show_seconds == true %}<x-cell class="secs"><span class="date">00 {{ 'openthinking.countdown.seconds' | t }}</span></x-cell>{% endif    %}
+    </x-flex>
+</coretex-countdown>
+
+<script>window.dateStrings = { week: `{{ 'openthinking.countdown.week' | t }}`, weeks: `{{ 'openthinking.countdown.weeks' | t }}`, day: `{{ 'openthinking.countdown.day' | t }}`, days: `{{ 'openthinking.countdown.days' | t }}`, hour: `{{ 'openthinking.countdown.hour' | t }}`, hours: `{{ 'openthinking.countdown.hours' | t }}`, minute: `{{ 'openthinking.countdown.minute' | t }}`, minutes: `{{ 'openthinking.countdown.minutes' | t }}`, second: `{{ 'openthinking.countdown.second' | t }}`, seconds: `{{ 'openthinking.countdown.seconds' | t }}` }</script>
+</component-loader>

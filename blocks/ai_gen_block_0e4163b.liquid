@@ -1,0 +1,325 @@
+{% doc %}
+  @prompt
+    Treba mi klikabilan segment sa google mapom koji vodi do adrese naše prodavnice. 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-map-container-{{ ai_gen_id }} {
+    position: relative;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    display: block;
+  }
+
+  .ai-map-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: {{ block.settings.map_height }}px;
+    border-radius: {{ block.settings.border_radius }}px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .ai-map-wrapper-{{ ai_gen_id }}:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .ai-map-iframe-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  .ai-map-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: {{ block.settings.overlay_color }};
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    pointer-events: none;
+  }
+
+  .ai-map-info-{{ ai_gen_id }} {
+    flex-grow: 1;
+  }
+
+  .ai-map-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 5px 0;
+  }
+
+  .ai-map-address-{{ ai_gen_id }} {
+    font-size: {{ block.settings.address_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  .ai-map-icon-{{ ai_gen_id }} {
+    width: 40px;
+    height: 40px;
+    background-color: {{ block.settings.icon_bg_color }};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ai-map-icon-{{ ai_gen_id }} svg {
+    width: 20px;
+    height: 20px;
+    fill: {{ block.settings.icon_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-map-wrapper-{{ ai_gen_id }} {
+      height: {{ block.settings.map_height_mobile }}px;
+    }
+
+    .ai-map-overlay-{{ ai_gen_id }} {
+      padding: 15px;
+    }
+
+    .ai-map-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.9 }}px;
+    }
+
+    .ai-map-address-{{ ai_gen_id }} {
+      font-size: {{ block.settings.address_size | times: 0.9 }}px;
+    }
+  }
+{% endstyle %}
+
+<google-map-{{ ai_gen_id }}
+  class="ai-map-container-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+>
+  <a
+    href="{{ block.settings.directions_url }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="ai-map-wrapper-{{ ai_gen_id }}"
+    aria-label="Otvori Google Maps za {{ block.settings.store_name }}"
+  >
+    <iframe
+      class="ai-map-iframe-{{ ai_gen_id }}"
+      src="https://www.google.com/maps/embed/v1/place?key={{ block.settings.google_maps_api_key }}&q={{ block.settings.map_address | url_encode }}&zoom={{ block.settings.zoom_level }}"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      allowfullscreen
+    ></iframe>
+
+    {% if block.settings.show_overlay %}
+      <div class="ai-map-overlay-{{ ai_gen_id }}">
+        <div class="ai-map-info-{{ ai_gen_id }}">
+          {% if block.settings.store_name != blank %}
+            <h3 class="ai-map-title-{{ ai_gen_id }}">{{ block.settings.store_name }}</h3>
+          {% endif %}
+          {% if block.settings.store_address != blank %}
+            <p class="ai-map-address-{{ ai_gen_id }}">{{ block.settings.store_address }}</p>
+          {% endif %}
+        </div>
+        <div class="ai-map-icon-{{ ai_gen_id }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>
+      </div>
+    {% endif %}
+  </a>
+</google-map-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class GoogleMap{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        const mapWrapper = this.querySelector('.ai-map-wrapper-{{ ai_gen_id }}');
+        const iframe = this.querySelector('.ai-map-iframe-{{ ai_gen_id }}');
+
+        if (mapWrapper && iframe) {
+          mapWrapper.addEventListener('click', function(e) {
+            if (e.target === iframe) {
+              e.preventDefault();
+            }
+          });
+        }
+      }
+    }
+
+    customElements.define('google-map-{{ ai_gen_id }}', GoogleMap{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Google mapa prodavnice",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Google Maps podešavanja"
+    },
+    {
+      "type": "text",
+      "id": "google_maps_api_key",
+      "label": "Google Maps API ključ",
+      "info": "Unesite vaš Google Maps API ključ. [Saznajte više](https://developers.google.com/maps/documentation/embed/get-api-key)"
+    },
+    {
+      "type": "text",
+      "id": "map_address",
+      "label": "Adresa",
+      "default": "Bulevar kralja Aleksandra 28, Beograd, Srbija"
+    },
+    {
+      "type": "url",
+      "id": "directions_url",
+      "label": "Link za putanju"
+    },
+    {
+      "type": "range",
+      "id": "zoom_level",
+      "label": "Nivo zumiranja",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "default": 15
+    },
+    {
+      "type": "header",
+      "content": "Dimenzije"
+    },
+    {
+      "type": "range",
+      "id": "map_height",
+      "label": "Visina na desktopu",
+      "min": 200,
+      "max": 800,
+      "step": 50,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "map_height_mobile",
+      "label": "Visina na mobilnom",
+      "min": 200,
+      "max": 600,
+      "step": 50,
+      "unit": "px",
+      "default": 300
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Širina na desktopu",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Zaobljenost ivica",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Informacije o prodavnici"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_overlay",
+      "label": "Prikaži informacije",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "store_name",
+      "label": "Naziv prodavnice",
+      "default": "Naša prodavnica"
+    },
+    {
+      "type": "text",
+      "id": "store_address",
+      "label": "Adresa za prikaz",
+      "default": "Bulevar kralja Aleksandra 28, Beograd"
+    },
+    {
+      "type": "header",
+      "content": "Stilizovanje"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Boja pozadine informacija",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Boja teksta",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "icon_bg_color",
+      "label": "Boja pozadine ikone",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Boja ikone",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Veličina naslova",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "address_size",
+      "label": "Veličina adrese",
+      "min": 10,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Google mapa prodavnice"
+    }
+  ]
+}
+{% endschema %}

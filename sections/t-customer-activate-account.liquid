@@ -1,0 +1,94 @@
+{% comment %}
+  === [ CORETEX FYI ] ===
+
+  To preview the customers/activate_account template, perform the following steps:
+
+  1. From your Shopify admin, add a fake customer on the Customers page using your own email.
+  2. Click the ... button at the top right of the page for your newly created customer, and then click Send account invite.
+  3. Check your email inbox for the Customer account invite email.
+  4. Click the link in the email. This will take you to the customer account activation page.
+
+  > https://shopify.dev/docs/storefronts/themes/architecture/templates/customers-activate-account#preview-the-template
+{% endcomment %}
+
+{%- # Load the stylesheet for the page -%}
+{%- render 'inc-stylesheet', src: 't-login.css' -%}
+
+<section class="customer activate">
+  <h1 class="h4 pageTitle">{{ 'customer.activate_account.title' | t }}</h1>
+  <p>{{ 'customer.activate_account.subtext' | t }}</p>
+
+    {%- form 'activate_customer_password' -%}
+      {%- if form.errors -%}
+        <h3 tabindex="-1" autofocus>{{ 'templates.contact.form.error_heading' | t }}</h3>
+        <ul>
+          {%- for field in form.errors -%}
+            <li>
+              {%- if field == 'form' -%}
+                {{ form.errors.messages[field] }}
+              {%- else -%}
+                <a href="#{{ field }}">
+                  {{ form.errors.translated_fields[field] | capitalize }}
+                  {{ form.errors.messages[field] }}
+                </a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      <x-field class="field">
+        <input
+          type="password"
+          name="customer[password]"
+          id="password"
+          autocomplete="new-password"
+          placeholder="{{ 'customer.activate_account.password' | t }}"
+          {% if form.errors contains 'password' %}
+            aria-invalid="true"
+            aria-describedby="password-error"
+          {% endif %}
+        >
+        <label for="password">{{ 'customer.activate_account.password' | t }}</label>
+      </x-field>
+      {%- if form.errors contains 'password' -%}
+        <small id="password-error">
+          {{ form.errors.translated_fields.password | capitalize }}
+          {{ form.errors.messages.password }}
+        </small>
+      {%- endif -%}
+
+      <x-field>
+        <input
+          type="password"
+          name="customer[password_confirmation]"
+          id="password_confirmation"
+          autocomplete="new-password"
+          placeholder="{{ 'customer.activate_account.password_confirm' | t }}"
+          {% if form.errors contains 'password' %}
+            aria-invalid="true"
+            aria-describedby="password_confirmation-error"
+          {% endif %}
+        >
+        <label for="password_confirmation">{{ 'customer.activate_account.password_confirm' | t }}</label>
+      </x-field>
+      {%- if form.errors contains 'password_confirmation' -%}
+        <small id="password_confirmation-error">
+          {{ form.errors.translated_fields.password_confirmation | capitalize }}
+          {{ form.errors.messages.password_confirmation }}
+        </small>
+      {%- endif -%}
+
+      <div class="actions">
+        <button type="submit">{{ 'customer.activate_account.submit' | t }}</button>
+        <button type="submit" name="decline">{{ 'customer.activate_account.cancel' | t }}</button>
+      </div>
+    {%- endform -%}
+</section>
+
+{% schema %}
+{
+  "name": "Main Activate account",
+  "settings": []
+}
+{% endschema %}

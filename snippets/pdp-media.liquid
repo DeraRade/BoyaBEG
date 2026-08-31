@@ -1,0 +1,183 @@
+{% comment %}
+    Renders a product media gallery.
+
+    Accepts:
+    - product: {Object} Product liquid object
+    - variant_images: {Array} Product images associated with a variant
+    - limit: {Number} (optional) When passed, limits the number of media items to render
+    - section: {Object} Section liquid object
+
+    Usage:
+    {%- render 'pdp-media', variant_images: variant_images, section: section -%}
+{% endcomment %}
+
+{%- liquid 
+    # Check how much media we have
+    assign media_count = product.media.size
+
+    # If we have more than one media, or media type is stacked do not start the slider
+    assign sliderState = true
+    if section.settings.media_type == 'stacked' or media_count == 1
+        assign sliderState = false
+    endif
+
+    # If we have only one media, we don't need the slider on mobile.
+    assign sliderStateMob = true
+    if media_count == 1
+        assign sliderStateMob = false
+    endif
+-%}
+<component-loader><media-gallery mq="{{ sliderState }}" mq-s="{{ sliderStateMob }}" loop="{{ section.settings.slider_loop }}"
+    controls-position="{{ section.settings.slider_button_position }}"
+    id="MediaGallery-{{ section.id }}"
+    role="region"
+    aria-label="{{ 'products.product.media.gallery_viewer' | t }}"
+    {% if media_count == 0 %}medialess{% endif %}
+  >
+    {% comment %} Main images {% endcomment %}
+    <slider-component slider-viewport id="GalleryViewer-{{ section.id }}">
+        <ul x-flex
+            id="Slider-Gallery-{{ section.id }}"
+            slider-container
+            role="list"
+            class="no-style inside" 
+        >
+            {%- assign count = 0 -%}
+            {%- assign image_count = 0 -%}
+            {%- for media in product.media -%}
+                {%- liquid
+                    assign count = count | plus: 1
+
+                    # Set fetchpriority and preload for media gallery
+                    assign fetchpriority = false
+                    assign preload = false
+                    
+                    # Set fetchpriority and preload for media gallery for the first two media items
+                    if media.media_type == 'image'
+                        assign image_count = image_count | plus: 1
+                        if image_count <= 2
+                            assign fetchpriority = 'high'
+                            assign preload = true
+                        endif
+                    endif
+                -%}
+
+                <li
+                    class="product__media-item" slider-slide="{{ count }}"
+                    data-media-id="{{ section.id }}-{{ media.id }}"
+                >
+                    {%- render 'pdp-media-core',
+                        media: media,
+                        media_count: media_count,
+                        loop: section.settings.enable_video_looping,
+                        autoplay: section.settings.enable_video_autoplay,
+                        controls: section.settings.enable_video_controls,
+                        constrain_to_viewport: section.settings.constrain_to_viewport,
+                        imageZoom: section.settings.imageZoom,
+                        modal_id: section.id,
+                        xr_button: true,
+                        fetchpriority: fetchpriority,
+                        preload: preload
+                    -%}
+                </li>
+            {%- endfor -%}
+        </ul>
+
+        {%- comment -%} Slider controls {%- endcomment -%}
+        <slider-controls overlay="{{ section.settings.pagination_overlay }}"> 
+            <x-flex direction="row" ai="center" wrap="wrap" class="paginationNav">
+
+                {%- comment -%} Number of slides / dots / lines {%- endcomment -%}
+                {% if section.settings.pagination_type == 'lines' or section.settings.pagination_type == 'dots' %}
+                    <x-cell span="1">
+                        <x-flex ai="center" control-dots{% if section.settings.pagination_type == 'lines' %} as-lines{% endif %}>
+                            <button class="control-dot is-selected" type="button" tabindex="0" disabled></button>
+                        </x-flex>
+                    </x-cell>
+                {% elsif section.settings.pagination_type == 'numbers' %}
+                    <x-cell span="1">
+                        <div control-numbers class="text-center">1 / 1</div>
+                    </x-cell>
+                {% endif %}
+
+                {%- comment -%} Previous and next buttons {%- endcomment -%}
+                {%- if section.settings.slider_button -%}
+                <x-cell>
+                    <x-cell>
+                        <button control-prev class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'general.slider.previous_slide' | t }}">
+                            {%- render 'inc-icon', icon: 'arrow-left' -%}
+                        </button>
+                    </x-cell>
+                    <x-cell>
+                        <button control-next class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'general.slider.next_slide' | t }}">
+                            {%- render 'inc-icon', icon: 'arrow-right' -%}
+                        </button>
+                    </x-cell>
+                </x-cell>
+                {%- endif -%}
+
+            </x-flex>
+        </slider-controls>
+    </slider-component>
+
+    {%- comment -%} 3D model trigger {%- endcomment -%}
+    {%- if first_3d_model -%}
+        <button
+          class="button button--full-width product__xr-button"
+          type="button"
+          aria-label="{{ 'products.product.xr_button_label' | t }}"
+          data-shopify-xr
+          data-shopify-model3d-id="{{ first_3d_model.id }}"
+          data-shopify-title="{{ product.title | escape }}"
+          data-shopify-xr-hidden
+        >
+          {%- render 'inc-icon', icon: 'cube' -%}
+          {{ 'products.product.xr_button' | t }}
+        </button>
+    {%- endif -%}
+
+    {%- comment -%}
+        === [ CORETEX FYI ] === 
+        The whole slider switch between variant images logic relays on this slider-thumbnails section. 
+        ⚠️ DO NOT REMOVE!
+        if you want to hide it use `display: none;` instead.
+    {%- endcomment -%}
+
+    {%- comment -%} Thumbnails {%- endcomment -%}
+    <slider-thumbnails {% unless section.settings.slider_thumbnails %}style="display:none"{% endunless %}>
+        <ul control-thumbs irregular-thumbs="{{ section.settings.slider_thumbnails_irregular }}" class="no-style inside scroll-snap align-start mandatory no-scrollbars" x-flex direction="row" ai="center">
+          {%- for media in product.media -%}
+            <li thumbs-slide
+                data-target="{{ section.id }}-{{ media.id }}"
+                data-media="{{ media.id }}"
+                data-media-position="{{ forloop.index }}"
+            >
+                {% comment %} Icons for 3D model and video {% endcomment %}
+                {%- if media.media_type == 'model' -%}
+                    <x-grid columns="1" pi="center" class="tbadge" aria-hidden="true">{%- render 'inc-icon', icon: 'cube' -%}</x-grid>
+                {%- elsif media.media_type == 'video' or media.media_type == 'external_video' -%}
+                    <x-grid columns="1" pi="center" class="tbadge" aria-hidden="true">{%- render 'inc-icon', icon: 'os-play' -%}</x-grid>
+                {%- endif -%}
+
+                <button
+                    class="is-blank"
+                    aria-label="{%- if media.media_type == 'image' -%}{{ 'products.product.media.load_image' | t: index: media_index }}{%- elsif media.media_type == 'model' -%}{{ 'products.product.media.load_model' | t: index: media_index }}{%- elsif media.media_type == 'video' or media.media_type == 'external_video' -%}{{ 'products.product.media.load_video' | t: index: media_index }}{%- endif -%}"
+                    aria-controls="GalleryViewer-{{ section.id }}"
+                >
+
+                    {%- liquid 
+                        assign img = media.preview_image
+                        assign width = 208
+                        assign widths = '54, 74, 104, 162, 208'
+                        assign sizes = '50px'
+                        assign alt = media.alt | escape
+
+                        render 'inc-img' img: img, width: width, widths: widths, sizes: sizes, alt: alt, mediaLoader: false, loading: 'lazy'
+                    -%}
+              </button>
+            </li>
+          {%- endfor -%}
+        </ul>
+    </slider-thumbnails>
+
+</media-gallery></component-loader>

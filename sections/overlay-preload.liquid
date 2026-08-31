@@ -1,0 +1,314 @@
+{%- capture style -%}
+{% if section.settings.overlayOpacity %}{{ section.settings.overlayOpacityValue | prepend: '--_bgOpacity:' | append: ';' }}{% endif %}
+{% if section.settings.overlayBlur %}{{ section.settings.overlayBlurValue | prepend: '--_overlayBlur:' | append: 'px;' }}{% endif %}
+{%- endcapture -%}
+
+<coretex-preload
+    class="center-axyz full"
+	id="pagePreloadBox"
+    style="{{- style | strip_newlines | strip -}}"
+	data-section-id="{{ section.id }}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    {% if section.settings.delay == true %}delay="{{ section.settings.delayTime }}"{% endif %}
+    opacity="{{ section.settings.overlayOpacity }}"
+    backdrop-blur="{{ section.settings.overlayBlur }}"
+    animate="{{ section.settings.animation }}"
+    exit-animation="{{ section.settings.exitAnimation }}"
+>
+    <x-flex direction="column" ai="center" jc="center" class="stage">
+        {%- assign hasImg = false -%}
+        {% for block in section.blocks %}
+            {%- case block.type -%}
+                {%- when 'image' -%}
+                    <x-cell class="affect1 loaderImage">
+                        {%- style -%}:root{ {{ block.settings.imageSize | prepend: '--loaderImageSize:' | append: 'px' }} }{%- endstyle -%}
+                        {%- liquid 
+                            assign img = block.settings.image | default: nil
+                            assign width = 450
+                            assign widths = '100,200,300,400,500'
+                            assign fallback = true
+                            assign loading = 'eager'
+                            assign mediaLoader = false
+
+                            render 'inc-img' img: img, width: width, widths: widths, fallback: fallback, loading: loading, mediaLoader: mediaLoader
+
+                            # Check if image is present
+                            if img
+                                assign hasImg = true
+                            endif
+                        -%}
+                    </x-cell>
+
+                {% when 'heading' -%}
+				    {%- if block.settings.text != empty -%}
+				    	<x-cell class="affect2" {% if hasImg %}style="--tDelay: 100ms"{%- endif -%}>
+				    		<h2 class="h1">{{ block.settings.text }}</h2>
+				    	</x-cell>
+				    {%- endif -%}
+
+            {%- endcase -%}
+        {%- endfor -%}
+    </x-flex>
+</coretex-preload>
+
+{%- style -%}
+coretex-preload {
+    display: grid;
+    position: fixed;
+    inset: 0;
+    z-index: 9999999;
+    overflow: clip;
+
+    background: var(--bg);
+    color: var(--color);
+    
+    transition: all 500ms ease-in-out;
+    transition-behavior: allow-discrete;
+
+    @starting-style { display: block; opacity: 1 }
+    &[loaded] { 
+        display: none; opacity: 0; 
+
+        /* Zoom out exit animation */
+        &[exit-animation="zoomout"] { scale: 3; filter: blur(10px) }
+    }
+
+    &[opacity="true"] { background: rgb(var(--bgRGB) / var(--_bgOpacity))!important }
+    &[backdrop-blur="true"] { backdrop-filter: blur(var(--_overlayBlur)) } 
+
+    img { max-width: var(--loaderImageSize) }
+
+    /* Loader animations */
+    @media screen and (prefers-reduced-motion: no-preference) {
+        &:not([loaded])[animate="bounce"] :where(.affect1,.affect2) {
+            animation: loaderBounce 4s var(--easeInOutQuint) infinite;
+            animation-delay: var(--tDelay, 0s);
+            transform-origin: center center;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        &:not([loaded])[animate="fade"] :where(.affect1,.affect2) {
+            animation: loaderFadeInOut 3s ease-in-out infinite;
+            transform-origin: center center;
+        } 
+
+        &:not([loaded])[animate="bounce-extra"] :where(.affect1, .affect2) {
+            animation: loaderBounceExtra 4s var(--easeInOutExpo) infinite;
+            animation-delay: var(--tDelay, 0s);
+            transform-origin: center center;
+            transform-style: preserve-3d;
+            will-change: transform, opacity, filter;
+        }
+
+        &:not([loaded])[animate="rotate"] {
+            :where(.affect1,.affect2) {
+                animation: loader360 6s var(--easeInOutQuad) infinite both;
+                animation-delay: var(--tDelay, 0s);
+                transform-origin: center center;
+                transform-style: preserve-3d;
+                perspective: 777px;
+            }
+            .affect2 { animation-direction: alternate-reverse; animation-delay: 200ms } 
+        }
+    }
+}
+
+@keyframes loaderBounce {
+    0%,100% { transform: translate3d(0) }
+    50% { transform: translate3d(0, -50px, 0) }
+}
+
+@keyframes loaderFadeInOut { 
+    0%,100% { opacity: 1 } 
+    50% { opacity: 0.2 }
+}
+
+@keyframes loaderBounceExtra {
+    0%,100% { 
+        opacity: 1; 
+        filter: blur(0px); 
+        transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg); 
+    }
+    50% { 
+        opacity: 0.5;
+        filter: blur(3px); 
+        transform: translate3d(0, -50px, 0) rotateX(20deg) rotateY(9deg); 
+    }
+}
+
+@keyframes loader360 {
+    0% { transform: rotateY(0deg) }
+    100% { transform: rotateY(360deg) }
+}
+{%- endstyle -%}
+
+{% schema %}
+{
+		"name": "Loading screen",
+		"limit": 1,
+		"enabled_on": { "groups": ["aside"] },
+		"presets": [
+			{
+				"name": "Loading screen",
+				"blocks": [ { "type": "heading" } ]
+			}
+		],
+		"settings": [
+            {
+                "type": "checkbox",
+                "id": "delay",
+                "label": "Extra delay",
+                "info": "Adds a delay before the loading screen is removed, even if the page has finished loading.",
+                "default": false
+            },
+            {
+                "type": "range",
+                "id": "delayTime",
+                "label": "Delay duration",
+                "min": 1,
+                "max": 10,
+                "unit": "sec",
+                "step": 1,
+                "default": 3,
+                "info": "Set how many seconds to delay hiding the loading screen after the page loads.",
+                "visible_if": "{{ section.settings.delay == true }}"
+            },
+			{
+				"type": "select",
+				"id": "exitAnimation",
+				"label": "Exit animation",
+				"default": "zoomout",
+				"options": [
+					{
+						"value": "default",
+						"label": "Default"
+					},
+					{
+						"value": "zoomout",
+						"label": "Zoom out"
+					}
+				]
+			},
+			{
+				"type": "header",
+				"content": "Content"
+			},
+			{
+				"type": "select",
+				"id": "animation",
+				"label": "Animation", 
+				"default": "bounce-extra",
+				"options": [
+					{
+						"value": "none",
+						"label": "None"
+					},
+					{
+						"value": "bounce",
+						"label": "Bounce"
+					},
+					{
+						"value": "bounce-extra",
+						"label": "Bounce extra"
+					},
+					{
+						"value": "fade",
+						"label": "Fade"
+					},
+					{
+						"value": "rotate",
+						"label": "Rotate"
+					}
+				]
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            },
+            {
+                "type": "checkbox",
+                "id": "overlayOpacity",
+                "label": "Enable overlay opacity",
+                "default": false
+            },
+            {
+                "type": "range",
+                "id": "overlayOpacityValue",
+                "label": "Opacity level",
+                "min": 0,
+                "max": 1,
+                "step": 0.1,
+                "default": 0.8,
+                "visible_if": "{{ section.settings.overlayOpacity == true }}"
+            },
+            {
+                "type": "checkbox",
+                "id": "overlayBlur",
+                "label": "Enable overlay blur",
+                "default": false
+            },
+            {
+                "type": "range",
+                "id": "overlayBlurValue",
+                "label": "Blur amount",
+                "min": 0,
+                "max": 40,
+                "step": 1,
+                "default": 5,
+                "visible_if": "{{ section.settings.overlayBlur == true }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "image",
+				"name": "Image",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "image_picker",
+						"id": "image",
+						"label": "Image"
+					},
+                    {
+                        "type": "range",
+                        "id": "imageSize",
+                        "min": 20,
+                        "max": 300,
+                        "step": 5,
+                        "unit": "px",
+                        "label": "Size",
+                        "default": 250,
+                        "visible_if": "{{ block.settings.image != nil }}"
+                    }
+				]
+			},
+			{
+				"type": "heading",
+				"name": "Heading",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "text",
+						"id": "text",
+						"label": "Heading",
+						"default": "Loading..."
+					}
+				]
+			}
+		]
+}
+{% endschema %}

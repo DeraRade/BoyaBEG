@@ -1,0 +1,207 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{%- endcapture -%}
+
+<section 
+    class="testimonials"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+
+    <component-loader><coretex-scroll>
+        {%- liquid
+            # Section heading 
+            assign heading = section.settings.heading
+            assign description = section.settings.description
+            assign url = section.settings.url
+            assign url_label = section.settings.label
+            assign attributes = 'wrap-s="wrap"'
+            assign nav = true
+            assign stealth = section.settings.stealthMode
+
+            render 'c-section-head', heading: heading, description: description, url: url, url_label: url_label, attributes: attributes, nav: nav, stealth: stealth
+        -%}
+
+        <x-flex ai="stretch" class="list scroll-snap mandatory" scroll-area> 
+            {%- for block in section.blocks -%}
+                <x-cell class="testimonial" scroll-slide>
+                    <x-flex direction="column" class="card">
+                        <x-flex jc="between" class="image">
+
+                            <x-cell>
+                                {%- liquid
+                                    assign img = block.settings.image
+                                    assign width = 500
+                                    assign widths = '150,250,350,450,500'
+                                    assign mediaLoader = true
+                                    render 'inc-img', img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true
+                                -%}
+                            </x-cell>
+
+                            {%- if block.settings.url != blank -%}<x-cell><a href="{{ block.settings.url }}" class="button has-icon is-custom" target="_blank">{%- render 'inc-icon', icon: 'arrow-upRight' -%}</a></x-cell>{%- endif -%}
+
+                        </x-flex>
+
+                        <x-cell class="desc rte">{{ block.settings.description | replace: '\n', '<br/>' }}</x-cell>
+
+                        <x-flex ai="center" jc="between" class="name">
+                            {% if block.settings.name != blank %}<x-cell>{{ block.settings.name }}</x-cell>{% endif %}
+                            {%- if block.settings.rating != 'none' -%}<x-cell class="stars button is-custom">{{ block.settings.rating }}</x-cell>{%- endif -%}
+                        </x-flex>
+                    </x-flex>
+                </x-cell>
+            {%- endfor -%}
+        </x-flex>
+    </coretex-scroll></component-loader>
+
+</section>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    { "name": "Testimonials", "category": "Content" }
+  ],
+  "settings": [
+    {
+        "type": "header",
+        "content": "Header"
+    },
+    {
+        "type": "checkbox",
+        "id": "stealthMode",
+        "label": "Show header on hover - desktop",
+        "default": false
+    },
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Testimonials"
+    },
+    {
+        "type": "text",
+        "id": "description",
+        "label": "Description"
+    },
+    {
+        "type": "url",
+        "id": "url",
+        "label": "URL"
+    },
+    {
+        "type": "text",
+        "id": "label",
+        "label": "Label",
+        "default": "View all"
+    },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "range",
+        "id": "marginTop",
+        "label": "Margin top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingTop",
+        "label": "Padding top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image",
+            "info": "300 x 300 px required"
+        },
+        {
+            "type": "text",
+            "id": "name",
+            "label": "Name",
+            "default": "Name"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "description",
+          "label": "Description",
+          "default": "Use this to describe the testimonial."
+        },
+        {
+            "type": "select",
+            "id": "rating",
+            "label": "Rating",
+            "default": "*****",
+            "options": [
+                { "value": "none", "label": "None" }, 
+                { "value": "*", "label": "1 Star" }, 
+                { "value": "**", "label": "2 Stars" }, 
+                { "value": "***", "label": "3 Stars" }, 
+                { "value": "****", "label": "4 Stars" }, 
+                { "value": "*****", "label": "5 Stars" }
+            ]
+        },
+        {
+            "type": "url",
+            "id": "url",
+            "label": "URL"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

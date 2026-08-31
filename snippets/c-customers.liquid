@@ -1,0 +1,15 @@
+{% comment %}
+  Renders layout for the customer pages
+
+  Accepts:
+  - content: {String} HTML of the content for the current page
+{% endcomment %}
+{%- render 'inc-stylesheet', src: 't-customer.css'  -%}
+
+<nav class="portal-nav sticky" style="--sticky: var(--headSpace, 0px)">
+    <x-flex direction="row">
+        <x-cell><a href="{{ routes.account_url }}" class="button is-custom text-normal">{{ 'customer.orders.title' | t }}</a></x-cell>
+        <x-cell><a href="{{ routes.account_addresses_url }}" class="button is-custom text-normal">{{ 'customer.addresses.title' | t }}</a></x-cell>
+        <x-cell><a href="{{ routes.account_logout_url }}" class="button is-custom text-normal">{{ 'customer.log_out' | t }}</a></x-cell>
+    </x-flex>
+</nav>

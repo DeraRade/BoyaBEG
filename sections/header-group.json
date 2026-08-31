@@ -1,0 +1,86 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "header": {
+      "type": "header",
+      "blocks": {
+        "cart_QDTUCc": {
+          "type": "cart",
+          "settings": {
+            "showCart": true,
+            "showSearch": false,
+            "showAccounts": true,
+            "showCountry": false,
+            "showLanguage": true,
+            "span": false,
+            "alignment": "right"
+          }
+        },
+        "logo": {
+          "type": "logo",
+          "settings": {
+            "hideOnHome": false,
+            "image": "shopify://shop_images/Boya_logotip.png",
+            "logoImageSize": 70,
+            "logoName": "",
+            "logo_font": "inter_n4",
+            "logoFontSize": 15,
+            "desktopPosition": "center",
+            "mobilePosition": "3"
+          }
+        },
+        "menu_main": {
+          "type": "menu",
+          "settings": {
+            "linklist": "main-menu",
+            "hamburgerDesktop": true,
+            "hamburgerMobile": true,
+            "type": "drop",
+            "span": true,
+            "alignment": "left",
+            "alignmentMobile": "left",
+            "dropdownBackground": true,
+            "openOnHover": false,
+            "firstElevated": false,
+            "showShadow": false
+          }
+        }
+      },
+      "block_order": [
+        "menu_main",
+        "logo",
+        "cart_QDTUCc"
+      ],
+      "settings": {
+        "location": "top",
+        "stealthMode": false,
+        "stickyMode": false,
+        "mixBlend": false,
+        "overlayOnHomepage": true,
+        "overlayOnProducts": true,
+        "overlayOnCollections": true,
+        "overlayOnArticles": true,
+        "overlayOnPages": true,
+        "contentDisplay": "both",
+        "cartIcon": "bag",
+        "textTransform": "none",
+        "bgFill": "solid",
+        "global_color_scheme": true,
+        "color_scheme": "scheme-bfaa0123-1850-4274-9fa3-ce69f61b97ef"
+      }
+    }
+  },
+  "order": [
+    "header"
+  ]
+}

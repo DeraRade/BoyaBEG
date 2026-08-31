@@ -1,0 +1,417 @@
+{%- render 'inc-stylesheet', src: 't-collection.css' -%}
+
+{%- capture search_input -%}
+<form action="{{ routes.search_url }}" method="get" role="search">
+    <x-field>
+        <input id="@x@x@" type="search" name="q" value="{{ search.terms | escape }}" placeholder="{{ 'general.search.search' | t }}" class="fullwidth" autofocus>
+        <label for="@x@x@">{{ 'general.search.search' | t }}</label>
+    </x-field>
+    <input type="hidden" name="sort_by" value="{{ search.sort_by | default: search.default_sort_by }}">
+    <input type="hidden" name="options[prefix]" value="last">
+    <button type="submit" class="is-blank fullwidth" hidden>{{ 'general.search.search' | t }}</button>
+</form>
+{%- endcapture -%}
+
+{% comment %}
+	Page intro
+{% endcomment %}
+<section class="search-page collections" filter-location="{{ section.settings.facets_location }}">
+    <h1 class="visually-hidden">{{ 'general.search.search' | t }}</h1>
+
+	<section class="page-intro willShrink" style="--inputWidth: 60ch; --inputMargin: 0">
+		<x-stack presuffix no-style>
+			<x-flex style="padding-inline-start:var(--inputPadding)"><label for="topSearchInput">{%- render 'inc-icon', icon: 'search' -%}</label></x-flex>
+			<x-cell class="fullwidth">{{ search_input | replace: '@x@x@', 'topSearchInput' }}</x-cell>
+		</x-stack>
+
+        {%- if search.performed and search.results_count == 0 -%}
+		<div class="empty">
+			<h2 class="h6 text-normal title">{{ 'openthinking.dictionary.sentence.no_results_html' | t: terms: search.terms }}</h2>
+        </div>
+        {%- endif -%}
+	</section>
+
+	{%- if search.performed and search.results_count > 1 -%}
+        {%- # Filters button -%}
+        {%- if section.settings.show_facets -%}
+        <section class="filter-trigger willShrink sticky" style="--sticky: var(--headSpace, 0px); --stickyZindex: 10">
+            {%- liquid 
+                if section.settings.grid_view_controller and section.settings.show_facets
+                    assign trigger_alignment = 'between'
+                elsif section.settings.show_facets == false and section.settings.grid_view_controller
+                    assign trigger_alignment = 'end'
+                else 
+                    assign trigger_alignment = section.settings.trigger_alignment | replace: 'left', 'start' | replace: 'right', 'end'
+                endif
+            -%}
+            <x-flex ai="center" jc="{{ trigger_alignment }}" as-button="{{ section.settings.trigger_as_button }}">
+                {%- if section.settings.show_facets -%}
+                <button role="button" class="button{% if section.settings.trigger_as_button == false %} is-blank{% endif %} has-icon" data-open="#filtersBox">
+                    {%- render 'inc-icon', icon: 'settings' -%} 
+                    <span>{{ 'products.facets.filter_and_sort' | t }}</span>
+                </button>
+                {%  endif %}
+        
+                {%- if section.settings.grid_view_controller -%}
+                <component-loader><grid-view-controller>
+                    <details class="closex text-end">
+                        <summary class="button{% if section.settings.trigger_as_button == false %} is-custom{% endif %} has-icon text-end">
+                            {%- render 'inc-icon', icon: 'layout-grid' -%}
+                            <span>{{ 'openthinking.dictionary.word.view' | t }}</span>
+                        </summary>
+                      
+                        <details-menu class="closex">
+                            <x-flex ai="center">
+                                <button data-col="1" class="is-custom text-normal small-only">1</button>
+                                <button data-col="2" class="is-custom text-normal">2</button>
+                                <button data-col="3" class="is-custom text-normal">3</button>
+                                <button data-col="4" class="is-custom text-normal">4</button>
+                                <button data-col="5" class="is-custom text-normal">5</button>
+                                <button data-col="6" class="is-custom text-normal large-only">6</button>
+                                <button data-col="10" class="is-custom text-normal large-only">10</button>
+                            </x-flex>
+                        </details-menu>
+                    </details>
+                </grid-view-controller></component-loader>
+                {%- endif -%}
+          
+            </x-flex>
+        </section>
+
+        {%- # Filters and sort -%} 
+        <coretex-drawer
+            class="filters" id="filtersBox" data-nobdc
+            role="dialog" aria-modal="true" aria-label="{{ 'products.facets.filter_and_sort' | t }}"
+            style="display:none;{% if section.settings.facets_shadow %} box-shadow: var(--globalShadow){% endif %}"
+        >
+    
+            {%- # Used for Menu: drawer (mobile + desktop) -%}
+            <drawer-header x-flex direction="row" ai="center" jc="between" class="sticky">
+                <h2 class="h6" style="--hMargin:0">{{ 'products.facets.filter_and_sort' | t }}</h2>
+                <button role="button" x-flex class="is-custom has-icon" data-close>
+                    <span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+                    {%- render 'inc-icon', icon: 'x-close' -%}
+                </button>
+            </drawer-header>
+    
+            {% comment %}
+                FACETS (FILTERS & SORTING)
+            {%- endcomment -%}
+            {%- liquid 
+                if section.settings.show_facets
+                    render 'c-facets', results: search, enable_filtering: section.settings.show_facets, enable_sorting: true, expand_by_default: section.settings.expand_by_default 
+                endif 
+            -%}
+    
+        </coretex-drawer>
+        {%- endif -%}
+	{%- endif -%}
+
+	{% comment %}
+		Page content
+	{% endcomment %}
+	<section class="product-list willShrink" data-facets-form-content="products-list">
+		<component-loader>
+			{%- if search.performed and search.results_count > 0 -%}
+                
+                {%- paginate search.results by section.settings.items_per_page -%}
+
+                        {% comment %}
+                        === [ CORETEX FYI ] ===
+                        About the <infinity-scroll> component.
+    
+                        Mandatory:
+                        - coretex-container: the container with inside the loop with product/blog card.
+                        - coretex-pagination: the container for the pagination link. Keep in mind that the pagination link has to have only 1 <a> with the next page link.
+                        - coretex-loading: {{ 'accessibility.loading' | t }}
+                        - the next link <a> has to have only a <span coretex-loading-more>
+                        {% endcomment %}
+                        {%- if section.settings.mode == 'infinity' -%}
+                            <infinity-scroll coretex-container="#ajaxContainer" coretex-pagination="#ajaxPagination" coretex-loading="{{ 'accessibility.loading' | t }}">
+                        {%- endif -%}
+
+                            <x-grid 
+                                columns="{{ section.settings.card_grid_columns }}" 
+                                columns-m="{{ section.settings.card_grid_columns_m }}" 
+                                columns-s="{{ section.settings.card_grid_columns_s }}" 
+                                class="products{% if section.settings.grid_view_controller %} preloading{% endif %}"  
+                                id="ajaxContainer"
+                                style="{{ section.settings.card_grid_gap | prepend: '--prodGap:' | append: 'px' }};{{ section.settings.card_grid_gap_s | prepend: '--prodGapMob:' | append: 'px'}}"
+                            >
+
+                                {% if search.performed and search.results_count != 0 %}
+                                    
+                                    {% comment %} # Display pages and articles only on the first page if paginated. {% endcomment %}
+                                    {%- if paginate.current_page == 1 -%}
+
+                                    {%- liquid
+                                        # Check if there are articles or pages
+                                        assign has_articles = false
+                                        assign has_pages = false 
+
+                                        for item in search.results
+                                            if item.object_type == 'article' 
+                                                assign has_articles = true 
+                                            elsif item.object_type == 'page' 
+                                                assign has_pages = true 
+                                            endif 
+                                        endfor
+                                    -%}
+
+                                    {%- if has_articles or has_pages -%} 
+                                        {% comment %} # Render only articles and pages in their own x-cell {% endcomment %}
+                                        <x-flex direction="column" class="pages-articles" style="gap: var(--space-5)">
+                                            {%- if has_articles -%}
+                                            <x-cell class="blog-listing">
+                                                <h3 class="h6 title">{{ 'blogs.article.blog' | t }}</h3>
+                                                <ul class="no-style inside">
+                                                {%- for item in search.results -%}
+                                                    {%- if item.object_type == 'article' -%}
+                                                        <li><a href="{{ item.url }}">{{ item.title | truncate: 50 | escape }}</a></li> 
+                                                    {%- endif -%}
+                                                {%- endfor -%}
+                                                </ul>
+                                            </x-cell>
+                                            {%- endif -%}
+
+                                            {%- if has_pages -%}
+                                            <x-cell class="page-listing">
+                                                <h3 class="h6 title">{{ 'templates.search.pages' | t }}</h3>
+                                                <ul class="no-style inside">
+                                                    {%- for item in search.results -%}
+                                                        {%- if item.object_type == 'page' -%}
+                                                            <li><a href="{{ item.url }}" class="no-style">{{ item.title | truncate: 50 | escape }}</a></li>
+                                                        {%- endif -%}
+                                                    {%- endfor -%}
+                                                </ul>
+                                            </x-cell>
+                                            {%- endif -%}
+                                        </x-flex>
+                                        {%- endif -%}
+                                    {%- endif -%}
+
+                                    {% comment %} Render only products {% endcomment %}
+                                    {%- for item in search.results -%}
+                                        {%- if item.object_type == 'product' -%}
+                                        <x-cell class="aprod">{% render 'c-prod-card' for item as product, css: false, index: forloop.index  %}</x-cell>
+                                        {%- endif -%}
+                                    {%- endfor -%}
+
+                                {%- endif -%}
+                            </x-grid>
+
+                            {% comment %}
+                                PAGINATION
+                            {% endcomment %}
+                            {%- render 'c-pagination' paginate: paginate, mode: section.settings.mode -%}
+                            
+                        {%- if section.settings.mode == 'infinity' -%}</infinity-scroll>{%- endif -%}
+
+                {%- endpaginate -%}
+
+			{%- endif -%}
+		</component-loader>
+	</section>
+</section>
+
+{% schema %}
+	{
+		"name": "Collection",
+		"settings": [
+			{
+				"type": "header",
+				"content": "Grid"
+			},
+            {
+                "type": "checkbox",
+                "id": "grid_view_controller",
+                "label": "Enable grid view controller",
+                "info": "Lets the customer choose how many columns to display in the grid view.",
+                "default": true
+            },
+			{
+				"type": "select",
+				"id": "card_grid_columns",
+				"label": "Columns - desktop",
+				"default": "5",
+				"options": [
+					{
+						"value": "2",
+						"label": "2 columns"
+					},
+					{
+						"value": "3",
+						"label": "3 columns"
+					},
+					{
+						"value": "4",
+						"label": "4 columns"
+					},
+					{
+						"value": "5",
+						"label": "5 columns"
+					},
+					{
+						"value": "6",
+						"label": "6 columns"
+					},
+					{
+						"value": "10",
+						"label": "10 columns"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "card_grid_columns_m",
+				"label": "Columns - tablet",
+				"default": "3",
+				"options": [
+					{
+						"value": "2",
+						"label": "2 columns"
+					},
+					{
+						"value": "3",
+						"label": "3 columns"
+					},
+					{
+						"value": "4",
+						"label": "4 columns"
+					},
+					{
+						"value": "5",
+						"label": "5 columns"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "card_grid_columns_s",
+				"label": "Columns - mobile",
+				"default": "2",
+				"options": [
+					{
+						"value": "1",
+						"label": "1 column"
+					},
+					{
+						"value": "2",
+						"label": "2 columns"
+					},
+					{
+						"value": "3",
+						"label": "3 columns"
+					}
+				]
+			},
+			{
+				"type": "range",
+				"label": "Gap - desktop",
+				"id": "card_grid_gap",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"label": "Gap - mobile",
+				"id": "card_grid_gap_s",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "header",
+				"content": "Filters",
+				"info": "Allow your customers to filter collections and search results by product availability, price, color, and more. [Learn more...](https://help.shopify.com/en/manual/online-store/themes/customizing-themes/storefront-filters#add-filters)"
+			},
+			{
+				"type": "checkbox",
+				"id": "show_facets",
+				"label": "Enable",
+				"default": true
+			},
+            {
+                "type": "text_alignment",
+                "id": "trigger_alignment",
+                "label": "Trigger button alignment",
+                "info": "Controls the alignment of the trigger button.",
+                "default": "left",
+                "visible_if": "{{ section.settings.show_facets and section.settings.grid_view_controller == false }}"
+            },
+            {
+                "type": "checkbox",
+                "id": "trigger_as_button",
+                "label": "Show trigger as button",
+                "info": "Adds a background color to the button for better visibility.",
+                "default": false,
+                "visible_if": "{{ section.settings.show_facets }}"
+            },
+            {
+                "type": "checkbox",
+                "id": "expand_by_default",
+                "label": "Expand by default",
+                "info": "If enabled, the filter groups, inside the drawer, will be expanded by default.",
+                "default": true
+            }, 
+			{
+				"type": "select",
+				"id": "facets_location",
+				"label": "Position - desktop",
+				"default": "end",
+				"info": "Choose the position of the drawer.",
+                "visible_if": "{{ section.settings.show_facets }}",
+				"options": [
+					{
+						"value": "start",
+						"label": "Left"
+					},
+					{
+						"value": "end",
+						"label": "Right"
+					}
+				]
+			},
+			{
+				"type": "checkbox",
+				"id": "facets_shadow",
+				"label": "Show shadow",
+				"info": "Adds a slight shadow to the drawer.",
+				"default": true,
+                "visible_if": "{{ section.settings.show_facets }}",
+			},
+			{
+				"type": "header",
+				"content": "Pagination"
+			},
+			{
+				"type": "select",
+				"id": "mode",
+				"label": "Type",
+				"default": "infinity",
+				"options": [
+					{
+						"value": "classic",
+						"label": "Numbers"
+					},
+					{
+						"value": "infinity",
+						"label": "Load on scroll"
+					}
+				]
+			},
+			{
+				"type": "range",
+				"label": "Items per page",
+				"id": "items_per_page",
+				"min": 4,
+				"max": 30,
+				"step": 2,
+				"default": 8
+			}
+		]
+	}
+{% endschema %}

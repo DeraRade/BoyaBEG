@@ -1,0 +1,133 @@
+{% comment %}
+    This is responsible for all self-hosted videos across the theme.
+
+    Usage:
+	{%- liquid 
+		assign video = block.settings.video
+		render 'inc-video' vid: video, vidMobile: vidMobile, loop: loop, autoplay: autoplay
+	-%}
+
+    Accepts:
+	- vid: the video to render [REQUIRED]
+    - vidMobile: if you want to have a different video for mobile.
+
+    - loop: the video
+    - autoplay: the video
+    - muted: the video
+    - clickToPlay: click over the video to play
+    - controls: show play/pause buttons
+    - fallback: show image placeholder if no video is present
+    - class: if you want to pass a class
+{% endcomment %}
+
+{%- liquid
+    # Load CSS file
+    render 'inc-stylesheet', src: 'c-video.css'
+
+    assign vid = vid | default: nil
+    assign vidMobile = vidMobile | default: nil
+
+    assign loop = loop 
+    assign autoplay = autoplay 
+    assign muted = muted 
+    assign controls = controls 
+    assign clickToPlay = clickToPlay  
+    assign progressbar = progressbar
+    assign fallback = fallback | default: false
+    assign class = class | default: nil
+-%}
+
+{%- if vid != nil -%}
+<component-loader>
+    {%- comment -%} 
+        Variables
+    {%- endcomment -%}
+    {%- capture video_controls -%}
+    <v-controls ps="end" x-flex ai="center" x-icons="false" class="js sticky-bottom">
+        {%- if muted -%}
+        <button class="has-icon controller mute" style="--tDelay:50ms" {% unless controls %}hidden tabindex="-1"{% endunless %}>
+            <span class="unmuted-icon">
+                <span class="text">{{ 'openthinking.dictionary.word.unmute' | t }}</span>
+                {%- render 'inc-icon', icon: 'volume-max' -%}
+            </span>
+            <span class="muted-icon">
+                <span class="text">{{ 'openthinking.dictionary.word.mute' | t }}</span>
+                {%- render 'inc-icon', icon: 'volume-x' -%}
+            </span>
+        </button>
+        {%- endif -%}
+
+        <button class="has-icon controller play" {% unless controls %}hidden tabindex="-1"{% endunless %}>
+            <span class="pause-icon">
+                <span class="text">{{ 'openthinking.dictionary.word.pause' | t }}</span>
+                {%- render 'inc-icon', icon: 'o-pause' -%}
+            </span>
+            <span class="play-icon">
+                <span class="text">{{ 'openthinking.dictionary.word.play' | t }}</span>
+                {%- render 'inc-icon', icon: 'o-play' -%}
+            </span>
+        </button>
+    </v-controls>
+    {%- endcapture -%}
+
+    {%- comment -%} 
+        Desktop video
+    {%- endcomment -%}
+        {%- liquid
+            assign style = nil
+            if vidMobile != nil
+                assign style = 'large-only'
+            endif
+            assign viewport = 'desktop'
+            assign vidPoster = vid.preview_image | image_url: width: 1500 
+        -%}
+        <video-player x-grid columns="stack" data-viewport="{{ viewport }}" class="{{ class }} {{ style }}" {% if progressbar %}progress-play{% endif %}>
+            <video
+                poster="{{ vidPoster }}"
+                crossorigin 
+                playsinline 
+                {% if loop %}loop{% endif %}
+                {% if autoplay %}autoplay muted{% endif %}
+                {% if muted %}muted{% endif %}
+                {% if clickToPlay %}click-play{% endif %}
+            >
+                {%- for video in vid.sources -%}
+                <source data-src="{{ video.url }}" type="{{ video.mime_type }}">
+                {%- endfor -%}
+            </video>
+
+            {{ video_controls }}
+        </video-player>
+
+    {%- comment -%} 
+        Mobile video
+    {%- endcomment -%}
+    {%- if vidMobile != nil -%}
+        {%- liquid
+            assign vid = vidMobile
+            assign vidPoster = vid.preview_image | image_url: width: 1000
+            assign viewport = 'mobile'
+            assign style = 'small-only'
+        -%}
+        <video-player x-grid columns="stack" data-viewport="{{ viewport }}" class="{{ class }} {{ style }}" {% if progressbar %}progress-play{% endif %}>
+            <video
+                poster="{{ vidPoster }}"
+                crossorigin 
+                playsinline 
+                {% if loop %}loop{% endif %}
+                {% if autoplay %}autoplay muted{% endif %}
+                {% if muted %}muted{% endif %}
+                {% if clickToPlay %}click-play{% endif %}
+            >
+                {%- for video in vid.sources -%}
+                <source data-src="{{ video.url }}" type="{{ video.mime_type }}">
+                {%- endfor -%}
+            </video>
+
+            {{ video_controls }}
+        </video-player>
+    {%- endif -%}
+</component-loader>
+{%- elsif fallback == true -%}
+    <picture>{{ 'image' | placeholder_svg_tag: 'svgph' }}</picture>
+{%- endif -%}

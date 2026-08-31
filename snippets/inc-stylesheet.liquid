@@ -1,0 +1,29 @@
+{%- comment -%}
+    🚨 Code #AA-M
+
+    This is responsible for loading CSS files across the theme.
+
+    Accepts:
+    - src: {String}
+    - loading: {String} - 'normal' (default), 'defer', 'inline'
+
+    Usage:
+    {%- render 'inc-stylesheet', src: 'product.css', loading: 'defer' -%}
+{%- endcomment -%}
+
+{%- assign stylesheet_path = src | asset_url -%}
+
+{% # theme-check-disable %}
+{%- if loading == 'inline' -%}
+    {%- liquid 
+        style
+            echo src | inline_asset_content
+        endstyle
+    -%}
+{% elsif section.index > 2 or loading == 'defer' %}
+    <link rel="preload" as="style" href="{{ stylesheet_path }}" onload="this.onload=null;this.removeAttribute('onload');if(document.querySelector('link[href=\'{{ stylesheet_path }}\']') !== this){this.remove()}else{this.rel='stylesheet'}">
+    <noscript><link rel="stylesheet" href="{{ stylesheet_path }}"></noscript>
+{%- else -%}
+    <link rel="stylesheet" type="text/css" href="{{ stylesheet_path }}" onload="this.onload=null;this.removeAttribute('onload');if(document.querySelector('link[href=\'{{ stylesheet_path }}\']') !== this)this.remove()">
+{%- endif -%}
+{% # theme-check-enable %}

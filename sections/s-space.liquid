@@ -1,0 +1,61 @@
+{%- capture style -%}
+    padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+    margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+{%- endcapture -%}
+
+<section class="space" style="{{- style | strip_newlines | strip -}}" data-section-id="{{ section.id }}">&nbsp;</section>
+
+{% schema %}
+{
+  "name": "Space",
+  "disabled_on": { "groups": [ "header", "aside" ] },
+  "presets": [
+    {
+      "name": "Space", 
+      "category": "Layout"
+    }
+  ],
+  "settings": [
+    {
+        "type": "paragraph",
+        "content": "This section allows you to create spacing between other sections, improving the visual separation and layout of your content."
+    },
+    {
+      "type": "range",
+      "id": "marginTop",
+      "label": "Margin top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "marginBottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 5
+    }
+  ]
+}
+{% endschema %}

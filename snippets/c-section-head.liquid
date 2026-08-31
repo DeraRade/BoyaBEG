@@ -1,0 +1,89 @@
+{% comment %}
+    Used to display the head of sections.
+
+    Accepts:
+    - heading: the heading of the section
+    - description: the description of the section
+    - url: the url of the section 
+    - url_label: the label of the url
+    - nav: if the section has a navigation { boolean }
+    - class: the class of the section { string }
+    - attributes: the attributes of the section { string }
+    - keepad: if the section has a keepad { boolean }
+
+    Usage:
+	{%- liquid
+        # Section heading 
+        assign heading = section.settings.heading
+        assign description = section.settings.description
+        assign url = section.settings.url
+        assign url_label = section.settings.label
+        assign attributes = 'wrap-s="wrap"'
+        assign keepad = section.settings.keepad
+
+        render 'c-section-head', heading: heading, description: description, url: url, url_label: url_label, attributes: attributes
+    -%}
+
+    Usage 2:
+	{%- render 'c-section-head', 
+            heading: heading, 
+            description: description, 
+            url: url, 
+            url_label: url_label,
+            nav: nav, 
+            class: class,
+            attributes: attributes ,
+            keepad: keepad
+    -%}
+{%- endcomment -%}
+
+{%- liquid 
+    assign heading = heading
+    assign description = description | default: nil
+    assign url = url
+    assign url_label = url_label
+    assign nav = nav
+    assign stealth = stealth | default: false
+
+    assign class = class | default: nil
+    assign attributes = attributes | default: nil
+
+    if addpad == nil
+        assign addpad = true
+    else 
+        assign addpad = addpad
+    endif
+-%}
+
+<x-flex {{ attributes }} wrap-s="wrap" {% unless description %}ai="center"{% endunless %} 
+    class="section-heading {{ class }}" 
+    {% unless addpad %}addpad{% endunless %}
+    stealth="{{ stealth }}"
+>
+    {%- if heading -%}
+        <x-cell class="title"><h2 class="h6 title">{{ heading }}</h2></x-cell>
+    {%- endif -%}
+
+    {%- if description -%}
+        <x-cell span-s="1" class="description">
+            <div class="content rte">{{ description }}</div>
+        </x-cell>
+    {%- endif -%}
+
+    {%- if url -%}
+        <x-cell {% if description %}span-s="row"{% endif %} {% unless nav %}js="end"{% endunless %} class="cta">
+            <a href="{{ url }}" class="button is-custom text-normal">{{ url_label }}</a>
+        </x-cell>
+    {%- endif -%}
+
+    {%- if nav -%}
+    <x-flex ai="center" jc="between" class="coretex-scroll-nav">
+        <button class="is-custom has-icon" scroll-button-prev aria-label="{{ 'general.slider.previous_slide' | t }}">
+            {%- render 'inc-icon', icon: 'arrow-left' -%}
+        </button>
+        <button class="is-custom has-icon" scroll-button-next aria-label="{{ 'general.slider.next_slide' | t }}">
+            {%- render 'inc-icon', icon: 'arrow-right' -%}
+        </button>
+    </x-flex>
+    {%- endif -%}
+</x-flex>

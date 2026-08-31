@@ -1,0 +1,113 @@
+{% comment %}
+	Renders an article card for a given blog with settings to either show the image or not.
+
+	Accepts:
+	- blog: {Object} Blog object
+	- article: {Object} Article object
+	- show_image: {String} The setting either show the article image or not. If it's not included it will show the image by default
+	- show_date: {String} The setting either show the article date or not. If it's not included it will not show the image by default
+	- show_author: {String} The setting either show the article author or not. If it's not included it will not show the author by default
+	- show_excerpt: {String} The setting either show the article excerpt or not.
+	- show_comments: {String} The setting either show the article comments count or not.
+
+	Usage:
+	{%- render 'c-article-card',
+	    article: article,
+	    show_image: section.settings.show_image,
+	    show_date: section.settings.show_date,
+	    show_author: section.settings.show_author,
+	    show_excerpt: section.settings.show_excerpt,
+	    show_comments: section.settings.show_comments
+        show_read_more: section.settings.show_read_more
+	-%}
+        
+{% endcomment %}
+
+{%- if article and article != empty -%}
+	<article-card aria-labelledby="Article-{{ article.id }}" x-flex direction="column">
+		{% comment %}
+			IMAGE
+		{% endcomment %}
+		{%- if show_image == true and article.image -%}
+			<x-cell class="media">
+				{% comment %}
+					=== [ CORETEX FYI ] ===
+					TODO: Adjust `width` `widths` and `sizes` according to design of the project.
+				{% endcomment %}
+				<a href="{{ article.url }}">
+					{%- render 'inc-img', img: article.image, widths: '480,640,768,1024,1280,1536,1920' -%}
+				</a>
+			</x-cell>
+		{%- endif -%}
+
+		{% comment %}
+			CONTENT
+		{% endcomment %}
+		<div class="meta">
+
+			<x-flex direction="row" wrap="wrap" ai="center" jc="between">
+                <x-cell>
+                    <h3 class="h6 title">
+                        <a href="{{ article.url }}">{{ article.title | escape }}</a>       
+                    </h3>
+                </x-cell>
+
+                {% if show_author %}
+                    <x-cell class="author text-start">
+                        <address class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">[&nbsp;{{ article.author }}&nbsp;]</address>
+                    </x-cell>
+                {% endif %}
+
+                {% if show_date %}
+                    <x-cell class="date">
+                        <time datetime="{{ article.published_at | date: '%Y-%m-%dT%H:%M:%SZ' }}">[&nbsp;{{ article.published_at | time_tag: format: 'date' }}&nbsp;]</time>
+                    </x-cell>
+                {% endif %}
+
+				{%- if show_excerpt and article.excerpt.size > 0 or article.content.size > 0 -%}
+				<p class="content rte" span="row">
+					{{ article.excerpt_or_content | strip_html | truncatewords: 32 | escape }}
+				</p>
+				{%- endif -%}
+
+                {% if show_read_more %}
+                <x-cell>
+                    <a href="{{ article.url }}" class="button is-link text-underline">{{ 'openthinking.dictionary.phrase.read_more' | t  }}</a>
+                </x-cell>
+                {% endif %}
+			</x-flex>
+		</div>
+	</article-card>
+{%- endif -%}
+
+{%- comment -%}
+	Placehoder
+{%- endcomment -%}
+{%  if placehoder == true %}
+	<article-card x-flex direction="column">
+		{% comment %}
+			IMAGE
+		{% endcomment %}
+		<x-cell class="media">
+			{%- render 'inc-img', img: nil, fallback: true -%}
+		</x-cell>
+
+		{% comment %}
+			CONTENT
+		{% endcomment %}
+		<div class="meta text-center">
+			<x-flex direction="row" wrap="wrap" ai="center" jc="between">
+                <x-cell>
+                    <h3 class="h6 title text-normal text-start">
+                        <a href="#" class="button is-link" tabindex="-1">{{ 'openthinking.onboarding.title' | t }}</a>
+                    </h3>
+                </x-cell>
+
+                <x-cell>
+                    <a href="#" class="button is-link text-underline" tabindex="-1">{{ 'openthinking.dictionary.phrase.read_more' | t  }}</a>
+                </x-cell>
+
+			</x-flex>
+		</div>
+	</article-card>
+{% endif %}

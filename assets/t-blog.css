@@ -1,0 +1,165 @@
+/*** Blog listing */
+.main-blog { 
+    padding: var(--space-2) var(--layoutInline); 
+
+    .header { margin-block-end: var(--padding) }
+}
+
+x-grid.blogPosts {
+    --gap: var(--space-7) 2%;
+    --hMargin: 0;
+    margin-block-end: var(--space-6);
+
+    & > x-cell:where(:nth-child(5n+1), :nth-child(5n+2), :nth-child(5n+3)) { 
+        --grid-ce: 4;
+        width: 100%;
+
+        img, svg {
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: center;
+            margin-inline: auto;
+        }
+    }
+
+    & > x-cell:where(:nth-child(5n+4), :nth-child(5n+5)) { 
+        --grid-ce: 6;
+        width: 100%;
+
+        img,svg {
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            object-position: center;
+        }
+    }
+
+    & > x-cell:not(:has(img)) { display: block; align-content: end }
+    
+    article-card {
+        --gap: var(--space-1) var(--space-2);
+
+        .meta {
+            margin-block-start: var(--padding);
+
+            .content {
+                font-size: var(--type-3);
+                text-align: start;
+            }
+        }
+    }
+
+    @media (max-width: 777px) {
+
+        x-cell img {
+            aspect-ratio: 16 / 12;
+            object-fit: cover;
+            object-position: center;
+        }
+
+    }
+
+}
+
+/*** Article */
+section.article {
+    padding-inline: var(--layoutInline);
+
+    .hero {
+
+        img {
+            object-fit: contain;
+            max-height: 65vh;
+            width: auto;
+        }
+
+        .title { margin-block: var(--padding) }
+
+        .meta {
+            max-width: 50vw;
+            @media (width < 777px) { 
+                max-width: 100% 
+            }
+        }
+
+        &.centre {
+            img { margin-inline: auto; justify-self: center; }
+
+            .meta {
+                margin: var(--padding) auto;
+                text-align: center;
+            }
+        }
+
+    }
+
+    /* Comment section */
+    comments-section {
+        --gap: var(--space-8) var(--space-6); 
+        --sticky: var(--headSpace);
+        --maxWidth: 50rem;
+    
+        position: relative; z-index: 2;
+        background: var(--bg); 
+        background-attachment: fixed;
+        padding-block: var(--space-8);
+
+        form { --gap: var(--space-1); max-width: var(--maxWidth) }
+        small { display: inline-block; line-height: 1.2 } 
+        .comment { max-width: var(--maxWidth) }
+    }
+
+    address { font-style: normal }
+
+    .content.rte {
+        --hTextWrap: initial;
+        --gap: 0;
+
+        :is(h1, h2, h3, h4, h5, h6) { margin-block-start: 1em }
+
+        & > *:not(.fullwidth) {
+            width: 100%;
+            max-width: 52rem;
+        }
+    }
+
+}
+
+.tags { margin-block: var(--margin) }
+
+
+/* [C] Featured articles (Blog) */
+related-articles { 
+    --pMargin: 0; 
+
+    display: block; 
+    margin-block: var(--space-8);
+    
+    .meta x-flex {
+        display: block; 
+
+        a { overflow-wrap: break-word; white-space: wrap; }
+    } 
+
+    [scroll-area] { align-items: flex-start } 
+
+    article-card {
+        --hMargin: 0; 
+        --hWeight: 400;
+        --hSize: var(--fontSize);
+        --scrollChildMinWidth: 250px;
+        --gap: var(--space-3);
+
+        height: 100%;
+        width: var(--scrollChildMinWidth);
+
+        img {
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: center;
+        }
+    }
+
+    .section-heading { padding: 0 }
+
+    .scroll-snap { margin-block-start: var(--space-3) }
+}

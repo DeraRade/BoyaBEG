@@ -1,0 +1,93 @@
+    {% comment %}
+    Renders a set of links for paginated results. Must be used within paginate tags.
+
+    Accepts:
+    - paginate: {Object}
+    - anchor: {String} (optional) This can be added so that on page reload it takes you to wherever you've placed your anchor tag.
+
+    Usage:
+    {% paginate results by 2 %}
+    {%- render 'c-pagination' paginate: paginate -%}
+    {% endpaginate %}
+{% endcomment %}
+
+{%- if paginate.parts.size > 0 -%}
+    <nav class="pagination" aria-label="{{ 'general.pagination.label' | t }}">
+
+    {% comment %} 
+    === [ CORETEX FYI ] === 
+    This is responsible for the infinity scroll 
+    `id="ajaxPagination"` needs to be the same as the `<infinity-scroll coretex-pagination="#ajaxPagination"`
+    {% endcomment %}
+
+    {%- if mode == 'infinity' -%}
+
+        <div class="infinity">
+            {%- if paginate.pages > 1 -%}
+                <div class="no-js-hidden">
+                {% if paginate.next %}
+                    <style>#ajaxPagination > a:empty { display: none }</style>
+                    <div id="ajaxPagination">
+                        <a href="{{ paginate.next.url }}" role="button" class="button is-custom brackets">
+                            <span class="loading-more">{{ 'openthinking.pagination.infinite.load_more' | t }}</span>
+                        </a>
+                    </div>
+                {%- endif -%}
+                </div>
+                <noscript>{{ paginate | default_pagination }}</noscript>
+            {%- endif -%}
+        </div>
+
+    {%- else -%}
+
+            {% comment %} 
+            === [ CORETEX FYI ] === 
+            This is responsible for "classic" numbered pagination.
+
+            We make use of
+            `coretex-fetch-link="{{ part.url }}&section_id={{ section.id }}"`
+            in links in order for `coretex-fetch` to fetch the content of the page dynamically thus ajaxifying it.
+            Read the documentation if you want to know more about `coretex-fetch`.
+
+            Currently turned off.
+            {% endcomment %}
+
+            <x-flex ai="center" jc="between">
+                <ul x-flex pi="center" class="no-style inside">
+                {%- for part in paginate.parts -%}
+                    <li>
+                    {%- if part.is_link -%}
+                        <a href="{{ part.url }}{{ anchor }}" coretex-fetch-link="{{ part.url }}&section_id={{ section.id }}"
+                            aria-label="{{ 'general.pagination.page' | t: number: part.title }}">
+                            {{- part.title -}}
+                        </a>
+                    {%- else -%}
+                        {%- if part.title == paginate.current_page -%}
+                            <span data-current="page">{{- part.title -}}</span>
+                        {%- else -%}
+                            <span>{{ part.title }}</span>
+                        {%- endif -%}
+                    {%- endif -%}
+                    </li>
+                {%- endfor -%}
+                </ul>
+                
+                <x-flex ai="ccenter" jc="between">
+                    <x-cell {% unless paginate.previous %}inert{% endunless %}>
+                        <a href="{% unless paginate.previous %}#{% else %}{{ paginate.previous.url }}{{ anchor }}{% endunless %}" coretex-fetch-link="{{ paginate.previous.url }}&section_id={{ section.id }}">
+                            {{ 'general.pagination.previous' | t }}
+                        </a>
+                    </x-cell>
+
+                    <x-cell {% unless paginate.next %}inert{% endunless %}>
+                        <a href="{% unless paginate.next %}#{% else %}{{ paginate.next.url }}{{ anchor }}{% endunless %}" coretex-fetch-link="{{ paginate.next.url }}&section_id={{ section.id }}">
+                            {{ 'general.pagination.next' | t }}
+                        </a>
+                    </x-cell>
+                </x-flex>
+            </x-flex>
+
+    {%- endif -%}
+
+    </nav>
+{%- endif -%}

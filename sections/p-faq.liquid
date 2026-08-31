@@ -1,0 +1,168 @@
+{% style %}
+.faq-page { min-height: 100vh }
+.faq-page .faqs .heading-divider:not(:first-of-type) { margin-block-start: var(--margin) }
+.faq-page .faqs .heading-divider > * { scroll-margin-top: var(--headSpace) }
+.faq-page .container .content { max-width: 60ch }
+/* Accordion */ 
+coretex-accordion details[open] summary { padding-bottom: 0 }
+{% endstyle %}
+
+<section 
+    class="general-page faq-page" 
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+    <x-grid columns="12" columns-s="1f" class="container">
+        {%- if section.settings.show_title -%}
+        <x-cell span="{{ section.settings.title_position }}">
+            <h1 class="h4 title">{{ page.title | escape }}</h1>
+        </x-cell>
+        {%- endif -%}
+
+        {%- if section.settings.show_content -%}
+        <x-cell span="4">
+            <div class="content rte">{{ page.content }}</div>
+        </x-cell>
+        {%- endif -%}
+
+        <x-cell span="4" class="faqs content rte">
+            {% for block in section.blocks %}
+                {%- case block.type -%}
+                  {%- when 'question' -%}
+                      <coretex-accordion class="accordion" {{ block.shopify_attributes }}>
+                          <details class="closex"
+                              {% if block.settings.expandAnswer == true %}open{% endif %}
+                              itemscope
+                              itemprop="mainEntity"
+                              itemtype="https://schema.org/Question"
+                          >
+                              <summary itemprop="name"><span>{{ block.settings.title | escape }}</span></summary>
+      
+                              <details-content itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                                  <div class="text rte" itemprop="text">{{ block.settings.answer | replace: '\n', '<br/>' }}</div>
+                              </details-content>
+                          </details>
+                      </coretex-accordion>
+      
+                  {%- when 'heading' -%}
+                      <div class="heading-divider">
+                          <h2 class="h6 title" id="faq-{{ block.settings.heading | escape | downcase | strip_html | strip_newlines | url_encode }}" {{ block.shopify_attributes }}>
+                              {{ block.settings.heading }}
+                          </h2>
+                      </div>
+      
+                {%- endcase -%}
+              {%- endfor -%}
+        </x-cell>
+
+        <x-cell span="2" class="faq-navigation large-only">
+            {%- if section.settings.summary -%}
+                <nav id="summary" class="sticky" style="--sticky: var(--headSpace)">
+                  <ul class="no-style inside">
+                    {% for block in section.blocks %}
+                      {% if block.type == 'heading' %}
+                        <li><a href="#faq-{{ block.settings.heading | escape | downcase | strip_html | strip_newlines | url_encode }}" class="button is-custom text-normal text-break-word">{{ block.settings.heading }}</a></li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                </nav>
+            {%- endif -%}
+        </x-cell>
+    </x-grid>
+</section>
+
+{%- if section.settings.summary -%}
+<script>function updateLinkStyles() { const currentFragment = window.location.hash; document.querySelectorAll('a[href^="#"]').forEach((link) => { link.style.textDecoration = link.getAttribute('href') === currentFragment ? 'underline' : 'none'; }); } updateLinkStyles(); window.addEventListener('hashchange', updateLinkStyles);</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "FAQs",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_content",
+        "label": "Show content",
+        "default": true
+    },
+    {
+        "type": "select",
+        "id": "title_position",
+        "label": "Title position - desktop",
+        "default": "2",
+        "options": [
+            { "value": "row", "label": "Top" },
+            { "value": "2", "label": "Side" }
+        ]
+    },
+    {
+      "type": "checkbox",
+      "id": "summary",
+      "label": "Enable summary",
+      "info": "Shows a summary link list for quick FAQ group navigation.",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading separator"
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Question",
+          "default": "Question"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Answer</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "expandAnswer",
+          "label": "Expand answer by default",
+          "default": false
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

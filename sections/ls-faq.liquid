@@ -1,0 +1,196 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+padding-inline: var(--layoutInline);
+{%- endcapture -%}
+
+<section
+	class="faq-box"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+	<x-flex wrap="wrap" style="gap: var(--margin)">
+		<x-cell class="faqs-intro" span-s="row">
+			{%- liquid
+				# Section heading
+				assign heading = section.settings.heading
+                assign description = section.settings.description
+				assign url = section.settings.url
+				assign url_label = section.settings.label
+                assign attributes = 'direction="column" direction-s="row" wrap="wrap" ai-s="start"'
+                assign stealth = section.settings.stealthMode
+
+				render 'c-section-head', heading: heading, description: description, url: url, url_label: url_label, attributes: attributes, stealth: stealth
+			-%}
+		</x-cell>
+
+		<x-grid columns="{{ section.settings.faqs_columns }}" columns-s="1" class="faqs-content">
+			{%- for block in section.blocks -%}
+				<coretex-accordion class="accordion" {{ block.shopify_attributes }}>
+					<details
+						class="closex"
+						{% if block.settings.expandAnswer == true %}
+							open
+						{% endif %}
+						itemscope
+						itemprop="mainEntity"
+						itemtype="https://schema.org/Question"
+					>
+						<summary itemprop="name">
+							<span>{{ block.settings.title | escape }}</span>
+						</summary>
+
+						<details-content itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+							<div class="text rte" itemprop="text">{{ block.settings.answer | replace: '\n', '<br/>' }}</div>
+						</details-content>
+					</details>
+				</coretex-accordion>
+			{%- endfor -%}
+		</x-grid>
+	</x-flex>
+</section>
+
+{% schema %}
+	{
+		"name": "FAQ",
+		"max_blocks": 15,
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "FAQ",
+                "category": "Content",
+				"blocks": [{ "type": "question" }, { "type": "question" }, { "type": "question" }]
+			}
+		],
+		"settings": [
+            {
+                "type": "checkbox",
+                "id": "stealthMode",
+                "label": "Show header on hover - desktop",
+                "default": false
+            },
+			{
+				"type": "text",
+				"id": "heading",
+				"label": "Heading",
+				"default": "Frequently Asked Questions"
+			},
+			{
+				"type": "inline_richtext",
+				"id": "description",
+				"label": "Description"
+			},
+			{
+				"type": "text",
+				"id": "label",
+				"label": "Button label",
+				"default": "View all FAQ"
+			},
+			{
+				"id": "url",
+				"type": "url",
+				"label": "Button link"
+			},
+			{
+				"type": "header",
+				"content": "FAQ block"
+			},
+			{
+				"type": "select",
+				"id": "faqs_columns",
+				"label": "Columns - desktop",
+				"default": "1",
+				"options": [
+					{ "value": "1", "label": "One" },
+					{ "value": "2", "label": "Two" }
+				]
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 3
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "question",
+				"name": "Question",
+				"settings": [
+					{
+						"type": "text",
+						"id": "title",
+						"label": "Question",
+						"default": "Question"
+					},
+					{
+						"type": "richtext",
+						"id": "answer",
+						"label": "Answer",
+						"default": "<p>Answer</p>"
+					},
+					{
+						"type": "checkbox",
+						"id": "expandAnswer",
+						"label": "Expand by default",
+						"default": false
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

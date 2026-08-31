@@ -1,0 +1,218 @@
+{%- comment -%}
+	=== [ CORETEX FYI ] ===
+	This section is not intended to be displayed.
+	It is used to update predictive search results using Section API.
+	DO NOT REMOVE
+{%- endcomment -%}
+
+{%- if predictive_search.performed -%}
+	{%- assign first_column_results_size = predictive_search.resources.queries.size
+		| plus: predictive_search.resources.collections.size
+		| plus: predictive_search.resources.pages.size
+		| plus: predictive_search.resources.articles.size
+	-%}
+	<div id="predictive-search-results" role="listbox">
+		{%- if first_column_results_size > 0 or predictive_search.resources.products.size > 0 -%}
+			<x-flex direction="column" 
+				id="predictive-search-results-groups-wrapper"
+				class="{% unless predictive_search.resources.products.size > 0 %} no-products{% endunless %}{% unless predictive_search.resources.queries.size > 0 or predictive_search.resources.collections.size > 0 %} no-suggestions{% endunless %}"
+			>
+		{%- endif -%}
+
+		{%- if first_column_results_size > 0 -%}
+			<x-flex direction="column" class="predictive-search__result-group">
+		{%- endif -%}
+
+        {%- comment -%}
+            === [ CORETEX FYI ] ===
+            Displays word suggestions (words and collections)
+        {%- endcomment -%}
+		{%- if predictive_search.resources.queries.size > 0 or predictive_search.resources.collections.size > 0 -%}
+			<div class="search-word-suggestions">
+				<h2 id="predictive-search-queries" class="h6">{{- 'templates.search.suggestions' | t -}}</h2>
+
+				<ul
+					x-flex
+					id="predictive-search-results-queries-list"
+					class="search-list no-style inside scroll-snap no-scrollbars"
+					role="group"
+					aria-labelledby="predictive-search-queries"
+				>
+
+                    {%- comment -%}
+                        === [ CORETEX FYI ] ===
+                        Displays word suggestions
+                    {%- endcomment -%}
+					{%- for query in predictive_search.resources.queries -%}
+						<li
+							id="predictive-search-option-query-{{ forloop.index }}"
+							class="item suggest"
+							role="option"
+							aria-selected="false"
+						>
+							<a href="{{ query.url }}" class="search-item button is-custom block" tabindex="-1">{{ query.styled_text }}</a>
+						</li>
+					{%- endfor -%}
+
+                    {%- comment -%}
+                        === [ CORETEX FYI ] ===
+                        Displays collections suggestions
+                    {%- endcomment -%}
+					{%- for collection in predictive_search.resources.collections -%}
+						<li
+							id="predictive-search-option-collection-{{ forloop.index }}"
+							class="item"
+							role="option"
+							aria-selected="false"
+						>
+							<a href="{{ collection.url }}" class="search-item" tabindex="-1">{{ collection.styled_text }}</a>
+						</li>
+					{%- endfor -%}
+				</ul>
+			</div>
+		{%- endif -%}
+
+        {%- comment -%}
+            === [ CORETEX FYI ] ===
+            Displays articles and pages
+        {%- endcomment -%}
+		{%- if predictive_search.resources.articles.size > 0 or predictive_search.resources.pages.size > 0 -%}
+			<div class="predictive-search__pages-wrapper">
+				<h2 id="predictive-search-pages-desktop" class="h6">{{- 'templates.search.pages' | t -}}</h2>
+
+				<ul x-flex wrap
+					id="predictive-search-results-pages-list-desktop"
+					class="search-list no-style inside scroll-snap no-scrollbars"
+					role="group"
+					aria-labelledby="predictive-search-pages-desktop"
+				>
+                    {%- comment -%}
+                        === [ CORETEX FYI ] ===
+                        Displays page suggestions
+                    {%- endcomment -%}
+					{%- for page in predictive_search.resources.pages -%}
+						<li
+							id="predictive-search-option-page-desktop-{{ forloop.index }}"
+							class="item pages"
+							role="option"
+							aria-selected="false"
+						>
+							<a href="{{ page.url }}" class="search-item button" tabindex="-1">{{ page.title | escape }}</a>
+						</li>
+					{%- endfor -%}
+
+                    {%- comment -%}
+                        === [ CORETEX FYI ] ===
+                        Displays article suggestions
+                    {%- endcomment -%}
+					{%- for article in predictive_search.resources.articles -%}
+						<li
+							id="predictive-search-option-article-desktop-{{ forloop.index }}"
+							class="item aritcles"
+							role="option"
+							aria-selected="false"
+						>
+							<a href="{{ article.url }}" class="search-item button" tabindex="-1">{{ article.title | escape }}</a>
+						</li>
+					{%- endfor -%}
+				</ul>
+			</div>
+		{%- endif -%}
+
+		{%- if first_column_results_size > 0 -%}</x-flex>{%- endif -%}
+
+        {%- comment -%}
+            === [ CORETEX FYI ] ===
+            Displays products
+        {%- endcomment -%}
+		{%- if predictive_search.resources.products.size > 0 or predictive_search.resources.articles.size > 0 or predictive_search.resources.pages.size > 0 -%}
+			<div class="search-result-group">
+				{%- if predictive_search.resources.products.size > 0 -%}
+					<div>
+						<h2 id="predictive-search-products" class="h6">{{- 'templates.search.products' | t -}}</h2>
+						<ul x-grid columns="1"
+							id="predictive-search-results-products-list"
+							class="search-list no-style inside"
+							role="group"
+							aria-labelledby="predictive-search-products"
+						>
+							{%- for product in predictive_search.resources.products -%}
+								<li
+									id="predictive-search-option-product-{{ forloop.index }}"
+									class="list-item"
+									role="option"
+									aria-selected="false"
+								>
+									<a href="{{ product.url }}" class="search-item" tabindex="-1" x-flex>
+
+										{%- if product.featured_media != blank -%}
+                                            {%- assign media_alt = product.featured_media.alt | escape -%}
+                                            {%- render 'inc-img',
+                                                img: product.featured_media,
+                                                alt: media_alt,
+                                                widths: '50,80,100,180,360,480,640',
+                                                mediaLoader: true,
+                                                class: 'noRadius'
+                                            -%}
+										{%- endif -%}
+
+										<x-flex direction="column" ai="start" class="meta text-start">
+                                            <x-cell class="titles">
+											    {%- if settings.predictive_search_show_vendor -%}
+											    	<span class="visually-hidden">{{ 'accessibility.vendor' | t }}</span>
+											    	<span class="vendor">{{ product.vendor }}</span>
+											    {%- endif -%}
+
+											    <h3 class="h6 title text-normal">{{ product.title | escape }}</h3>
+                                            </x-cell>
+											{%- if settings.predictive_search_show_price -%}
+                                            <x-cell class="prices">{%- render 'c-price', product: product, use_variant: true, show_badges: false -%}</x-cell>
+											{%- endif -%}
+										</x-flex>
+
+									</a>
+								</li>
+							{%- endfor -%}
+						</ul>
+					</div>
+				{%- endif -%}
+
+			</div>
+		{%- endif -%}
+
+		{%- if first_column_results_size > 0 or predictive_search.resources.products.size > 0 -%}</x-flex>{%- endif -%}
+
+        {%- comment -%}
+            === [ CORETEX FYI ] ===
+            Displays the Search "${QUERY}" button
+        {%- endcomment -%}
+		<div id="predictive-search-option-search-keywords" class="text-center">
+			<button class="has-icon" tabindex="-1" role="option" aria-selected="false">
+				<span data-predictive-search-search-for-text>{{- 'templates.search.search_for' | t: terms: predictive_search.terms -}}</span>
+				{% render 'inc-icon', icon: 'arrow-right' %}
+			</button>
+		</div>
+	</div>
+
+	<span class="hidden" data-predictive-search-live-region-count-value>
+		{% liquid
+			assign total_results = predictive_search.resources.products.size | plus: first_column_results_size
+			if total_results == 0
+				echo 'templates.search.no_results' | t: terms: predictive_search.terms
+			else
+				echo 'templates.search.results_with_count' | t: count: total_results | append: ': '
+				if predictive_search.resources.queries.size > 0
+					assign count = predictive_search.resources.queries.size | plus: predictive_search.resources.collections.size
+					echo 'templates.search.results_suggestions_with_count' | t: count: count | append: ', '
+				endif
+				if predictive_search.resources.pages.size > 0
+					assign count = predictive_search.resources.pages.size | plus: predictive_search.resources.articles.size
+					echo 'templates.search.results_pages_with_count' | t: count: count | append: ', '
+				endif
+				if predictive_search.resources.products.size > 0
+					echo 'templates.search.results_products_with_count' | t: count: predictive_search.resources.products.size
+				endif
+			endif
+		%}
+	</span>
+{%- endif -%}

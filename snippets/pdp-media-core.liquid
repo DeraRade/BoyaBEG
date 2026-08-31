@@ -1,0 +1,124 @@
+{%- liquid
+    # Image widths
+    assign widths = '550,750,950,1280,1426,1646,1946'
+    assign sizes = '(min-width: 2720px) 25.36vw, (min-width: 2340px) 30vw, (min-width: 780px) 33.05vw, 37.39vw"'
+
+    # Video
+    assign videoLoop = loop
+    assign videoAutoplay = autoplay
+    assign videoControls = controls
+    assign clickToPlay = true
+-%}
+
+{%- if media.media_type == 'image' -%}
+
+{%- comment -%}
+    Images
+{%- endcomment -%}
+
+    {%- if imageZoom -%}
+    <button class="is-blank" data-open="#imagezoom-{{ section.id }}-Box" data-zoom-target="{{ section.id }}-{{ media.id }}">
+    <span class="visually-hidden">{{ 'products.product.media.open_media' | t: index: media_index }}</span>
+    {%- endif -%}
+
+    {%- liquid
+        assign img = media.preview_image
+        assign widths = widths
+        assign sizes = sizes
+        assign alt = media.preview_image.alt | default: product.title | escape
+        assign mediaLoader = true
+
+        render 'inc-img' img: img, width: width, widths: widths, sizes: sizes, alt: alt, mediaLoader: mediaLoader, fetchpriority: fetchpriority, preload: preload
+    -%}
+
+    {%- if imageZoom -%}</button>{%- endif -%}
+
+{%- else -%}
+
+{%- comment -%}
+    Video & 3D model
+{%- endcomment -%}
+
+{%- if media.media_type == 'model' -%}
+    <product-model class="deferred-media media xmodel no-js-hidden" data-media-id="{{ media.id }}" x-grid columns="stack" pi="center">
+{%- else -%}
+    <deferred-media class="deferred-media media xvideo no-js-hidden" data-media-id="{{ media.id }}" x-grid columns="stack" pi="center">
+{%- endif -%}
+
+{%- comment -%}
+    When video is autoplay
+{%- endcomment -%}
+
+{% if media.media_type == 'video' and videoAutoplay == true %}
+
+	{%- render 'inc-video'
+        vid: media, 
+        loop: videoLoop, 
+        autoplay: videoAutoplay, 
+        controls: videoControls, 
+        clickToPlay: clickToPlay
+	-%}
+
+{% else %}
+
+    <button id="Deferred-Poster-Modal-{{ media.id }}" type="button" x-grid columns="stack" pi="center">
+        <poster-button>
+        {%- liquid 
+            if media.media_type == 'model' 
+                render 'inc-icon', icon: 'cube'
+            else
+                render 'inc-icon', icon: 'os-play'
+            endif
+        -%}
+        </poster-button>
+
+        {%- liquid 
+            assign img = media.preview_image
+            assign width = 1946
+            assign widths = widths
+            assign sizes = sizes
+            assign alt = media.preview_image.alt | default: product.title | escape
+            assign mediaLoader = true
+    
+            render 'inc-img' img: img, width: width, widths: widths, sizes: sizes, alt: alt, mediaLoader: mediaLoader
+        -%}
+    </button>
+
+    <template>
+    {%- liquid
+        case media.media_type
+        when 'external_video'
+
+            assign video_class = 'js-' | append: media.host
+            if media.host == 'youtube'
+                echo media | external_video_url: autoplay: true, loop: videoLoop, playlist: media.external_id | external_video_tag: class: video_class, loading: "lazy"
+            else
+                echo media | external_video_url: autoplay: true, loop: videoLoop | external_video_tag: class: video_class, loading: "lazy"
+            endif
+
+        when 'video'
+            echo media | media_tag: image_size: "2048x", autoplay: true, loop: videoLoop, controls: false, preload: "none"
+        when 'model'
+            echo media | media_tag: image_size: "2048x", toggleable: true
+        endcase
+    -%}
+    </template>
+{% endif %}
+
+    {%- if media.media_type == 'model' -%}
+    </product-model>
+    {%- if xr_button -%}
+        <div class="d3xr-button">
+            <button type="button" class="has-icon xr-button"
+                data-shopify-xr data-shopify-model3d-id="{{ media.id }}" 
+                data-shopify-title="{{ product.title | escape }}" 
+                data-shopify-xr-hidden>
+                <span>{% render 'inc-icon', icon: 'cube' %}</span>
+                <small class="text-normal">{{ 'products.product.xr_button' | t }}</small>
+            </button>
+          </div>
+    {%- endif -%}
+    {%- else -%}
+    </deferred-media>
+    {%- endif -%}
+{%- endif -%}

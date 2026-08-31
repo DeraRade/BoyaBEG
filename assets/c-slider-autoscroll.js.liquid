@@ -1,0 +1,325 @@
+import CoretexSlider from "{{ 'c-slider.js' | asset_url }}"
+import AutoScroll from "{{ 'h-carousel-as.js' | asset_url }}"
+
+/**
+ * CoretexAutoscroll - Carousel component with autoscroll functionality
+ * Extends the base CoretexSlider class with autoscroll capabilities
+ * 
+ * Features:
+ * - Automatic scrolling with configurable direction and speed
+ * - Play/pause controls
+ * - Customizable behavior on user interaction
+ * - Responsive breakpoints support
+ */
+export default class CoretexAutoscroll extends CoretexSlider {
+    constructor() {
+        super();
+        this.autoscrollPlugin = null;
+    }
+
+    // Override getViewportSelector method to use autoscroll-specific selectors if needed
+    // getViewportSelector() {
+    //     return 'autoscroll-viewport';
+    // }
+
+    // Override getSlideAttribute method to use autoscroll-specific selectors if needed
+    // getSlideAttribute() {
+    //     return 'autoscroll-slide';
+    // }
+
+    // Override getDefaultOptions to include autoscroll-specific options
+    getDefaultOptions() {
+        // Get base options from parent class
+        const baseOptions = super.getDefaultOptions();
+        
+        // Add autoscroll-specific default options
+        return {
+            ...baseOptions,
+            loop: true, // Enable loop by default for autoscroll
+            draggable: false, // Completely disable dragging
+            autoscroll: {
+                direction: 'forward',
+                speed: 2,
+                startDelay: 0, // No initial delay - start immediately
+                active: true,
+                playOnInit: true,
+                stopOnFocusIn: true,
+                stopOnInteraction: false, // Not relevant as drag is disabled
+                stopOnMouseEnter: true // Enable pausing on hover by default
+            }
+        };
+    }
+
+    // Initialize the component with custom options
+    async connectedCallback() {
+        // Get autoscroll-specific options from attributes
+        const autoscrollOptions = this.getAutoscrollOptions();
+        
+        // Merge autoscroll options with base options and completely disable dragging
+        await super.connectedCallback({
+            autoscroll: autoscrollOptions,
+            draggable: false // Completely disable dragging functionality
+        });
+        
+        // After initialization, set up event listeners for hover operations
+        if (this.embla) {
+            this.setupHoverEventHandlers();
+        }
+    }
+
+    // Extract autoscroll-specific options from attributes
+    getAutoscrollOptions() {
+        const options = {};
+        
+        // Get direction attribute (forward or backward)
+        if (this.hasAttribute('scroll-direction')) {
+            options.direction = this.getAttribute('scroll-direction');
+        }
+        
+        // Get speed attribute (float value)
+        if (this.hasAttribute('scroll-speed')) {
+            options.speed = parseFloat(this.getAttribute('scroll-speed'));
+        }
+        
+        // Default start delay to 0 (immediate start)
+        options.startDelay = 0;
+        
+        // Allow override if explicitly set
+        if (this.hasAttribute('scroll-delay')) {
+            options.startDelay = parseInt(this.getAttribute('scroll-delay'), 10);
+        }
+        
+        // Get active state attribute (boolean)
+        if (this.hasAttribute('scroll-active')) {
+            options.active = this.getAttribute('scroll-active') === 'true';
+        }
+        
+        // Get play on init attribute (boolean)
+        if (this.hasAttribute('scroll-play-init')) {
+            options.playOnInit = this.getAttribute('scroll-play-init') === 'true';
+        }
+        
+        // Get stop on focus in attribute (boolean)
+        if (this.hasAttribute('scroll-stop-focus')) {
+            options.stopOnFocusIn = this.getAttribute('scroll-stop-focus') === 'true';
+        }
+        
+        // Get stop on interaction attribute (boolean)
+        if (this.hasAttribute('scroll-stop-interact')) {
+            options.stopOnInteraction = this.getAttribute('scroll-stop-interact') === 'true';
+        }
+        
+        // Get stop on mouse enter attribute (boolean)
+        if (this.hasAttribute('scroll-stop-hover')) {
+            options.stopOnMouseEnter = this.getAttribute('scroll-stop-hover') === 'true';
+        }
+        
+        return options;
+    }
+
+
+    // Override the initializePlugins method to add the autoscroll plugin
+    async initializePlugins() {
+        // Get plugins from parent class
+        const plugins = await super.initializePlugins();
+        
+        if (this.emblaNode) {
+            // Get autoscroll options from attributes
+            const autoscrollOptions = this.getAutoscrollOptions();
+            
+            // Create autoscroll plugin with our options
+            // Ensure startDelay is 0 for immediate start
+            const autoscrollPlugin = AutoScroll({
+                ...autoscrollOptions,
+                startDelay: 0,
+                stopOnInteraction: false // Allow resuming after interaction
+            });
+            
+            plugins.push(autoscrollPlugin);
+            
+            // Store a reference to the autoscroll plugin
+            this.autoscrollPlugin = autoscrollPlugin;
+        }
+        
+        return plugins;
+    }
+
+    // Override the init method to add autoscroll-specific initialization
+    init() {
+        // Call parent init method
+        super.init();
+        
+        // Initialize autoscroll controls
+        this.initAutoscrollControls();
+    }
+
+    // Initialize autoscroll-specific controls
+    initAutoscrollControls() {
+        // Find autoscroll control elements
+        this.playButton = this.querySelector('[autoscroll-play]');
+        this.pauseButton = this.querySelector('[autoscroll-pause]');
+        this.toggleButton = this.querySelector('[autoscroll-toggle]');
+        
+        // Set up play button
+        if (this.playButton) {
+            this.playButton.addEventListener('click', () => this.playAutoscroll());
+        }
+        
+        // Set up pause button
+        if (this.pauseButton) {
+            this.pauseButton.addEventListener('click', () => this.pauseAutoscroll());
+        }
+        
+        // Set up toggle button
+        if (this.toggleButton) {
+            this.toggleButton.addEventListener('click', () => this.toggleAutoscroll());
+            this.updateToggleButtonState();
+        }
+        
+        // Force immediate start if playOnInit is true and autoscrollPlugin exists
+        if (this.autoscrollPlugin && this.embla.internalEngine().options.autoscroll?.playOnInit) {
+            // Small timeout to ensure the component is fully initialized
+            setTimeout(() => {
+                this.autoscrollPlugin.play(0);
+                this.updateToggleButtonState();
+            }, 0);
+        }
+    }
+
+    // Play autoscroll
+    playAutoscroll() {
+        if (this.autoscrollPlugin && !this.autoscrollPlugin.isPlaying()) {
+            // Use 0 delay to start immediately
+            this.autoscrollPlugin.play(0);
+            this.updateToggleButtonState();
+        }
+    }
+
+    // Pause autoscroll
+    pauseAutoscroll() {
+        if (this.autoscrollPlugin && this.autoscrollPlugin.isPlaying()) {
+            this.autoscrollPlugin.stop();
+            this.updateToggleButtonState();
+        }
+    }
+
+    // Toggle autoscroll play/pause
+    toggleAutoscroll() {
+        if (this.autoscrollPlugin) {
+            if (this.autoscrollPlugin.isPlaying()) {
+                this.autoscrollPlugin.stop();
+            } else {
+                // Use 0 delay to start immediately
+                this.autoscrollPlugin.play(0);
+            }
+            this.updateToggleButtonState();
+        }
+    }
+
+    // Update toggle button state
+    updateToggleButtonState() {
+        if (this.toggleButton && this.autoscrollPlugin) {
+            const isPlaying = this.autoscrollPlugin.isPlaying();
+            
+            // Update toggle button text or icon based on state
+            if (this.toggleButton.querySelector('[autoscroll-play-text]')) {
+                const playText = this.toggleButton.querySelector('[autoscroll-play-text]');
+                const pauseText = this.toggleButton.querySelector('[autoscroll-pause-text]');
+                
+                if (playText) playText.style.display = isPlaying ? 'none' : 'inline';
+                if (pauseText) pauseText.style.display = isPlaying ? 'inline' : 'none';
+            }
+            
+            // Update toggle button aria attributes
+            this.toggleButton.setAttribute('aria-label', isPlaying ? 'Pause autoscroll' : 'Play autoscroll');
+            this.toggleButton.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+        }
+    }
+
+    // Override stopAutoplay method to stop autoscroll as well
+    stopAutoplay() {
+        // Call parent stopAutoplay method
+        super.stopAutoplay();
+        
+        // Also stop the autoscroll if it's playing
+        if (this.autoscrollPlugin && this.autoscrollPlugin.isPlaying()) {
+            this.autoscrollPlugin.stop();
+            this.updateToggleButtonState();
+        }
+    }
+
+    // Method to reset autoscroll to initial state
+    resetAutoscroll() {
+        if (this.autoscrollPlugin) {
+            this.autoscrollPlugin.reset();
+            this.updateToggleButtonState();
+        }
+    }
+    
+    // Set up event handlers for hover operations
+    setupHoverEventHandlers() {
+        if (!this.embla || !this.autoscrollPlugin) return;
+        
+        // Get the container node to add hover events
+        const containerNode = this.embla.containerNode();
+        if (!containerNode) return;
+        
+        // Define hover event handlers for immediate response
+        const mouseEnterHandler = () => {
+            // Immediately stop autoscroll on mouse enter
+            this.autoscrollPlugin.stop();
+            this.updateToggleButtonState();
+        };
+        
+        const mouseLeaveHandler = () => {
+            // Immediately start autoscroll on mouse leave without any delay
+            // We'll bypass the default delay mechanism by directly calling play with 0 delay
+            this.autoscrollPlugin.play(0);
+            this.updateToggleButtonState();
+        };
+        
+        // Store references to remove event listeners later
+        this.hoverEventHandlers = {
+            mouseenter: mouseEnterHandler,
+            mouseleave: mouseLeaveHandler
+        };
+        
+        // Add event listeners
+        containerNode.addEventListener('mouseenter', mouseEnterHandler);
+        containerNode.addEventListener('mouseleave', mouseLeaveHandler);
+    }
+
+    // Override disconnectedCallback to clean up additional resources
+    disconnectedCallback() {
+        // Clean up hover event handlers
+        if (this.embla && this.hoverEventHandlers) {
+            const containerNode = this.embla.containerNode();
+            if (containerNode) {
+                containerNode.removeEventListener('mouseenter', this.hoverEventHandlers.mouseenter);
+                containerNode.removeEventListener('mouseleave', this.hoverEventHandlers.mouseleave);
+            }
+        }
+        
+        
+        // Clean up control button event listeners
+        if (this.playButton) {
+            this.playButton.removeEventListener('click', () => this.playAutoscroll());
+        }
+        
+        if (this.pauseButton) {
+            this.pauseButton.removeEventListener('click', () => this.pauseAutoscroll());
+        }
+        
+        if (this.toggleButton) {
+            this.toggleButton.removeEventListener('click', () => this.toggleAutoscroll());
+        }
+        
+        // Call parent disconnectedCallback
+        super.disconnectedCallback();
+    }
+} 
+
+// Register custom element if not already defined
+if (!customElements.get('coretex-autoscroll')) {
+    customElements.define('coretex-autoscroll', CoretexAutoscroll);
+}

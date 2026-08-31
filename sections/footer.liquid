@@ -1,426 +1,796 @@
-<script
-  type="application/json"
-  data-section-type="footer"
-  data-section-id="{{ section.id }}"
+{%- liquid
+  # Debug check
+  assign debuger = false
+  if request.design_mode and section.settings.debug
+    assign debuger = true
+  endif
+
+  # skelet .debug
+  capture debug
+    if debuger
+      echo 'debug outline' | prepend: ' '
+    endif
+  endcapture
+
+  # x-grid columns
+  assign columns = 8
+-%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+{%- endcapture -%}
+
+<section id="primaryFooter" 
+    style="{{ style }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
 >
-</script>
 
-{%- assign locale_selector = false -%}
-{%- assign currency_selector = false -%}
+  <x-grid columns="{{ columns }}" class="{{ debug }}">
+    {%- for block in section.blocks -%}
+      {%- case block.type -%}
+        {%- when 'image' -%}
+          <section x-flex jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" ai="center"
+            class="image"
+            style="{{ block.settings.imageSize | prepend: '--imageSize:' | append: 'px' }}"
+            span="{{ block.settings.span }}"
+            span-s="{{ block.settings.spanMobile }}"
+            {{ block.shopify_attributes }}
+          >
+            {%- if block.settings.url != blank -%}<a href="{{ block.settings.url }}">{% endif -%}
+            {%- render 'inc-img', img: block.settings.image, width: 768, widths: '100,180,360,480,640,768', mediaLoader: true, fallback: true, class: 'noRadius' -%}
+            {%- if block.settings.url != blank -%}</a>{% endif -%}
+          </section>
 
-{%- if section.settings.show_currency_selector and shop.enabled_currencies.size > 1 -%}
-  {%- assign currency_selector = true -%}
-{%- endif -%}
-
-{%- if section.settings.show_locale_selector and shop.published_locales.size > 1 -%}
-  {%- assign locale_selector = true -%}
-{%- endif -%}
-
-<footer class="footer">
-  <section class="section">
-    <div class="container footer-menu-wrap">
-      {% for block in section.blocks %}
-        <div class="{% if forloop.length >= 5 %}one-fifth column{% elsif forloop.length == 4 %}one-fourth column{% elsif forloop.length == 3 %}one-third column{% elsif forloop.length == 2 %}one-half column{% endif %} medium-down--one-whole" {{ block.shopify_attributes }}>
-          {% if block.type == 'logo' %}
-            <div class="text-align--{{block.settings.text_align}}">
-              {% if block.settings.image %}
-                <img alt="{{ block.settings.image.alt | escape }}"
-                     class="footer-logo lazyload {{ settings.image_loading_style }}"
-                     data-sizes="25vw"
-                     style="object-fit: cover; object-position: {{ block.settings.image.presentation.focal_point }}; max-width: {{- block.settings.image.width -}}px"
-                     data-src="{{ block.settings.image | img_url: '2048x' }}"
-                     data-srcset="{{ block.settings.image | img_url: '200x' }} 200w,
-                                  {{ block.settings.image | img_url: '300x' }} 300w,
-                                  {{ block.settings.image | img_url: '400x' }} 400w,
-                                  {{ block.settings.image | img_url: '500x' }} 500w,
-                                  {{ block.settings.image | img_url: '600x' }} 600w,
-                                  {{ block.settings.image | img_url: '1000x' }} 1000w"
-                />
-              {% else %}
-                <div class="logo">{{ shop.name }}</div>
-              {% endif %}
+        {%- when 'text' -%}
+          <section
+            class="text text-{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}"
+            span="{{ block.settings.span }}"
+            span-s="{{ block.settings.spanMobile }}"
+            {{ block.shopify_attributes }}
+          >
+            {%- if block.settings.heading != empty -%}
+              <h3 class="labelTitle">{{ block.settings.heading }}</h3>
+            {%- endif -%}
+            <div class="rte meta">
+              {{ block.settings.motto | replace: '\n', '<br/>' }}
             </div>
-          {% elsif block.type == 'newsletter' %}
-            <div class="newsletter_section">
-              {% if block.settings.title != blank %}
-                <h6>{{ block.settings.title }}</h6>
+          </section>
+
+        {%- when 'payments' -%}
+          <section
+            class="payments"
+            span="{{ block.settings.span }}"
+            span-s="{{  block.settings.spanMobile }}"
+            {{ block.shopify_attributes }}
+          >
+            <x-cell
+              class="paymentMethods text-{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}"
+              style="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--paymentJustify:' | append: ';' }}"
+            >
+              {%- if block.settings.heading != empty -%}
+                <h3 class="labelTitle">{{ block.settings.heading }}</h3>
               {% endif %}
 
-              {% if block.settings.newsletter_text != blank %}
-                {{ block.settings.newsletter_text }}
-              {% endif %}
-
-              <div class="newsletter">
-                <span class="message"></span>
-
-                {% if settings.mailchimp_link != blank %}
-                  <form action="{{ settings.mailchimp_link }}" method="post" name="mc-embedded-subscribe-form" id="contact_form" target="_blank">
-                    {% if block.settings.show_firstname %}
-                      <input type="text" value="" class="firstName" name="FNAME" placeholder="{{ 'general.newsletter_form.subscriber_first_name' | t }}">
-                    {% endif %}
-
-                    {% if block.settings.show_lastname %}
-                      <input type="text" value="" name="LNAME" placeholder="{{ 'general.newsletter_form.subscriber_last_name' | t }}">
-                    {% endif %}
-
-                    <input type="email" value="" name="EMAIL" class="contact_email" placeholder="{{ 'general.newsletter_form.placeholder' | t }}">
-
-                    <input type="submit" value="{{ 'general.newsletter_form.submit' | t }}" class="global-button global-button--primary newsletter-form__sign-up" name="subscribe" />
-                  </form>
-                {% else %}
-                  {% form 'customer' %}
-                    {% if form.posted_successfully? %}
-                      <p><em>{{ 'general.newsletter_form.success_text' | t }}</em></p>
-                    {% elsif form.errors %}
-                      {% for field in form.errors %}
-                        <p><em>{{ field }} - {{ form.errors.messages[field] }}</em></p>
-                      {% endfor %}
-                    {% endif %}
-
-                    <input type="hidden" name="contact[tags]" value="prospect,newsletter"/>
-
-                    {% if block.settings.show_firstname %}
-                      <input type="text" class="firstName" name="contact[first_name]" placeholder="{{ 'general.newsletter_form.subscriber_first_name' | t }}" />
-                    {% endif %}
-
-                    {% if block.settings.show_lastname %}
-                      <input type="text" name="contact[last_name]" placeholder="{{ 'general.newsletter_form.subscriber_last_name' | t }}" />
-                    {% endif %}
-
-                    <input type="hidden" name="challenge" value="false" />
-                    <input type="email" class="contact_email" name="contact[email]" required placeholder="{{ 'general.newsletter_form.placeholder' | t }}" />
-                    <input type='submit' class="global-button global-button--primary newsletter-form__sign-up" value="{{ 'general.newsletter_form.submit' | t }}" />
-                  {% endform %}
-                {% endif %}
+              <div class="payment-icons meta" style="{%- if settings.cart_icons_grey -%}filter:grayscale(1){%- endif -%}">
+                {%- render 'inc-payment-icons' -%}
               </div>
+            </x-cell>
 
-              {% if block.settings.show_social %}
-                {% render 'social-icons' %}
-              {% endif %}
-            </div>
-          {% elsif block.type == 'link_list' %}
-            <div class="footer_menu">
-              {% if block.settings.menu != blank %}
-                <h6>{{ linklists[block.settings.menu].title }}<span class="right icon-down-arrow"></span></h6>
+            {%- if shop.features.follow_on_shop? and block.settings.enable_follow_on_shop -%}
+                <x-cell class="follow-on-shop center">{{- shop | login_button: action: 'follow' -}}</x-cell>
+            {%- endif -%}
+          </section>
 
-                <div class="toggle_content">
-                  <ul>
-                    {% for link in linklists[block.settings.menu].links %}
-                      <li>
-                        <p>
-                          <a href="{{ link.url }}">{{ link.title }}</a>
-                        </p>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              {% else %}
-                <h6>Menu title<span class="right icon-down-arrow"></span></h6>
+        {%- when 'menu' -%}
+          <section class="menu" span="{{ block.settings.span }}" span-s="8" x-subgrid {{ block.shopify_attributes }}>
+            {%- liquid
+              assign linklist = block.settings.menu
+              assign hasSublinks = false
 
-                <div class="toggle_content">
-                  <ul>
-                    <li>
-                      <p>{{ 'homepage.onboarding.no_content' | t }}</p>
+              for link in linklists[linklist].links
+                if link.links.size > 0
+                  assign hasSublinks = true
+                  break
+                endif
+              endfor
+            -%}
+
+            {%- if hasSublinks -%}
+              <ul class="no-style inside{{ debug }}" span="{{ columns }}" x-subgrid>
+                {%- for link in linklists[linklist].links -%}
+                  {%- if link.links.size > 0 -%}
+                    <li span="{{ block.settings.spanCell }}" span-s="{{ block.settings.spanCellMobile }}">
+                      <h3 class="labelTitle">{{ link.title }}</h3>
+                      <ul class="no-style inside" x-flex direction="column">
+                        {%- for sublink in link.links -%}
+                          <li>
+                            <a href="{{ sublink.url }}">{{ sublink.title }}</a>
+                          </li>
+                        {%- endfor -%}
+                      </ul>
                     </li>
-                  </ul>
-                </div>
-              {% endif %}
+                  {%- else -%}
+                    <li span="{{ block.settings.spanCell }}" span-s="{{ block.settings.spanCellMobile }}">
+                      <a href="{{ link.url }}">{{ link.title }}</a>
+                    </li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            {%- else -%}
+              <ul
+                class="no-style inside"
+                span="{{ columns }}"
+                x-flex
+                wrap
+                direction="row"
+                jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}"
+              >
+                {%- for link in linklists[linklist].links -%}
+                  <li>
+                    <a href="{{ link.url }}">{{ link.title }}</a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </section>
+
+        {%- when 'socials' -%}
+          <section
+            class="social"
+            span="{{ block.settings.span }}"
+            span-s="{{ block.settings.spanMobile }}"
+            {{ block.shopify_attributes }}
+          >
+            {%- if block.settings.heading != empty -%}
+                <h3 class="labelTitle {{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-' }}">
+                    {{ block.settings.heading }}
+                </h3>
+            {% endif %}
+            <div class="meta">
+              {%- assign attribute = block.settings.alignment
+                | replace: 'left', 'start'
+                | replace: 'right', 'end'
+                | prepend: 'x-flex direction=row wrap=wrap ai=center jc='
+              -%}
+              {%- render 'inc-socials',
+                location: 'footer',
+                attribute: attribute,
+                type: block.settings.type,
+                button: 'false'
+              -%}
             </div>
-          {% elsif block.type == 'text' %}
-            <div class="footer_content footer-text {% if block.settings.title == blank %}no-footer-title{% endif %}">
-              {% if block.settings.title != blank %}
-                <h6>{{ block.settings.title }}<span class="right icon-down-arrow"></span></h6>
-              {% endif %}
+          </section>
 
-              {% if block.settings.content %}
-                <div class="toggle_content">
-                  {{ block.settings.content }}
-                </div>
-              {% endif %}
-            </div>
-          {% elsif block.type == 'page' %}
-            <div class="footer_content footer-text">
-              {% if block.settings.page != blank %}
-                <h6>{{ pages[block.settings.page].title }}<span class="right icon-down-arrow"></span></h6>
+        {%- when 'newsletter' -%}
+          <section
+            class="newsletter"
+            span="{{ block.settings.span }}"
+            span-s="{{ block.settings.spanMobile }}"
+            {{ block.shopify_attributes }}
+          >
+            {%- liquid
+                if block.settings.buttonStyle == 'text'
+                    assign style = 'is-custom'
+                endif
 
-                <div class="toggle_content rte">
-                  {{ pages[block.settings.page].content }}
-                </div>
-              {% else %}
-                <h6>Page title<span class="right icon-down-arrow"></span></h6>
+                # when contentDirection is column
+                if block.settings.contentDirection == 'column'
+                    assign aiDirection = block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end'
+                else
+                    assign aiDirection = 'center'
+                endif
+            -%}
+            <x-flex 
+                direction="{{ block.settings.contentDirection }}" 
+                jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" 
+                ai="{{ aiDirection }}"
+            >
+            {%- if block.settings.heading != empty -%}<h3 class="labelTitle">{{ block.settings.heading }}</h3>{% endif %}
+            {%- if block.settings.message != empty -%}<div class="rte meta {{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-' }}"><p>{{ block.settings.message }}</p></div>{%- endif -%}
+              <button data-open="#newsletterBox" class="{{ style }} has-icon">
+                <span>{{ block.settings.label | escape }}</span>
+                {%- render 'inc-icon', icon: 'arrow-right' -%}
+              </button>
+            </x-flex>
+          </section>
 
-                <div class="toggle_content">
-                  <p>{{ 'homepage.onboarding.no_content' | t }}</p>
-                </div>
-              {% endif %}
-            </div>
-          {% elsif block.type == 'empty' %}
-            <div class="empty-column"></div>
-          {% endif %}
+          {%- when 'selectors' -%}
+            <section
+                class="i18n-selectors" 
+                span="{{ block.settings.span }}"
+                span-s="{{ block.settings.spanMobile }}"
+                {{ block.shopify_attributes }}
+              >
+                <x-flex 
+                    direction="{{ block.settings.contentDirection }}" 
+                    wrap="wrap" jc="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" 
+                    {%- liquid
+                        # Fix for flexboxs alignment nonsense.
 
-          {% if block.settings.social_icons_footer %}
-            {%- assign social_icons = true -%}
+                        if block.settings.contentDirection == 'column' 
+                            echo block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'ai='
+                        else
+                            echo 'ai=center'
+                        endif
+                    -%}
+                >
+                    {% # Country/region selector %}
+                    {%- if block.settings.show_country and localization.available_countries.size > 1  -%}
+                        <x-cell>
+                            {%- if block.settings.show_heading -%}<h3 class="labelTitle">{{ 'localization.country_label' | t }}</h3>{%- endif -%}
+                            {%- render 'global-localization', component: 'button', type: 'country', icons: false -%}
+                        </x-cell>
+                    {%- endif -%}
 
-            <div class="footer-social-icons {% if block.type == 'logo' %}text-align--{{ block.settings.text_align }}{% endif %}">
-              {% render 'social-icons' %}
-            </div>
-          {% endif %}
-        </div>
-
-        {% if forloop.last and social_icons %}
-          <div class="footer-social-icons--mobile sixteen columns">
-            {% render 'social-icons' %}
-          </div>
-        {% endif %}
-      {% endfor %}
-
-      <div class="one-whole column footer_credits">
-        {% if locale_selector or currency_selector or settings.show_multiple_currencies == true %}
-          <div class="localization-wrap">
-            {%
-              render 'localization-switcher',
-              additional_classes: 'footer-menu__disclosure',
-              id: 'footer__selector-form',
-              currency_selector: currency_selector,
-              locale_selector: locale_selector,
-              show_currency: section.settings.show_currency_selector
-            %}
-          </div>
-        {% endif %}
-
-        <p class="credits">
-          &copy; {{ "now" | date: "%Y" }} {{ shop.name | link_to: routes.root_url }}.
-
-          {{ section.settings.copyright_text }}
-
-          {% if section.settings.display_designed_by %}
-            {{ 'layout.general.designer_credits_html' | t }}
-          {% endif %}
-
-          {{ powered_by_link }}
-        </p>
-
-        {% if section.settings.display_payment_methods %}
-          <div class="payment_methods">
-            {% for type in shop.enabled_payment_types %}
-              {{ type | payment_type_svg_tag: class:'payment-icon' }}
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-</footer>
+                    {% # Language selector %}
+                    {%- if block.settings.show_language and localization.available_languages.size > 1 -%}
+                        <x-cell>
+                            {%- if block.settings.show_heading -%}<h3 class="labelTitle">{{ 'localization.language_label' | t }}</h3>{%- endif -%}
+                            {%- render 'global-localization', component: 'button', type: 'language', icons: false -%}
+                        </x-cell>
+                    {%- endif -%}
+                </x-flex>
+              </section>
+      {%- endcase -%}
+    {%- endfor -%}
+  </x-grid>
+</section>
 
 {% schema %}
 {
-  "name": "Footer",
-  "class": "shopify-section--footer",
-  "max_blocks": 5,
+  "name": "Main",
+  "class": "main-footer",
   "settings": [
     {
       "type": "header",
-      "content": "Sub footer"
-    },
-    {
-      "type": "text",
-      "id": "copyright_text",
-      "label": "Copyright text"
+      "content": "Grid"
     },
     {
       "type": "checkbox",
-      "id": "display_designed_by",
-      "label": "Show theme designer credits",
-      "default": true
+      "id": "debug",
+      "label": "Show grid outline",
+      "default": false,
+      "info": "Visually outline grid areas and elements. These visual aids will only appear in the theme editor and won't be visible to end users."
     },
-    {
-      "type": "checkbox",
-      "id": "display_payment_methods",
-      "label": "Show payment method icons",
-      "default": true
-    },
+	{
+		"type": "header",
+		"content": "Spacing"
+	},
+	{
+		"type": "range",
+		"id": "marginTop",
+		"label": "Margin top",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 0
+	},
+	{
+		"type": "range",
+		"id": "marginBottom",
+		"label": "Margin bottom",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 0
+	},
+	{
+		"type": "range",
+		"id": "paddingTop",
+		"label": "Padding top",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 0
+	},
+	{
+		"type": "range",
+		"id": "paddingBottom",
+		"label": "Padding bottom",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 0
+	},
     {
       "type": "header",
-      "content": "Language selector",
-      "info": "To add a language, go to your [language settings.](/admin/settings/languages)"
+      "content": "Appearance"
     },
     {
-      "type": "checkbox",
-      "id": "show_locale_selector",
-      "label": "Show language selector",
-      "default": true
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
     },
     {
-      "type": "header",
-      "content": "Country selector",
-      "info": "To add a country, go to your [payment settings.](/admin/settings/payments)"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_currency_selector",
-      "label": "Show country selector",
-      "default": true
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
     }
   ],
   "blocks": [
     {
-      "type": "logo",
-      "name": "Logo",
+      "type": "image",
+      "name": "Image",
+      "limit": 2,
       "settings": [
         {
-          "type": "image_picker",
-          "id": "image",
-          "label": "Logo"
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image"
+        },
+        {
+          "type": "range",
+          "id": "imageSize",
+          "min": 20,
+          "max": 500,
+          "step": 5,
+          "unit": "px",
+          "label": "Size",
+          "default": 120,
+          "visible_if": "{{ block.settings.image != nil }}"
+        },
+        {
+            "type": "url",
+            "id": "url",
+            "label": "Link"
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Alignment",
+          "default": "left"
         },
         {
           "type": "select",
-          "id": "text_align",
-          "label": "Alignment",
-          "default": "left",
+          "id": "span",
+          "label": "Block span - desktop",
+          "default": "2",
           "options": [
-            {
-              "value": "left",
-              "label": "Left"
-            },
-            {
-              "value": "center",
-              "label": "Center"
-            },
-            {
-              "value": "right",
-              "label": "Right"
-            }
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" },
+            { "value": "7", "label": "7 columns" },
+            { "value": "8", "label": "8 columns" }
           ]
         },
         {
-          "type": "checkbox",
-          "id": "social_icons_footer",
-          "label": "Show social media footer icons",
-          "default": false
+          "type": "select",
+          "id": "spanMobile",
+          "label": "Block span - mobile",
+          "default": "4",
+          "options": [
+            { "value": "4", "label": "4 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Rich text",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading",
+          "info": "Leave blank to remove"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "motto",
+          "label": "Description",
+          "default": "Use this to add additional information about your business, e.g. address, opening hours etc.",
+          "info": "Talk about your business"
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Alignment",
+          "default": "left"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Block span - desktop",
+          "default": "2",
+          "options": [
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" },
+            { "value": "7", "label": "7 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "spanMobile",
+          "label": "Block span - mobile",
+          "default": "4",
+          "options": [
+            { "value": "4", "label": "4 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "Menu",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Main navigation",
+          "default": "main-menu",
+          "info": "How to set up a multi-column menu, [learn more](https://docs.openthinking.net/themes/etheryx/editor/sections/footer/#menu-multicolumn)"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Main block span",
+          "default": "4",
+          "options": [
+            { "value": "1", "label": "1 Column" },
+            { "value": "2", "label": "2 Columns" },
+            { "value": "3", "label": "3 Columns" },
+            { "value": "4", "label": "4 Columns" },
+            { "value": "5", "label": "5 Columns" },
+            { "value": "6", "label": "6 Columns" },
+            { "value": "7", "label": "7 Columns" },
+            { "value": "8", "label": "8 Columns" }
+          ]
+        },
+        {
+          "type": "header",
+          "content": "Single row menu",
+          "info": "Settings for menus displayed in a single row."
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Item alignment",
+          "default": "left",
+          "info": "Align the items within the menu. This setting applies only to single row menus, not to multi-column menus."
+        },
+        {
+          "type": "header",
+          "content": "Multi-column menu",
+          "info": "Settings for menus displayed in multiple columns."
+        },
+        {
+          "type": "select",
+          "id": "spanCell",
+          "label": "Column span - desktop",
+          "default": "1",
+          "options": [
+            { "value": "1", "label": "1 Column" },
+            { "value": "2", "label": "2 Columns" },
+            { "value": "3", "label": "3 Columns" },
+            { "value": "4", "label": "4 Columns" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "spanCellMobile",
+          "label": "Column span - mobile",
+          "default": "2",
+          "options": [
+            { "value": "2", "label": "2 Columns" },
+            { "value": "4", "label": "4 Columns" },
+            { "value": "8", "label": "8 Columns" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "socials",
+      "name": "Social media",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Link your social media accounts in [Theme settings > Social media](/editor?context=theme&category=social+media)."
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "info": "Leave blank to remove",
+          "placeholder": "Follow",
+          "default": "Follow"
+        },
+        {
+          "type": "select",
+          "id": "type",
+          "label": "Display type",
+          "default": "text",
+          "options": [
+            { "value": "text", "label": "Text" },
+            { "value": "icon", "label": "Icon" }
+          ]
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Alignment",
+          "default": "left"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Block span - desktop",
+          "default": "2",
+          "options": [
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" },
+            { "value": "7", "label": "7 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "spanMobile",
+          "label": "Block span - mobile",
+          "default": "4",
+          "options": [
+            { "value": "4", "label": "4 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
         }
       ]
     },
     {
       "type": "newsletter",
       "name": "Newsletter",
-      "settings": [
-        {
-          "type": "text",
-          "id": "title",
-          "label": "Heading",
-          "default": "Subscribe today!"
-        },
-        {
-          "type": "richtext",
-          "id": "newsletter_text",
-          "label": "Text"
-        },
-        {
-          "type": "checkbox",
-          "id": "show_firstname",
-          "label": "Show first name"
-        },
-        {
-          "type": "checkbox",
-          "id": "show_lastname",
-          "label": "Show last name"
-        },
-        {
-          "type": "checkbox",
-          "id": "show_social",
-          "label": "Show social media icons"
-        }
-      ]
-    },
-    {
-      "type": "link_list",
-      "name": "Menu",
-      "settings": [
-        {
-          "type": "link_list",
-          "id": "menu",
-          "label": "Menu",
-          "info": "This menu won't show drop-down items"
-        },
-        {
-          "type": "checkbox",
-          "id": "social_icons_footer",
-          "label": "Show social media footer icons",
-          "default": false
-        }
-      ]
-    },
-    {
-      "type": "page",
-      "name": "Page",
       "limit": 1,
       "settings": [
         {
-          "type": "page",
-          "id": "page",
-          "label": "Content page"
+            "type": "header",
+            "content": "Notice",
+            "info": "Ensure the Newsletter section is active in the overlay area for this functionality to work as intended."
         },
-        {
-          "type": "checkbox",
-          "id": "social_icons_footer",
-          "label": "Show social media footer icons",
-          "default": false
-        }
-      ]
-    },
-    {
-      "type": "text",
-      "name": "Text",
-      "settings": [
         {
           "type": "text",
-          "id": "title",
+          "id": "heading",
           "label": "Heading",
-          "default": "Title"
+          "info": "Leave blank to remove",
+          "placeholder": "Newsletter",
+          "default": "Newsletter"
         },
         {
-          "type": "richtext",
-          "id": "content",
-          "label": "Text",
-          "default": "<p>Use this text to share information about your brand with your customers. Describe a product, share announcements, or welcome customers to your store.</p>"
+          "type": "text",
+          "id": "message",
+          "label": "Description",
+          "info": "Leave blank to remove",
+          "default": "Subscribe to our newsletter."
         },
         {
-          "type": "checkbox",
-          "id": "social_icons_footer",
-          "label": "Show social media footer icons",
-          "default": false
+          "type": "text",
+          "id": "label",
+          "label": "Button label",
+          "default": "Sign up"
+        },
+        {
+            "type": "select",
+            "id": "buttonStyle",
+            "label": "Button style",
+            "default": "text",
+            "options": [
+                { "value": "text", "label": "Link" },
+                { "value": "center", "label": "Button" }
+            ]
+        },
+        {
+            "type": "select",
+            "id": "contentDirection",
+            "label": "Content direction",
+            "default": "column",
+            "options": [
+                { "value": "row", "label": "Row" },
+                { "value": "column", "label": "Column" }
+            ]
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment",
+            "label": "Content alignment",
+            "default": "left"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Block span - desktop",
+          "default": "2",
+          "options": [
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" },
+            { "value": "7", "label": "7 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "spanMobile",
+          "label": "Block span - mobile",
+          "default": "4",
+          "options": [
+            { "value": "4", "label": "4 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
         }
       ]
     },
     {
-      "type": "empty",
-      "name": "Empty column",
+      "type": "payments",
+      "name": "Payment methods",
+      "limit": 1,
       "settings": [
         {
-          "type": "checkbox",
-          "id": "social_icons_footer",
-          "label": "Show social media footer icons",
-          "default": false
+          "type": "header",
+          "content": "Payment icons",
+          "info": "The payment icons that show in your theme are determined by your store's [payment settings.](/admin/settings/payments) and the customer's region and currency. [Learn more...](https://docs.openthinking.net/themes/etheryx/kb/payment-icons/)"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Payment methods",
+          "placeholder": "Payment methods",
+          "info": "Leave blank to remove"
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "Alignment",
+          "default": "left"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Block span - desktop",
+          "default": "2",
+          "options": [
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" },
+            { "value": "7", "label": "7 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "spanMobile",
+          "label": "Block span - mobile",
+          "default": "4",
+          "options": [
+            { "value": "4", "label": "4 columns" },
+            { "value": "8", "label": "8 columns" }
+          ]
+        },
+        {
+          "type": "header",
+          "content": "Follow on Shop",
+        },
+        {
+            "type": "checkbox",
+            "id": "enable_follow_on_shop",
+            "label": "Enable",
+            "default": false
         }
       ]
+    },
+    {
+        "type": "selectors",
+        "name": "Selectors",
+        "limit": 1,
+        "settings": [
+            {
+                "type": "checkbox",
+                "id": "show_heading",
+                "label": "Show labels",
+                "default": true
+            },
+            {
+                "type": "header",
+                "content": "Country/region selector",
+                "info": "To add a country/region, go to your [payment settings.](/admin/settings/payments)"
+              },
+              {
+                "type": "checkbox",
+                "id": "show_country",
+                "label": "Show country/region selector",
+                "default": true
+            },
+            {
+              "type": "header",
+              "content": "Language selector",
+              "info": "To add a language, go to your [language settings.](/admin/settings/languages)"
+            },
+            {
+              "type": "checkbox",
+              "id": "show_language",
+              "label": "Show language selector",
+              "default": true
+            },
+            {
+                "type": "select",
+                "id": "contentDirection",
+                "label": "Content direction",
+                "default": "row",
+                "options": [
+                    { "value": "row", "label": "Row" },
+                    { "value": "column", "label": "Column" }
+                ]
+            },
+            {
+                "type": "text_alignment",
+                "id": "alignment",
+                "label": "Content alignment",
+                "default": "left"
+            },
+            {
+              "type": "select",
+              "id": "span",
+              "label": "Block span - desktop",
+              "default": "8",
+              "options": [
+                { "value": "1", "label": "1 column" },
+                { "value": "2", "label": "2 columns" },
+                { "value": "3", "label": "3 columns" },
+                { "value": "4", "label": "4 columns" },
+                { "value": "5", "label": "5 columns" },
+                { "value": "6", "label": "6 columns" },
+                { "value": "7", "label": "7 columns" },
+                { "value": "8", "label": "8 columns" }
+              ]
+            },
+            {
+              "type": "select",
+              "id": "spanMobile",
+              "label": "Block span - mobile",
+              "default": "4",
+              "options": [
+                { "value": "4", "label": "4 columns" },
+                { "value": "8", "label": "8 columns" }
+              ]
+            }
+        ]
     }
   ],
   "default": {
     "blocks": [
-      {
-        "type": "logo"
-      },
-      {
-        "type": "link_list"
-      },
-      {
-        "type": "link_list"
-      },
-      {
-        "type": "text"
-      }
+      { "type": "text" },
+      { "type": "newsletter" },
+      { "type": "menu" },
+      { "type": "payments" },
+      { "type": "socials" },
+      { "type": "image" }
     ]
   }
 }
-
 {% endschema %}

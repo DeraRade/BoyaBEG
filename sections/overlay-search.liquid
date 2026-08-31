@@ -1,0 +1,73 @@
+{%- render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer' -%}
+
+<coretex-dialog id="searchBox" 
+    class="coretex-dialog" 
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+    <dialog aria-label="Search modal" dialog-position="{{ section.settings.dialogPosition }}" data-lenis-prevent>
+        <dialog-wrapper aria-label="Search modal" x-flex direction="column">
+            <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                <h2 class="h6" style="--hMargin:0">{{ 'general.search.search' | t }}</h2>
+                <form>
+                    <button formmethod="dialog" x-flex class="is-custom has-icon" data-close>
+                        <span class="visually-hidden">{{ 'accessibility.close' | t }}</span>
+                        {%- render 'inc-icon', icon: 'x-close' -%}
+                    </button>
+                </form>
+            </header>
+            
+            <main>
+                {%- render 'c-search', section: section -%}
+            </main>
+            
+        </dialog-wrapper>
+    </dialog>
+</coretex-dialog>
+
+{% schema %}
+{
+  "name": "Search",
+  "class": "search-overlay",
+  "enabled_on": { "groups": ["aside"] },
+  "settings": [
+    {
+        "type": "header",
+        "content": "Dialog"
+    },
+    {
+      "type": "select",
+      "id": "dialogPosition",
+      "label": "Position",
+      "default": "bottom center",
+      "options": [
+        {
+          "value": "top center",
+          "label": "Top"
+        },
+        {
+          "value": "bottom center",
+          "label": "Bottom"
+        }
+      ]
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

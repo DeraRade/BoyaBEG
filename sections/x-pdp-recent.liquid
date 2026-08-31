@@ -1,0 +1,36 @@
+{%- comment -%}
+=== [ CORETEX FYI ] ===
+This section is not intended to be displayed. 
+It is used to display recently viewed products using Section API.
+
+    - Used by: `s-recently-viewed.liquid`
+
+DO NOT REMOVE
+{%- endcomment -%}
+
+{%- if search.results_count == 0 -%}
+
+    <p>{{ 'sections.collection_template.empty' | t }}</p>
+
+{%- else -%}
+
+<component-loader><coretex-scroll>
+	{%- liquid
+        assign heading = 'openthinking.dictionary.phrase.recently_viewed' | t
+        assign attributes = 'ai="center"'
+
+        render 'c-section-head', heading: heading, nav: true, attributes: attributes
+    -%}
+
+    <ul direction="row" role="list" class="no-style inside scroll-snap mandatory" scroll-area>
+        {%- for product in search.results -%}
+        <li as="start" scroll-slide>
+            {%- render 'c-prod-card', 
+                product: product, 
+                loading: 'lazy'
+            -%}
+        </li>
+        {%- endfor -%}
+    </ul>
+</coretex-scroll></component-loader>
+{%- endif -%}

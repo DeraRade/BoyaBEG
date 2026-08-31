@@ -1,0 +1,71 @@
+{%- comment -%}
+    Renders social networks
+    
+    Usage:
+    {%- render 'inc-socials', 
+        location: 'footer', 
+        style: 'inline',
+        attribute: 'x-flex direction="column"',
+        type: 'icon',
+        button: 'true'
+    -%}
+{%- endcomment -%}
+
+{%- liquid
+    if type == nil
+        if settings.show_social_type == 'icon'
+            assign showIcon = true
+            assign showText = false
+        else
+            assign showIcon = false
+            assign showText = true
+        endif
+    else 
+        if type == 'icon'
+            assign showIcon = true
+            assign showText = false
+        else
+            assign showIcon = false
+            assign showText = true
+        endif
+    endif
+
+    assign showButton = button | default: false
+    assign style = style | default: 'no-style inside'
+
+    # Add visually hidden class to text for screen readers
+    capture textStyle
+        if showIcon
+            echo 'class="visually-hidden"'
+        endif
+    endcapture
+
+    # Button style
+    capture buttonStyle
+        if showButton == 'true'
+            echo 'class="button is-pill has-icon"'
+        endif
+    endcapture
+
+    assign social_platforms = 'twitter,facebook,pinterest,instagram,tumblr,snapchat,youtube,vimeo,tiktok,reddit,discord,twitch,linkedin,trustpilot,tripadvisor,telegram,wechat,line,whatsapp,weibo,spotify,applemusic,soundcloud' | split: ',' 
+-%}
+
+<ul class="socialNets {{ style }}" {{ attribute }} data-icons="{{ showIcon }}" data-text="{{ showText }}" data-id="{{ location }}">
+{%- for platform in social_platforms -%}
+    {%- liquid
+        assign platform_key = 'social-' | append: platform
+        assign social_link = settings[platform_key] 
+    -%}
+
+    {%- if social_link != blank -%}
+    <li><a href="{{ social_link }}" rel="nofollow noopener noreferrer" target="_blank" {{ buttonStyle }}>
+        {%- liquid 
+            if showIcon
+                render 'inc-icon', icon: platform
+            endif
+        -%}
+        <span {{ textStyle }}>{{ 'openthinking.socials.' | append: platform | t }}</span>
+    </a></li>
+    {%- endif -%}
+{%- endfor -%}
+</ul>

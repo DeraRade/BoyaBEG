@@ -1,0 +1,307 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+{{ section.settings.height | prepend: '--hHeight:' | append: ';' }}
+{{ section.settings.heightMobile | prepend: '--hHeightMob:' | append: ';' }}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+    class="image-before-after" 
+    style="{{ style | strip_newlines | strip }}"
+	data-section-id="{{ section.id }}"
+>
+
+	{%- render 'c-section-head', heading: section.settings.heading, nav: false, addpad: section.settings.paddingInline -%}
+
+    <component-loader><image-comparison class="image-comparison" data-orient="{{ section.settings.orient }}">
+        <div class="cortex">
+            {% for block in section.blocks %}
+            {%- case block.type -%}
+            {%- when 'image' -%}
+            {%- liquid 
+                if forloop.first
+                    assign blockNum = 'imageBefore'
+                    assign js = 'start' 
+                else
+                    assign blockNum = "imageAfter"
+                    assign js = 'end'
+                endif
+            -%}
+            <x-grid columns="stack" class="{{ blockNum }}"> 
+                {%- if block.settings.heading != empty -%}
+                <div class="label large-only" as="{{ block.settings.alignment }}" js="{{ js }}"><span>{{ block.settings.heading }}</span></div>
+                {%- endif -%}
+                <div class="media">
+                    {%-
+                        render 'inc-img',
+                        dynamic: true,
+                        img: block.settings.image,
+                        imgMob: block.settings.imageMobile,
+                        width: 2560,
+                        widths: '480,640,768,1024,1280,1536,1920,2560',
+                        mediaLoader: true,
+                        fallback: true,
+                        svg: 'image'
+                    -%}
+                </div>
+            </x-grid>
+            {%- endcase -%}
+            {%- endfor -%}
+        </div>
+
+        <label for="startingValue" hidden>Starting Value</label>
+        <input type="range" id="startingValue" min="1" max="99" value="{{ section.settings.startingValue }}">
+        <button type="button" class="separationLine" tabindex="-1" aria-label="hidden">
+            <span>{% render 'inc-icon', icon: 'arrow-left-right' %}</span>
+        </button>
+    </image-comparison></component-loader>  
+</section>
+
+{% schema %}
+{
+  "name": "Image comparison",
+  "max_blocks": 2,
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer",
+      "aside"
+    ]
+  },
+  "presets": [
+    {
+      "name": "Image comparison",
+      "category": "Content",
+      "blocks": [
+        { "type": "image" },
+        { "type": "image" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Headings",
+      "default": "Before/after"
+    },
+    {
+      "type": "select",
+      "id": "height",
+      "label": "Banner height",
+      "default": "600px",
+      "options": [
+        {
+          "value": "400px",
+          "label": "400px"
+        },
+        {
+          "value": "450px",
+          "label": "450px"
+        },
+        {
+          "value": "500px",
+          "label": "500px"
+        },
+        {
+          "value": "550px",
+          "label": "550px"
+        },
+        {
+          "value": "600px",
+          "label": "600px"
+        },
+        {
+          "value": "650px",
+          "label": "650px"
+        },
+        {
+          "value": "700px",
+          "label": "700px"
+        },
+        {
+          "value": "750px",
+          "label": "750px"
+        },
+        {
+          "value": "var(--heroHeight-f)",
+          "label": "Full"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heightMobile",
+      "label": "Banner height - mobile",
+      "default": "350px",
+      "options": [
+        {
+          "value": "200px",
+          "label": "200px"
+        },
+        {
+          "value": "250px",
+          "label": "250px"
+        },
+        {
+          "value": "300px",
+          "label": "300px"
+        },
+        {
+          "value": "350px",
+          "label": "350px"
+        },
+        {
+          "value": "400px",
+          "label": "400px"
+        },
+        {
+          "value": "450px",
+          "label": "450px"
+        },
+        {
+          "value": "500px",
+          "label": "500px"
+        },
+        {
+          "value": "550px",
+          "label": "550px"
+        },
+        {
+          "value": "600px",
+          "label": "600px"
+        },
+        {
+          "value": "var(--heroHeight-f)",
+          "label": "Full"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "orient",
+      "label": "Layout orientation",
+      "default": "horizontal",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "Horizontal"
+        },
+        {
+          "value": "vertical",
+          "label": "Vertical"
+        }
+      ]
+    },
+    {
+        "type": "range",
+        "label": "Starting value",
+        "id": "startingValue",
+        "info": "The starting value of the slider",
+        "min": 1,
+        "max": 99,
+        "step": 1,
+        "default": 50
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+    {
+      "type": "range",
+      "id": "marginTop",
+      "label": "Margin top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "marginBottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "Image",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Notice",
+          "info": "For optimal results, maintain consistent image dimensions."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop"
+        },
+        {
+          "type": "image_picker",
+          "id": "imageMobile",
+          "label": "Mobile"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "info": "Leave blank to remove heading."
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "Heading position",
+          "default": "start",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Center"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

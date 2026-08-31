@@ -1,0 +1,408 @@
+{%- render 'inc-stylesheet', src: 't-blog.css' -%}
+
+<section 
+    class="article"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    <article>
+        <div class="hero{% if section.settings.layout == 'center' %} centre{% endif %}">  
+            {%- if section.settings.show_image -%}
+                <div class="image" order-s="1">
+                {%- liquid 
+                    assign img = article.image
+                    assign width = 1426
+                    assign widths = '750,950,1100,1280,1426'
+        
+                    render 'inc-img' img: img, width: width, widths: widths
+                -%}
+                </div>
+            {%- endif -%}
+
+            <div class="meta">
+                <h1 class="h3 title">{{ article.title }}</h1>
+
+                {%- comment -%}
+                === [ CORETEX ] ===
+                Author and date
+                {%- endcomment -%}
+                <x-flex wrap="wrap" jc="{{ section.settings.layout }}">
+                    {%- if section.settings.show_date -%}
+                    <time class="" datetime="{{ article.published_at | date: '%Y-%m-%dT%H:%M:%SZ' }}">[&nbsp;{{ article.published_at | time_tag: format: 'date' }}&nbsp;]</time>
+                    {%- endif -%}
+                    {%- if section.settings.show_author -%}
+                    <address class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">[&nbsp;{{ article.author }}&nbsp;]</address>
+                    {%- endif -%}
+                </x-flex>
+            </div>
+        </div>
+
+        <div class="container">
+            {%- comment -%}
+            === [ CORETEX ] ===
+            Post content
+            {%- endcomment -%}
+            <x-flex direction="column" ai="{{ section.settings.layout }}" ai-s="start" class="content rte">
+                {{ article.content }}
+            </x-flex>
+        
+            {%- comment -%}
+            === [ CORETEX ] ===
+            Blog tags
+            {%- endcomment -%}
+            {%- if section.settings.show_tags and article.tags.size > 0 -%}
+                <div class="tags text-center text-capitalize">
+                    <ul aria-label="Tags" class="inline no-style inside">
+                        {%- for tag in article.tags -%}
+                        <li>
+                            <a href="{{ blog.url }}/tagged/{{ tag | handle }}">{{ tag }}</a>
+                            {%- liquid
+                                unless forloop.last
+                                    echo ',&nbsp;'
+                                endunless
+                            -%}
+                        </li>
+                        {%- endfor -%}
+                    </ul>
+                </div>
+            {%- endif -%}
+        </div>
+
+
+        {%- comment -%}
+            Comments
+        {%- endcomment -%}
+    {%- if blog.comments_enabled? -%}
+        <comments-section id="comments" x-flex wrap="wrap">
+            <x-cell span-s="row">
+                <h2 class="h5 title">{{ 'openthinking.dictionary.word.comments' | t }}</h2> 
+            </x-cell>
+
+            {%- comment -%}
+            === [ CORETEX ] ===
+            This renders the comments form.
+            {%- endcomment -%}
+        <x-cell span-s="row">
+            {%- form 'new_comment', article, class: 'sticky' -%}
+                {%- liquid
+                    assign post_message = 'blogs.article.success'
+                    if blog.moderated? and comment.status == 'unapproved'
+                        assign post_message = 'blogs.article.success_moderated'
+                    endif
+                -%}
+
+                <fieldset>
+                    <legend class="visually-hidden">{{ 'customer.register.title' | t }}</legend>
+    
+                    {%- comment -%}
+                    === [ CORETEX ] ===
+                    Form errors.
+                    {%- endcomment -%}
+                    {%- if form.errors -%}
+                        <div class="form-status error" role="alert">
+                            <h3 class="title" tabindex="-1" autofocus>{{ 'templates.contact.form.error_heading' | t }}</h3>
+        
+                            <ul class="list">
+                                {%- for field in form.errors -%}
+                                    <li>
+                                        <a href="#CommentForm-{{ field }}">
+                                            {%- liquid 
+                                                if form.errors.translated_fields[field] contains 'author'
+                                                    echo 'blogs.article.name' | t
+                                                elsif form.errors.translated_fields[field] contains 'body'
+                                                    echo 'blogs.article.message' | t
+                                                else 
+                                                    echo form.errors.translated_fields[field]
+                                                endif 
+                                                echo form.errors.messages[field] 
+                                            -%}
+                                        </a>
+                                    </li>
+                                {%- endfor -%}
+                            </ul>
+                        </div>
+                    {%- elsif form.posted_successfully? -%}
+                        <div class="form-status success" role="status">
+                            <h3 class="title" tabindex="-1" autofocus>{{ post_message | t }}</h3>
+                        </div>
+                    {%- endif -%}
+
+                    {%- comment -%}
+                    === [ CORETEX ] ===
+                    Comment inputs.
+                    {%- endcomment -%}
+                    <x-grid columns="2">
+
+                        {%- comment -%}
+                        === [ CORETEX ] ===
+                        Message name
+                        {%- endcomment -%}
+                        <x-cell class="commenter-name">
+                            <x-field>
+                                <input
+                                    type="text"
+                                    name="comment[author]"
+                                    id="CommentForm-author"
+                                    class="fullwidth"
+                                    autocomplete="name"
+                                    value="{{ form.author }}"
+                                    aria-required="true"
+                                    required
+                                    {% if form.errors contains 'author' %}
+                                    aria-invalid="true"
+                                    aria-describedby="CommentForm-author-error"
+                                    {% endif %}
+                                    placeholder="{{ 'blogs.article.name' | t }}"
+                                >
+                                <label for="CommentForm-author"><span>{{- 'blogs.article.name' | t }}</span></label>
+                            </x-field>
+
+                            {%- if form.errors contains 'author' -%}
+                            <small id="CommentForm-author-error">
+                                <span>{{- 'blogs.article.name' | t }} {{ form.errors.messages.author }}</span>
+                            </small>
+                            {%- endif -%}
+                        </x-cell>
+
+                        {%- comment -%}
+                        === [ CORETEX ] ===
+                        Message email
+                        {%- endcomment -%}
+                        <x-cell class="commenter-email">
+                            <x-field>
+                                <input
+                                    type="email"
+                                    name="comment[email]"
+                                    id="CommentForm-email"
+                                    class="fullwidth"
+                                    autocomplete="email"
+                                    value="{{ form.email }}"
+                                    autocorrect="off"
+                                    autocapitalize="off"
+                                    aria-required="true"
+                                    required
+                                    {% if form.errors contains 'email' %}
+                                    aria-invalid="true"
+                                    aria-describedby="CommentForm-email-error"
+                                    {% endif %}
+                                    placeholder="{{ 'blogs.article.email' | t }}"
+                                >
+                                <label for="CommentForm-email"> <span>{{- 'blogs.article.email' | t }}</span></label>
+                            </x-field>
+
+                            {%- if form.errors contains 'email' -%}
+                            <small id="CommentForm-email-error"><span>{{- 'blogs.article.email' | t }} {{ form.errors.messages.email }}</span></small>
+                            {%- endif -%}
+                        </x-cell>
+
+                        {%- comment -%}
+                        === [ CORETEX ] ===
+                        Message textarea
+                        {%- endcomment -%}
+                        <x-cell span="row" class="commenter-message">
+
+                            <label for="CommentForm-body" class="visually-hidden"><span>{{- 'blogs.article.message' | t }}</span></label>
+                            <textarea
+                                rows="5"
+                                name="comment[body]"
+                                id="CommentForm-body"
+                                class="fullwidth"
+                                aria-required="true"
+                                required
+                                {% if form.errors contains 'body' %}
+                                aria-invalid="true"
+                                aria-describedby="CommentForm-body-error"
+                                {% endif %}
+                                placeholder="{{ 'blogs.article.message' | t }}"
+                            >{{ form.body }}</textarea>
+
+                            {%- if form.errors contains 'body' -%}
+                            <small id="CommentForm-body-error">
+                                <span>{{- 'blogs.article.message' | t }} {{ form.errors.messages.body }}</span>
+                            </small>
+                            {%- endif -%}
+                        </x-cell>
+        
+                        {%- comment -%}
+                        === [ CORETEX ] ===
+                        Submit form.
+                        {%- endcomment -%}
+                        <x-cell span="1" as="center" js="start">
+                            <button type="submit" class="button">
+                                <span>{{ 'blogs.article.post' | t }}</span>
+                            </button>
+                        </x-cell>
+
+                        {%- comment -%}
+                        === [ CORETEX ] ===
+                        If blog is moderated show notice to user.
+                        {%- endcomment -%}
+                        {%- if blog.moderated? -%}
+                            <x-cell span="1" as="center" js="end">
+                                <small class="notice">{{ 'blogs.article.moderated' | t }}</small>
+                            </x-cell>
+                            {%- endif -%}
+                    </x-grid>
+                </fieldset>
+            {%- endform -%}
+        </x-cell>
+            
+            {%- comment -%}
+            === [ CORETEX ] ===
+            This renders the comments if any.
+            {%- endcomment -%}
+            {%- if article.comments_count > 0 -%}
+
+                {%- paginate article.comments by 5 -%}
+                <x-cell class="comments-area">
+
+                <h2 class="h5 title" id="Comments-{{ article.id }}" tabindex="-1">
+                    {{ 'blogs.article.comments' | t: count: article.comments_count }}
+                </h2>
+
+                <x-flex direction="column" class="comment">
+                    {%- if comment.status == 'pending' and comment.content -%}
+                        <article id="{{ comment.id }}" class="comment">
+                            <main>
+                                <p class="rte comment">{{ comment.content }}</p>
+                            </main>
+                            <footer class="commenter">
+                                <address class="name">[&nbsp;{{ comment.author }}&nbsp;]</address>
+                            </footer>
+                        </article>
+                    {%- endif -%}
+
+                    {%- for comment in article.comments -%}
+                        <article id="{{ comment.id }}" class="comment">
+                            <main>
+                                <p class="rte comment">{{ comment.content }}</p>
+                            </main>
+                            <footer x-flex wrap="wrap" direction="row" class="commenter">
+                                <x-cell><address class="name">[&nbsp;{{ comment.author }}&nbsp;]</address></x-cell>
+                                <x-cell><time datetime="{{ comment.created_at | date: '%Y-%m-%d' }}">[&nbsp;{{- comment.created_at | time_tag: format: 'date' -}}&nbsp;]</time></x-cell>
+                            </footer>
+                        </article>
+                    {%- endfor -%}
+                </x-flex>
+
+                {%- comment -%}
+                === [ CORETEX ] ===
+                Pagination for comments.
+                {%- endcomment -%}
+                {%- render 'c-pagination', mode: 'classic', paginate: paginate, anchor: '#comments' -%}
+                </x-cell>
+
+                {%- endpaginate -%}
+            {%- endif -%}
+        </comments-section>
+    {%- endif -%}
+    </article>
+
+    {%- comment -%}
+    === [ CORETEX ] ===
+    This renders the related articles.
+    {%- endcomment -%}
+    {%- if section.settings.show_relatedArticles -%}
+    <related-articles class="suggested">
+        <component-loader><coretex-scroll>
+            {%- liquid
+                # Section heading 
+                assign heading = 'openthinking.dictionary.phrase.related_articles' | t
+                assign attributes = 'wrap-s="wrap"'
+        
+                render 'c-section-head', heading: heading, nav: true, attributes: attributes
+            -%}
+
+            <ul direction="row" role="list" class="no-style inside scroll-snap mandatory" scroll-area>
+            {%- liquid
+                # === [ CORETEX FYI ] ===
+                # both paginate and limit are required for pagination to work properly
+                # > https://shopify.dev/docs/api/liquid/tags/paginate#paginate-limit-data-fetching
+                assign limit_articles = 21
+                paginate blog.articles by limit_articles 
+                    assign related_article_counter = 0
+                    for related_article in blog.articles limit: limit_articles
+                        if related_article.handle != article.handle 
+                        echo '<li>'
+                            render 'c-article-card', article: related_article, show_image: true, 
+                        echo '</li>'
+                        assign related_article_counter = related_article_counter | plus: 1
+                        endif
+                    endfor
+                endpaginate
+            -%}
+            </ul>
+        </coretex-scroll></component-loader>
+    </related-articles>
+    {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Blog post",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_author",
+      "label": "Show author",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "Show date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_image",
+      "label": "Show featured image",
+      "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_tags",
+        "label": "Show tags",
+        "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_relatedArticles",
+      "label": "Show related articles",
+      "default": true
+    },
+    {
+        "type": "select",
+        "id": "layout",
+        "label": "Page layout - desktop",
+        "default": "start",
+        "options": [
+            { "value": "start", "label": "Left" },
+            { "value": "center", "label": "Center" }
+        ]
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+      },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "enabled_on": {
+    "templates": [
+      "article"
+    ]
+  }
+}
+{% endschema %}

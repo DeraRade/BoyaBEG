@@ -1,0 +1,266 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{%- if section.settings.useLocalCardSize %}{{ section.settings.card_size | prepend: '--prodCardSlideRatio:' | append: 'px;' }}{% endif -%}
+{%- endcapture -%}
+
+{%- assign layoutType = section.settings.layoutType -%}
+
+<section
+	class="feat-products listOfProds"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+    layout-type="{{ layoutType }}"
+>
+
+	{%- liquid
+        # Section heading 
+        capture section_heading
+            assign heading = section.settings.heading
+            assign description = section.settings.description
+            assign url = section.settings.url
+            assign url_label = section.settings.label
+            assign attributes = 'wrap-s="wrap"'
+            assign stealth = section.settings.stealthMode
+            if layoutType == 'list'
+                assign nav = true
+            endif
+
+            # Render section head
+            render 'c-section-head', heading: heading, description: description, url: url, url_label: url_label, nav: nav, attributes: attributes, stealth: stealth
+        endcapture
+
+        # Render section body
+        render 'c-section-grid', section: section, layoutType: layoutType, products: section.settings.product_list, section_heading: section_heading
+    -%}
+
+</section>
+
+{% schema %}
+{
+  "name": "Product list",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    { "name": "Product list", "category": "Products" }
+  ],
+  "settings": [
+    {
+        "type": "header",
+        "content": "Header"
+    },
+    {
+        "type": "checkbox",
+        "id": "stealthMode",
+        "label": "Show header on hover - desktop",
+        "default": false
+    },
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Product list"
+    },
+    {
+        "type": "text",
+        "id": "description",
+        "label": "Description"
+    },
+    {
+        "type": "url",
+        "id": "url",
+        "label": "URL"
+    },
+    {
+        "type": "text",
+        "id": "label",
+        "label": "Label",
+        "default": "View all"
+    },
+    {
+        "type": "header",
+        "content": "Content"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products"
+    },
+    {
+        "type": "select",
+        "id": "layoutType",
+        "label": "Layout",
+        "default": "list",
+        "options": [
+            { "value": "list", "label": "List" },
+            { "value": "grid", "label": "Grid" }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "card_grid_columns",
+        "label": "Columns - desktop",
+        "default": "5",
+        "visible_if": "{{ section.settings.layoutType == 'grid' }}",
+        "options": [
+            {
+                "value": "2",
+                "label": "2 columns"
+            },
+            {
+                "value": "3",
+                "label": "3 columns"
+            },
+            {
+                "value": "4",
+                "label": "4 columns"
+            },
+            {
+                "value": "5",
+                "label": "5 columns"
+            },
+            {
+                "value": "6",
+                "label": "6 columns"
+            }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "card_grid_columns_m",
+        "label": "Columns - tablet",
+        "default": "3",
+        "visible_if": "{{ section.settings.layoutType == 'grid' }}",
+        "options": [
+            {
+                "value": "2",
+                "label": "2 columns"
+            },
+            {
+                "value": "3",
+                "label": "3 columns"
+            },
+            {
+                "value": "4",
+                "label": "4 columns"
+            }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "card_grid_columns_s",
+        "label": "Columns - mobile",
+        "default": "2",
+        "visible_if": "{{ section.settings.layoutType == 'grid' }}",
+        "options": [
+            {
+                "value": "1",
+                "label": "1 column"
+            },
+            {
+                "value": "2",
+                "label": "2 columns"
+            }
+        ]
+    },
+	{
+		"type": "range",
+		"label": "Gap - desktop",
+		"id": "card_grid_gap",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 3,
+        "visible_if": "{{ section.settings.layoutType == 'grid' }}"
+	},
+	{
+		"type": "range",
+		"label": "Gap - mobile",
+		"id": "card_grid_gap_s",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 2,
+        "visible_if": "{{ section.settings.layoutType == 'grid' }}"
+	},
+    {
+        "type": "checkbox",
+        "id": "useLocalCardSize",
+        "label": "Override global card size",
+        "info": "Will override global card size if enabled.",
+        "default": false,
+        "visible_if": "{{ section.settings.layoutType == 'list' }}"
+    },
+    {
+        "type": "range",
+        "label": "Card size",
+        "id": "card_size",
+        "min": 200,
+        "max": 600,
+        "step": 10,
+        "unit": "px",
+        "default": 250,
+        "visible_if": "{{ section.settings.useLocalCardSize }}"
+    },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "range",
+        "id": "marginTop",
+        "label": "Margin top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingTop",
+        "label": "Padding top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

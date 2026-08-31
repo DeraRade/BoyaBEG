@@ -1,0 +1,244 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+--inlineGap: {{ section.settings.gap | prepend: 'var(--space-' | append: ')' }};
+{% unless section.settings.title_bold %}--hWeight: 400;{% endunless %}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+	class="blog-post"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+
+	{%- liquid
+        assign blog = blogs[section.settings.blog]
+
+		#assign total_posts = blog.articles.size
+		#assign post_limit = section.settings.post_limit | plus: 0
+		#assign posts_to_display = post_limit
+
+		# If there are less than the limit
+		#if total_posts < post_limit
+	    #	assign posts_to_display = total_posts
+	    #endif
+	-%}
+
+	{%- liquid
+		# Section heading
+		assign heading = section.settings.heading | default: blog.title
+		assign url = section.settings.url | default: blog.url
+		assign url_label = section.settings.label
+		assign attributes = 'wrap-s="wrap"'
+        assign stealth = section.settings.stealthMode
+        assign addpad = section.settings.paddingInline
+
+		render 'c-section-head', heading: heading, url: url, url_label: url_label, attributes: attributes, stealth: stealth, addpad: addpad
+	-%}
+
+	<x-grid columns="12" columns-s="1f" ji="center" class="blogPosts">
+        {% comment %}
+            === [ CORETEX FYI ] ===
+            both paginate and limit are required for pagination to work properly
+            > https://shopify.dev/docs/api/liquid/tags/paginate#paginate-limit-data-fetching
+        {% endcomment %}
+        {%- paginate blog.articles by section.settings.post_limit -%}
+		{%- for article in blog.articles limit: section.settings.post_limit -%}
+			<x-cell span>
+                {%- render 'c-article-card', 
+                    article: article,
+                    show_image: section.settings.show_image, 
+                    show_excerpt: section.settings.show_excerpt, 
+                    show_read_more: section.settings.show_read_more,
+                    show_author: section.settings.show_author,
+                    show_date: section.settings.show_date
+                -%}
+			</x-cell>
+
+        {%- else -%}
+
+            {%- for i in (1..5) -%}
+            <x-cell span>{%- render 'c-article-card', placehoder: true -%}</x-cell>
+            {% endfor %}
+
+		{%- endfor -%}
+        {%- endpaginate -%}
+	</x-grid>
+</section>
+
+{% schema %}
+	{
+		"name": "Blog posts",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "Blog posts",
+                "category": "Content",
+				"settings": {
+                    "heading": "{{ section.settings.blog.title }}",
+                    "url": "{{ section.settings.blog.url }}",
+					"blog": "news"
+				}
+			}
+		],
+		"settings": [
+			{
+				"type": "header",
+				"content": "Header"
+			},
+            {
+                "type": "checkbox",
+                "id": "stealthMode",
+                "label": "Show header on hover - desktop",
+                "default": false
+            },
+            {
+                "type": "text",
+                "id": "heading",
+                "label": "Heading"
+            },
+            {
+                "type": "url",
+                "id": "url",
+                "label": "URL"
+            },
+            {
+                "type": "text",
+                "id": "label",
+                "label": "Label",
+                "default": "View all articles"
+            },
+			{
+				"type": "blog",
+				"id": "blog",
+				"label": "Blog"
+			},
+            {
+                "type": "select",
+                "id": "post_limit",
+                "label": "Number of posts",
+                "default": "2",
+                "options": [
+                    { "value": "2", "label": "2 posts" },
+                    { "value": "5", "label": "5 posts" }
+                ]
+            },
+			{
+				"type": "header",
+				"content": "Article card"
+			},
+			{
+				"type": "checkbox",
+				"id": "title_bold",
+				"label": "Bold title",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "show_image",
+				"label": "Show image",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "show_excerpt",
+				"label": "Show excerpt",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "show_read_more",
+				"label": "Show link to read more",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "show_author",
+				"label": "Show author",
+				"default": false
+			},
+            {
+				"type": "checkbox",
+				"id": "show_date",
+				"label": "Show date",
+				"default": false
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+            {
+                "type": "checkbox",
+                "id": "paddingInline",
+                "label": "Enable lateral padding",
+                "default": true
+            },
+			{
+				"type": "range",
+				"id": "gap",
+				"label": "Lateral gap",
+				"min": 0,
+				"max": 10,
+				"step": 1,
+				"default": 1
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		]
+	}
+{% endschema %}

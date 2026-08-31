@@ -1,0 +1,234 @@
+<section class="suggested related">
+    <product-recommendations
+        data-url="{{ routes.product_recommendations_url }}?limit={{ section.settings.product_limit }}"
+        data-section-id="{{ section.id }}"
+        data-product-id="{{ product.id }}"
+    >
+        {%- if recommendations.performed and recommendations.products_count > 0 -%}
+        <component-loader><coretex-snap>
+                <h2 class="h4 section-heading">{{ section.settings.heading }}</h2>
+                <div slider-viewport>
+                    <ul slider-container x-flex class="no-style" role="region" aria-roledescription="carousel" aria-label="{{ 'sections.slideshow.carousel' | t }}">
+                        {%- for product in recommendations.products -%}
+                        <li slider-slide>
+                            {%- render 'c-prod-card', 
+                                product: product, 
+                                loading: 'lazy'
+                            -%}
+                        </li>
+                        {%- endfor -%}
+                    </ul>
+                </div>
+            
+                <slider-controls>
+                    <x-flex direction="row" jc="start" ai="center" class="paginationNav">
+                        <x-cell order="1">
+                            <button control-prev class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'sections.slideshow.previous_slideshow' | t }}">
+                                {%- render 'inc-icon', icon: 'arrow-left' -%}
+                            </button>
+                        </x-cell>
+                        <x-cell order="3">
+                            <button control-next class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'sections.slideshow.next_slideshow' | t }}">
+                                {%- render 'inc-icon', icon: 'arrow-right' -%}
+                            </button>
+                        </x-cell>
+                    </x-flex>
+                </slider-controls>
+            
+            </coretex-snap></component-loader>
+        {%- endif -%}
+    </product-recommendations>
+</section>
+
+<style>
+[slider-viewport] {
+    overflow: hidden
+}
+
+[slider-viewport].is-draggable {
+    cursor: grab;
+    user-select: none
+}
+
+[slider-container] {
+    backface-visibility: hidden;
+    display: flex;
+    touch-action: pan-y pinch-zoom;
+    margin-left: calc(var(--slide-spacing)* -1);
+}
+
+[slider-slide] {
+    flex: 0 0 200px; /* Slide covers 200px of the viewport */
+    min-width: 0;
+}
+  
+</style>
+
+<script type="module">
+/***
+    === [ CORETEX FYI ] ===
+    - Dynamic Imports: The import() function is used within the connectedCallback method 
+    to dynamically import the "Autoplay" and "Fade" plugins only if 
+    the relevant attributes (autoplay and fade) are present.
+
+    - The connectedCallback method is marked as async 
+    to handle the asynchronous import() calls.
+*/
+
+import EmblaCarousel from "{{ 'm-carousel.js' | asset_url }}"
+import ClassNames from "{{ 'h-carousel-cn.js' | asset_url }}"
+{% comment %} // import WheelGesturesPlugin from "{{ 'h-carousel-wg.js' | asset_url }}" {% endcomment %}
+
+if (!customElements.get('coretex-snap')) {
+    customElements.define('coretex-snap', class CoretexSnap extends HTMLElement {
+        constructor() {
+            super();
+            this.embla = null;
+            this.autoplayPlugin = null; // Store reference to the Autoplay plugin
+        }
+
+        // === [ CORETEX FYI ] === 
+        // The connectedCallback method is marked as async to handle the asynchronous import() calls.
+        async connectedCallback() {
+            this.emblaNode = this.querySelector('coretex-snap');
+            this.viewportNode = this.querySelector('[slider-viewport]');
+            this.containerNode = this.querySelector('[slider-container]');
+
+            this.buttonPrev = this.querySelector('[control-prev]');
+            this.buttonNext = this.querySelector('[control-next]');
+            this.buttonPlay = this.querySelector('[control-play]');
+            this.buttonDots = this.querySelector('[control-dots]');
+            this.buttonThumbs = this.querySelector('[control-thumbs]');
+            this.numbersNode = this.querySelector('[control-numbers]');
+
+            if (!this.viewportNode) {
+                console.error('Viewport node is not found.');
+                return;
+            }
+
+            //const plugins = [ClassNames(), WheelGesturesPlugin({ target: this.containerNode })]; // Always include ClassNames and WheelGestures plugins
+            const plugins = [ClassNames()]; // Always include ClassNames and WheelGestures plugins
+
+            // Set-up slider options
+            const OPTIONS = { loop: false, align: 'start', dragFree: true,  };
+
+            // Initialize EmblaCarousel with options and selected plugins
+            this.embla = EmblaCarousel(this.viewportNode, OPTIONS, plugins);
+
+            this.init();
+        }
+
+        disconnectedCallback() {
+            this.destroy();
+        }
+
+        init() {
+            this.embla.on('select', this.a11y.bind(this));
+            this.embla.on('init', this.a11y.bind(this));
+            this.embla.on('select', this.updateButtonState.bind(this)); // Update button state on selection change
+            this.embla.on('init', this.updateButtonState.bind(this)); // Update button state on init
+            this.a11y();
+            this.buttons();
+        }
+
+        destroy() {
+            if (this.embla) {
+                this.embla.destroy();
+                this.embla = null;
+            }
+        }
+
+        a11y() {
+            const slides = this.embla.slideNodes();
+            const inView = this.embla.slidesInView();
+
+            slides.forEach((slide, index) => {
+                if (inView.includes(index)) {
+                    slide.removeAttribute('aria-hidden');
+                } else {
+                    slide.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+            // Additional a11y improvements
+            this.viewportNode.setAttribute('role', 'region');
+            this.viewportNode.setAttribute('aria-roledescription', 'carousel');
+            this.viewportNode.setAttribute('aria-label', 'Image slideshow');
+
+            slides.forEach(slide => {
+                slide.setAttribute('role', 'group');
+                slide.setAttribute('aria-roledescription', 'slide');
+            });
+        }
+
+        buttons() {
+            if (this.buttonPrev && this.buttonNext) {
+                this.buttonPrev.addEventListener('click', () => this.embla.scrollPrev());
+                this.buttonNext.addEventListener('click', () => this.embla.scrollNext());
+            }
+
+            if (this.buttonPlay) {
+                this.buttonPlay.addEventListener('click', () => {
+                    if (this.autoplayPlugin) {
+                        if (this.autoplayPlugin.isPlaying()) {
+                            this.autoplayPlugin.stop();
+                            this.buttonPlay.innerText = 'Play';
+                        } else {
+                            this.autoplayPlugin.start();
+                            this.buttonPlay.innerText = 'Pause';
+                        }
+                    }
+                });
+            }
+        }
+
+        updateButtonState() {
+            const canScrollPrev = this.embla.canScrollPrev();
+            const canScrollNext = this.embla.canScrollNext();
+
+            if (this.buttonPrev) {
+                if (!canScrollPrev) {
+                    this.buttonPrev.classList.add('disabled');
+                } else {
+                    this.buttonPrev.classList.remove('disabled');
+                }
+            }
+
+            if (this.buttonNext) {
+                if (!canScrollNext) {
+                    this.buttonNext.classList.add('disabled');
+                } else {
+                    this.buttonNext.classList.remove('disabled');
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% schema %}
+{
+  "name": "Reco products",
+  "settings": [
+    {
+        "type": "paragraph",
+        "content": "Control product recommendations with the Shopify Search & Discovery app. [Learn more](https://help.shopify.com/en/manual/online-store/search-and-discovery/product-recommendations)."
+    },
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "You may also like"
+    },
+    {
+        "type": "range",
+        "label": "Number of products to show",
+        "id": "product_limit",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "default": 10
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,595 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+{{- section.settings.gap | prepend: '--gridGap: var(--space-' | append: ');' }}
+{{- section.settings.paddingTop | prepend: 'padding-block: var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+{{- section.settings.marginTop | prepend: 'margin-block: var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+{%- if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+{%- liquid
+    # Check if overlayContent is enabled
+    if section.settings.overlayContent
+        assign overlayContent = 'stack'
+    else
+        assign overlayContent = 1
+    endif
+-%}
+
+<section
+    class="hero-multicolumn" block-count="{{ section.blocks.size }}"
+    style="{{- style | strip_newlines | strip -}}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+    uniform-media="{{ section.settings.uniformMedia }}"
+>
+
+    <x-grid columns="{{ section.settings.columns }}" columns-s="{{ section.settings.columnsMob }}" class="columnsList">
+        {%- assign count = 0 -%}
+        {%- for block in section.blocks -%}
+        {%- assign count = count | plus: 1 -%}
+        {%- liquid
+            # Determine media type
+            case block.type
+                when 'image'
+                    assign mediaType = 'image'
+                when 'video'
+                    assign mediaType = 'video'
+            endcase
+
+            # Hide on mobile - only apply to outermost wrapper
+            assign hideOnMobile = ''
+            if block.settings.hideOnMobile
+                assign hideOnMobile = 'class="large-only"'
+            endif
+        -%}
+
+        {% if block.settings.url != blank %}<a href="{{ block.settings.url }}" {{ hideOnMobile }}>{% endif %}
+        <x-grid columns="{{ overlayContent }}" media-type="{{ mediaType }}" {{ hideOnMobile }} {{ block.shopify_attributes }}>
+
+            {%- if block.settings.heading -%}
+                {%- liquid
+                    # Block style
+                    capture block_style
+                        echo block.settings.heroColor | prepend: 'color:' | append: ';'
+                        echo block.settings.fontSize | prepend: '--_hSize: var(--type-' | append: ');'
+                        echo block.settings.fontSizeMob | prepend: '--_hSizeMob: var(--type-' | append: ');'
+                        if block.settings.fontBold
+                            echo '--_fontWeight: var(--hWeight);'
+                        endif
+                    endcapture 
+
+                    # Sticky state. If it's bottom, sticky bottom.
+                    capture stickyState
+                        if block.settings.sticky
+                            if block.settings.contentPosition contains 'bottom'
+                                echo 'class="sticky-bottom" style="--sticky: var(--padding);"'
+                            else
+                                echo 'class="sticky" style="--sticky: calc(var(--padding) + var(--headSpace));"'
+                            endif
+                        endif
+                    endcapture
+                -%}
+                <x-flex class="content{% if block.settings.mixBlend %} mixBlend{% endif %}" pi="{{ block.settings.contentPosition }}">
+                    <x-cell {{ stickyState }}>
+                        <h3 x-flex class="title" style="{{- block_style | strip_newlines | strip -}}">
+                            <x-cell>{{ block.settings.heading }}</x-cell>
+                            {%- if block.settings.label and block.settings.url -%}<span class="label">{{ block.settings.label }}</span>{%- endif -%}
+                        </h3>
+                    </x-cell>
+                </x-flex>
+			{%- endif -%}
+
+            <x-cell class="media">
+            {%- case block.type -%}
+            {%- when 'image' -%}
+                {%- liquid
+					# Optimize first section splash image
+					assign fetchpriority = nil
+					assign preload = false
+                    assign loading = 'lazy'
+
+					if section.index == 1 and count <= 3
+						assign fetchpriority = 'high'
+						assign preload = true
+                        assign loading = 'eager'
+					endif
+
+                    # Calculate dynamic sizes based on column count
+                    # Desktop: divide 100vw by number of columns
+                    # Mobile: divide 100vw by mobile columns
+                    assign desktopColumns = section.settings.columns | times: 1.0
+                    assign mobileColumns = section.settings.columnsMob | times: 1.0
+                    assign desktopPercent = 100 | divided_by: desktopColumns
+                    assign mobilePercent = 100 | divided_by: mobileColumns
+
+                    assign sizes = '(max-width:777px) ' | append: mobilePercent | append: 'vw, ' | append: desktopPercent | append: 'vw'
+
+                    render 'inc-img' dynamic: true, img: block.settings.image, imgMob: block.settings.imageMobile, mediaLoader: true, fallback: true, fetchpriority: fetchpriority, preload: preload, loading: loading, sizes: sizes
+                -%}
+
+            {%- when 'video' -%}
+
+                {%- if mediaType == 'video' and block.settings.url -%}
+                {% style %}.hero-multicolumn [media-type="video"] .contentz { pointer-events: all }{% endstyle %}
+                {%- endif -%}
+
+                {%- if block.settings.video -%}
+                    {%- render 'inc-video'
+                        vid: block.settings.video,
+                        vidMobile: block.settings.videoMobile,
+                        loop: block.settings.videoLoop,
+                        autoplay: block.settings.videoAutoplay,
+                        muted: block.settings.videoMute,
+                        clickToPlay: block.settings.clickToPlay,
+                        controls: block.settings.playPause
+                    -%}
+                {%- else -%}
+                    {%- render 'inc-img' fallback: true -%}
+                {%- endif -%}
+
+            {%- endcase -%}
+            </x-cell>
+
+        </x-grid>
+        {%- if block.settings.url != blank -%}</a>{%- endif -%}
+		{%- endfor -%}
+	</x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Hero multicolumn",
+  "disabled_on": {
+    "groups": [ "header", "footer", "aside" ]
+  },
+  "max_blocks": 8,
+  "presets": [
+    {
+      "name": "Hero multicolumn",
+      "category": "Banners",
+      "blocks": [
+        { "type": "image" },
+        { "type": "video" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Grid"
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Columns - desktop",
+      "default": "2",
+      "options": [
+        {
+          "value": "2",
+          "label": "2 Columns"
+        },
+        {
+          "value": "3",
+          "label": "3 Columns"
+        },
+        {
+          "value": "4",
+          "label": "4 Columns"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "columnsMob",
+      "label": "Columns - mobile",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": "1 Column"
+        },
+        {
+          "value": "2",
+          "label": "2 Columns"
+        }
+      ]
+    },
+    {
+        "type": "range",
+        "label": "Columns gap",
+        "id": "gap",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 1
+    },
+    {
+        "type": "checkbox",
+        "id": "overlayContent",
+        "label": "Overlay text on media",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "uniformMedia",
+        "label": "Enable uniform media",
+        "info": "Keep all media elements the same size for a consistent appearance.",
+        "default": true,
+        "visible_if": "{{ section.settings.overlayContent }}"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+    {
+      "type": "range",
+      "id": "marginTop",
+      "label": "Margin top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "marginBottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "name": "Image",
+      "type": "image",
+      "settings": [
+        {
+            "type": "checkbox",
+            "id": "hideOnMobile",
+            "label": "Hide on mobile",
+            "default": false,
+            "info": "Hide this block on mobile devices."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop",
+          "info": "9:16 recommended"
+        },
+        {
+            "type": "image_picker",
+            "id": "imageMobile",
+            "label": "Mobile",
+            "info": "9:16 recommended"
+        },
+        {
+            "type": "header",
+            "content": "Content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Your hero image heading"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Shop now"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Heading link"
+        },
+        {
+              "type": "range",
+              "id": "fontSize",
+              "label": "Text size - desktop",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        },
+        {
+              "type": "range",
+              "id": "fontSizeMob",
+              "label": "Text size - mobile",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        },
+        {
+            "type": "checkbox",
+            "id": "fontBold",
+            "label": "Enable bold text",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "sticky",
+            "label": "Stick content",
+            "default": true
+        },
+        {
+          "type": "select",
+          "id": "contentPosition",
+          "label": "Content position",
+          "default": "top left",
+          "options": [
+            {
+              "value": "top left",
+              "label": "Top left"
+            },
+            {
+              "value": "top center",
+              "label": "Top center"
+            },
+            {
+              "value": "top right",
+              "label": "Top right"
+            },
+            {
+              "value": "center left",
+              "label": "Middle left"
+            },
+            {
+              "value": "center",
+              "label": "Middle center"
+            },
+            {
+              "value": "center right",
+              "label": "Middle right"
+            },
+            {
+              "value": "bottom left",
+              "label": "Bottom left"
+            },
+            {
+              "value": "bottom center",
+              "label": "Bottom center"
+            },
+            {
+              "value": "bottom right",
+              "label": "Bottom right"
+            }
+          ]
+        },
+        {
+          "type": "header",
+          "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "mixBlend",
+            "label": "Enable text blend mode",
+            "info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+            "default": false
+        },
+        {
+          "type": "color",
+          "id": "heroColor",
+          "label": "Heading text color",
+          "default": "#000000"
+        }
+      ]
+    },
+    {
+      "name": "Video",
+      "type": "video",
+      "settings": [
+        {
+            "type": "checkbox",
+            "id": "hideOnMobile",
+            "label": "Hide on mobile",
+            "default": false,
+            "info": "Hide this block on mobile devices."
+        },
+        {
+            "type": "video",
+            "id": "video",
+            "label": "Desktop",
+            "info": "9:16 recommended."
+        },
+        {
+            "type": "video",
+            "id": "videoMobile",
+            "label": "Mobile",
+            "info": "9:16 recommended."
+        },
+        {
+          "type": "checkbox",
+          "id": "videoLoop",
+          "label": "Loop",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "videoMute",
+          "label": "Mute",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "videoAutoplay",
+          "label": "Autoplay",
+          "default": false,
+          "info": "Autoplay is not recommended. It is not supported on mobile devices and disabled by default in many browsers."
+        },
+        {
+            "type": "checkbox",
+            "id": "clickToPlay",
+            "label": "Enable click to play",
+            "info": "A click on the video will toggle play/pause. If a Heading link is defined, this will not function.",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "playPause",
+            "label": "Enable play/pause button",
+            "default": false,
+            "info": "If a Heading link is defined, this will not function."
+        },
+        {
+            "type": "header",
+            "content": "Content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Your hero video heading"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Shop now"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Heading link"
+        },
+        {
+              "type": "range",
+              "id": "fontSize",
+              "label": "Text size - desktop",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        },
+        {
+              "type": "range",
+              "id": "fontSizeMob",
+              "label": "Text size - mobile",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        },
+        {
+            "type": "checkbox",
+            "id": "fontBold",
+            "label": "Enable bold text",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "sticky",
+            "label": "Stick content",
+            "default": true
+        },
+        {
+          "type": "select",
+          "id": "contentPosition",
+          "label": "Content position",
+          "default": "top left",
+          "options": [
+            {
+              "value": "top left",
+              "label": "Top left"
+            },
+            {
+              "value": "top center",
+              "label": "Top center"
+            },
+            {
+              "value": "top right",
+              "label": "Top right"
+            },
+            {
+              "value": "center left",
+              "label": "Middle left"
+            },
+            {
+              "value": "center",
+              "label": "Middle center"
+            },
+            {
+              "value": "center right",
+              "label": "Middle right"
+            },
+            {
+              "value": "bottom left",
+              "label": "Bottom left"
+            },
+            {
+              "value": "bottom center",
+              "label": "Bottom center"
+            },
+            {
+              "value": "bottom right",
+              "label": "Bottom right"
+            }
+          ]
+        },
+        {
+          "type": "header",
+          "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "mixBlend",
+            "label": "Enable text blend mode",
+            "info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+            "default": false
+        },
+        {
+          "type": "color",
+          "id": "heroColor",
+          "label": "Heading text color",
+          "default": "#000000"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

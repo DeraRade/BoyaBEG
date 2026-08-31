@@ -1,1 +1,25 @@
-{"sections":{"main":{"type":"cart-template","settings":{"display_special_instructions":true,"display_savings":true,"cart_message":"","continue_shopping_url":""}},"featured-collection":{"type":"featured-collection","disabled":true,"settings":{"title":"You may also be interested in","collection_description":true,"collection":"","collection_style":"grid","products_per":6,"products_limit":6,"css_class":"","custom_css":""}},"2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b":{"type":"featured-product","blocks":{"template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-0":{"type":"title","settings":{}},"template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-1":{"type":"price","settings":{"display_savings":true}},"template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-2":{"type":"description","settings":{}},"template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-3":{"type":"form","settings":{}}},"block_order":["template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-0","template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-1","template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-2","template--14628893950086__2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b-16802142958ff06689-3"],"settings":{"product":"premium-packaging","wide_display":false,"media_position":"is-flex-row","set_product_height":false,"product_height":500,"video_looping":false,"product_thumbs":true,"gallery_arrows":true,"enable_product_lightbox":true,"activate_zoom":true,"slideshow_speed":0,"slideshow_animation":"slide","thumbnail_position":"bottom","enable_thumbnail_slider":true,"css_class":"","custom_css":""}}},"order":["main","featured-collection","2e5ebb87-5ee6-429b-a90a-a109bf5b5c8b"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "t-cart",
+      "settings": {}
+    },
+    "recently-viewed": {
+      "type": "ls-recently-viewed",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "recently-viewed"
+  ]
+}

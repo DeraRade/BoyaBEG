@@ -1,0 +1,67 @@
+{% comment %}
+    Recursive menu item component
+    Renders a menu link with nested children if present
+
+    Parameters:
+        - link: The link object to render
+        - level: Current nesting level (1-4)
+        - index: Loop index for unique IDs
+        - isMega: Boolean for mega menu mode
+        - detailState: State attribute for details (e.g., ' open')
+        - level2FlexDirection: Flex direction for level 2 menus
+        - id: ID of the menu
+{% endcomment %}
+
+{%- liquid
+  assign nextLevel = level | plus: 1
+  assign hasChildren = false
+  if link.links.size > 0
+    assign hasChildren = true
+  endif
+-%}
+
+{%- if hasChildren == false -%}
+  {%- # Simple link with no children -%}
+  <li class="bdotfx">
+    <a href="{{ link.url }}" class="button is-custom" data-name="{{ link.title | escape }}">
+      {{- link.title -}}
+    </a>
+  </li>
+
+{%- else -%}
+  {%- # Link with children - render details/summary -%}
+  <li class="bdotfx">
+    <details
+      class="lv{{ level }} closex"
+      {% if level == 1 %}name="coretex-menu"{% elsif level > 1 and isMega == false %}name="coretex-menu-lv{{ level }}"{% endif %}
+      id="{{ id }}-Details-{{ level }}-{{ index }}"
+      {%- if level > 1 -%}{{- detailState -}}{%- endif -%}
+    >
+      <summary data-name="{{ link.title | escape }}" class="button is-custom has-icon">
+        <span {% if level == 1 %}class="bdotfx" role="link"{% else %}class="text-clip"{% endif %} data-name="{{ link.title | escape }}">
+          {{- link.title -}}
+        </span>
+        {%- render 'inc-icon', icon: 'chevron-down' -%}
+      </summary>
+
+      <details-menu id="Menu-{{ level }}-{{ index }}" class="closex">
+        <ul
+          data-level="{{ nextLevel }}"
+          {% if level == 1 and level2FlexDirection %}x-flex direction="{{ level2FlexDirection }}" direction-s="column"{% endif %}
+        >
+          {%- for child_link in link.links -%}
+            {%- render 'c-menu-item',
+              link: child_link,
+              level: nextLevel,
+              index: forloop.index,
+              isMega: isMega,
+              detailState: detailState,
+              level2FlexDirection: level2FlexDirection,
+              id: id
+            -%}
+          {%- endfor -%}
+        </ul>
+      </details-menu>
+    </details>
+  </li>
+{%- endif -%}

@@ -1,0 +1,296 @@
+{%- assign menu = section.settings.menu -%}
+
+{%- capture separator -%}
+{%- if section.settings.separator == 'coma' -%},{%- endif -%}
+{%- if section.settings.separator == 'bullet' -%}•{%- endif -%}
+{%- if section.settings.separator == 'endash' -%}–{%- endif -%}
+{%- if section.settings.separator == 'emdash' -%}—{%- endif -%}
+{%- if section.settings.separator == 'star' -%}✦{%- endif -%}
+{%- if section.settings.separator == 'asterisk' -%}*{%- endif -%}
+{%- if section.settings.separator == 'arrowRight' -%}→{%- endif -%}
+{%- endcapture -%}
+
+{%-  render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+    padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+    margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+    padding-inline: var(--layoutInline);
+{%- endcapture -%}
+
+<section
+	x-flex
+	direction="{{ section.settings.direction }}"
+	direction-s="column"
+    jc="{{- section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -}}"
+	class="link-list"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+	{%- capture block_style -%}
+            {{- section.settings.fontSize | prepend: '--_fontSize: var(--type-' | append: ');' -}} 
+            {{- section.settings.fontSizeMob | prepend: '--_fontSizeMob: var(--type-' | append: ');' -}}
+            {{- section.settings.fontFamily | prepend: '--_fontFamily: var(--' | append: ');' -}}
+            {{- section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--_textAlign:' | append: ';' -}}
+            {%- if section.settings.fontBold -%}--_fontWeight: var(--hWeight);{%- endif -%}
+            {{- section.settings.marginTop | prepend: '--_marginBlock: var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+    {%- endcapture -%}
+
+	<div
+		class="content"
+		style="{{ block_style | strip_newlines | strip }}"
+		{{ section.shopify_attributes }}
+	>
+		<ul x-flex wrap="wrap" direction="{{ section.settings.direction }}" jc="{{- section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -}}"
+            class="{% if section.settings.count == 'hover' %}stealth {% endif %}no-style inside">
+			{%- for link in linklists[menu].links -%}
+				{%- assign iscollection = false -%}
+
+				{%- liquid
+					# Check if the link is a collection link
+					case link.type
+						when 'collection_link'
+							assign iscollection = true
+					endcase
+				-%}
+				<li data-separator="{{ separator }}">
+					<a href="{{ link.url }}">
+						{{ link.title }}
+						{%- unless section.settings.count == 'false' -%}
+							<sup class="count">
+								{%- liquid
+									if iscollection and section.settings.countType == 'productCount'
+										echo link.object.products_count
+									elsif section.settings.countType == 'index'
+										echo forloop.index
+									else
+										echo 0
+									endif
+								-%}
+							</sup>
+						{%- endunless -%}
+					</a>
+				</li>
+
+                {%- liquid
+                    #if section.settings.separator != 'none'
+                    #    unless forloop.last
+                    #        echo '<li as="center" class="rator">'
+                    #        echo separator
+                    #        echo '</li>'
+                    #    endunless
+                    #endif
+                -%}
+			{%- endfor -%}
+		</ul>
+	</div>
+</section>
+
+{% schema %}
+	{
+		"name": "Link list",
+		"disabled_on": { "groups": ["header", "aside"] },
+		"presets": [
+			{ "name": "Link list", "category": "Content" }
+		],
+		"settings": [
+			{
+				"type": "link_list",
+				"id": "menu",
+				"label": "Menu",
+				"default": "main-menu",
+				"info": "Only top-level menu items are displayed."
+			},
+			{
+				"type": "select",
+				"id": "separator",
+				"label": "Link separator",
+				"default": "coma",
+				"options": [
+					{
+						"value": "none",
+						"label": "None"
+					},
+					{
+						"value": "coma",
+						"label": ", (Coma)"
+					},
+					{
+						"value": "bullet",
+						"label": "• (Bullet)"
+					},
+					{
+						"value": "endash",
+						"label": "- (En dash)"
+					},
+					{
+						"value": "emdash",
+						"label": "— (Em dash)"
+					},
+					{
+						"value": "star",
+						"label": "✦ (Star)"
+					},
+					{
+						"value": "asterisk",
+						"label": "* (Asterisk)"
+					},
+					{
+						"value": "arrowRight",
+						"label": "→ (Arrow right)"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "direction",
+				"label": "List direction",
+				"default": "row",
+				"options": [
+					{
+						"value": "row",
+						"label": "Horizontal list"
+					},
+					{
+						"value": "column",
+						"label": "Vertical list"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "count",
+				"label": "Show item count",
+				"default": "hover",
+				"options": [
+					{
+						"value": "false",
+						"label": "None"
+					},
+					{
+						"value": "true",
+						"label": "Always"
+					},
+					{
+						"value": "hover",
+						"label": "On hover"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "countType",
+				"label": "Counting type",
+				"default": "index",
+				"options": [
+					{
+						"value": "index",
+						"label": "Sequential numbering"
+					},
+					{
+						"value": "productCount",
+						"label": "Collection product count"
+					}
+				]
+			},
+			{
+				"type": "select",
+				"id": "fontFamily",
+				"label": "Font",
+				"default": "fontFamily",
+				"options": [
+					{ "value": "fontFamily", "label": "Body" },
+					{ "value": "hFontFamily", "label": "Headings" }
+				]
+			},
+			{
+				"type": "checkbox",
+				"id": "fontBold",
+				"label": "Enable bold text",
+				"default": false
+			},
+			{
+				"type": "text_alignment",
+				"id": "alignment",
+				"label": "Text alignment",
+				"default": "left"
+			},
+			{
+				"type": "range",
+				"id": "fontSize",
+				"label": "Text size - desktop",
+				"min": 1,
+				"max": 30,
+				"step": 1,
+				"default": 8
+			},
+			{
+				"type": "range",
+				"id": "fontSizeMob",
+				"label": "Text size - mobile",
+				"min": 1,
+				"max": 30,
+				"step": 1,
+				"default": 4
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "range",
+				"id": "paddingTop",
+				"label": "Padding top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "range",
+				"id": "paddingBottom",
+				"label": "Padding bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 2
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		]
+	}
+{% endschema %}

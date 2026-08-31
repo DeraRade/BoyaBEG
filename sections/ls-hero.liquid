@@ -1,0 +1,665 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+--_height: {%- if section.settings.media_height_uncropped -%}auto;{%- else -%}{{ section.settings.media_height | append: 'vh;' }}{% endif -%}
+--_heightMob: {%- if section.settings.media_height_uncropped_mob -%} auto;{%- else -%}{{ section.settings.media_height_mob | append: 'vh;' }}{% endif -%}
+--_width: {%- if section.settings.media_width_full -%}100%;{%- else -%}auto;{%- endif -%}
+{%- if section.settings.paddingInline -%}padding-inline:var(--layoutInline);{%- endif -%}
+{%- if section.settings.media_width_full == false and section.settings.media_center -%}--_mediaInline:auto;--_radius:var(--globalRadiusImg);{%- endif -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{%- endcapture -%}
+
+<section
+	class="hero prime"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+	{% if section.settings.url %}<a href="{{ section.settings.url }}">{% endif %}
+	<x-grid columns="{% if section.settings.overlay %}stack{% else %}1{% endif %}">
+		{%- # Meta content %}
+        {%- liquid
+            # Sticky state. If it's bottom, sticky bottom.
+            capture stickyState
+                if section.settings.sticky
+                    if section.settings.position contains 'bottom'
+                        echo 'class="content sticky-bottom" style="--sticky: var(--padding);"'
+                    else
+                        echo 'class="content sticky" style="--sticky: calc(var(--padding) + var(--headSpace));"'
+                    endif
+                else
+                    echo 'class="content"'
+                endif
+            endcapture
+        -%}
+
+		<x-flex
+			class="meta{% if section.settings.mixBlend %} mixBlend{% endif %}"
+			{% if section.settings.overlay == false %}
+				order="{{ section.settings.metaOrder }}"
+			{% endif %}
+			pi="{{ section.settings.position }}"
+			pi-s="{{ section.settings.positionMob }}"
+			orientation="{{ section.settings.direction }}"
+			orientation-s="{{ section.settings.directionMob }}"
+		>
+			<x-cell {{ stickyState }}>
+				<x-flex direction="{{ section.settings.direction }}" direction-s="{{ section.settings.directionMob }}">
+					{%- for block in section.blocks -%}
+						{% case block.type %}
+							{% when 'text' %}
+								<x-cell class="texts" {{ block.shopify_attributes }}>
+									{%- capture block_style -%}
+                                {{- block.settings.fontSize | prepend: '--_fontSize: var(--type-' | append: ');' -}} 
+                                {{- block.settings.fontSizeMob | prepend: '--_fontSizeMob: var(--type-' | append: ');' -}}
+                                {{- block.settings.textIndent | prepend: '--_textIndent: var(--space-' | append: ');' -}}
+                                {{- block.settings.fontFamily | prepend: '--_fontFamily: var(--' | append: ');' -}}
+                                {{- block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--_textAlign:' | append: ';' -}}
+                                {{- block.settings.letterSpacing | divided_by: 100.0 | prepend: '--_letterSpacing:' | append: 'em;' -}}
+                                {{- block.settings.lineHeight | prepend: '--_lineHeight:' | append: 'em;' -}}
+                                {% if block.settings.fontBold -%}font-weight: var(--hWeight);{%- endif %}
+                                {% if block.settings.enableCharWidth %}{{- block.settings.charWidth | prepend: '--_charWidth:' | append: 'ch;' -}}{% endif %}
+                                --_marginBlock: {{- block.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ block.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+                            {%- endcapture -%}
+
+									<div
+										class="content rte"
+										as="{{- block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -}}"
+										style="{{ block_style | strip_newlines | strip }}"
+									>
+										{{ block.settings.text | replace: '\n', '<br/>' }}
+									</div>
+								</x-cell>
+
+							{% when 'button' %}
+								{% if section.settings.url == blank %}
+									<x-flex 
+                                        as="{{- block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -}}"
+                                        wrap="wrap" class="buttons" 
+                                        {{ block.shopify_attributes }}
+                                    >
+										{% if block.settings.label != blank %}
+											<a href="{{ block.settings.url | default: '#' }}" 
+                                                class="button{% unless block.settings.linkAsButton %} is-custom{% endunless %}">
+												{{ block.settings.label }}
+											</a>
+										{% endif %}
+
+										{% if block.settings.label2 != blank %}
+											<a href="{{ block.settings.url2 | default: '#' }}"
+                                                class="button{% unless block.settings.linkAsButton2 %} is-custom{% endunless %}">
+												{{ block.settings.label2 }}
+											</a>
+										{% endif %}
+									</x-flex>
+								{% endif %}
+						{% endcase %}
+					{%- endfor -%}
+				</x-flex>
+			</x-cell>
+		</x-flex>
+
+		{% # Media content %}
+		<x-cell
+			class="media full"
+			{% if section.settings.overlay == false %}order="2"{% endif %}
+		>
+			{% if section.settings.mediaType == 'video' and section.settings.video != null -%}
+				{%- render 'inc-video',
+					vid: section.settings.video,
+					vidMobile: section.settings.videoMob,
+					loop: section.settings.video_loop,
+					autoplay: section.settings.video_autoplay,
+					muted: section.settings.video_muted,
+					controls: section.settings.video_controls,
+					clickToPlay: true,
+				-%}
+			{%- else -%}
+				{%- liquid
+					# Optimize first section hero image
+					assign fetchpriority = nil
+					assign preload = false
+                    assign loading = 'lazy'
+
+					if section.index == 1
+						assign fetchpriority = 'high'
+						assign preload = true
+                        assign loading = 'eager'
+					endif
+				-%}
+				{%- render 'inc-img'
+					dynamic: true,
+					img: section.settings.image,
+					imgMob: section.settings.imageMob,
+					mediaLoader: true,
+                    fallback: true,
+					fetchpriority: fetchpriority,
+					preload: preload,
+                    loading: loading,
+                    svg: 'lifestyle-2'
+				-%}
+			{%- endif -%}
+		</x-cell>
+	</x-grid>
+	{%- if section.settings.url -%}</a>{%- endif -%}
+</section>
+
+{% schema %}
+	{
+		"name": "Hero banner",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"presets": [
+			{
+				"name": "Hero banner",
+                "category": "Banners",
+				"blocks": [
+					{
+						"type": "text",
+                        "settings": {
+                            "text": "Heading",
+                            "fontFamily": "hFontFamily",
+                            "fontBold": true,
+                            "fontSize": 3,
+                            "fontSizeMob": 3,
+                          }
+					},
+					{
+						"type": "text",
+                        "settings": {
+                            "text": "Hero banner subheading.",
+                            "fontSize": 2,
+                            "fontSizeMob": 2,
+                        }
+					},
+					{
+						"type": "button",
+                        "settings": {}
+					}
+				]
+			}
+		],
+		"settings": [
+			{
+				"type": "header",
+				"content": "Media"
+			},
+            {
+                "type": "select",
+                "id": "mediaType",
+                "label": "Type",
+                "default": "image",
+                "options": [
+                    { "value": "image", "label": "Image" },
+                    { "value": "video", "label": "Video" }
+                ]
+            },
+			{
+				"type": "image_picker",
+				"id": "image",
+				"label": "Desktop",
+                "visible_if": "{{ section.settings.mediaType == 'image' }}"
+			},
+			{
+				"type": "image_picker",
+				"id": "imageMob",
+				"label": "Mobile",
+                "visible_if": "{{ section.settings.mediaType == 'image' }}"
+			},
+			{
+				"type": "video",
+				"id": "video",
+				"label": "Desktop",
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "video",
+				"id": "videoMob",
+				"label": "Mobile",
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "video_autoplay",
+				"label": "Video autoplay",
+				"default": true,
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "video_loop",
+				"label": "Video loop",
+				"default": true,
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "video_muted",
+				"label": "Video muted",
+				"default": true,
+                "info": "Video is muted by default if autoplay is enabled.",
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "video_controls",
+				"label": "Video controls",
+				"default": false,
+                "visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "media_height_uncropped",
+				"label": "Full height uncropped - desktop",
+				"default": false
+			},
+			{
+				"type": "range",
+				"id": "media_height",
+				"label": "Height - desktop",
+				"min": 40,
+				"max": 100,
+				"step": 10,
+				"unit": "vh",
+				"default": 80,
+                "visible_if": "{{ section.settings.media_height_uncropped == false }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "media_width_full",
+				"label": "Full width - desktop",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "media_center",
+				"label": "Center media - desktop",
+				"default": true,
+                "visible_if": "{{ section.settings.media_width_full == false }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "media_height_uncropped_mob",
+				"label": "Full height uncropped - mobile",
+				"default": false
+			},
+			{
+				"type": "range",
+				"id": "media_height_mob",
+				"label": "Height - mobile",
+				"min": 40,
+				"max": 100,
+				"step": 10,
+				"unit": "vh",
+				"default": 90,
+                "visible_if": "{{ section.settings.media_height_uncropped_mob == false }}"
+			},
+			{
+				"type": "header",
+				"content": "Clickable media",
+				"info": "If an URL is selected below, the media will be clickable and buttons will no longer show."
+			},
+			{
+				"type": "url",
+				"id": "url",
+				"label": "URL",
+				"info": "Use this to make your media clickable. Leave blank to disable."
+			},
+			{
+				"type": "header",
+				"content": "Content"
+			},
+			{
+				"type": "checkbox",
+				"id": "sticky",
+				"label": "Sticky content",
+				"default": false
+			},
+			{
+				"type": "checkbox",
+				"id": "overlay",
+				"label": "Overlay content",
+				"default": false
+			},
+			{
+				"type": "select",
+				"id": "metaOrder",
+				"label": "Inline content position",
+				"default": "3",
+                "visible_if": "{{ section.settings.overlay == false }}",
+				"options": [
+					{ "value": "1", "label": "Above media" },
+					{ "value": "3", "label": "Below media" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "direction",
+				"label": "Content direction - desktop",
+				"default": "row",
+				"options": [
+					{ "value": "row", "label": "Row" },
+					{ "value": "column", "label": "Stacked" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "position",
+				"label": "Content position - desktop",
+				"default": "center between",
+				"options": [
+					{ "value": "top left", "label": "Top left" },
+					{ "value": "top center", "label": "Top center" },
+					{ "value": "top right", "label": "Top right" },
+					{ "value": "center left", "label": "Middle Left" },
+					{ "value": "center", "label": "Middle Center" },
+					{ "value": "center right", "label": "Middle Right" },
+					{ "value": "bottom left", "label": "Bottom left" },
+					{ "value": "bottom center", "label": "Bottom center" },
+					{ "value": "bottom right", "label": "Bottom right" },
+					{ "value": "top between", "label": "Top space-between" },
+					{ "value": "center between", "label": "Middle space-between" },
+					{ "value": "bottom between", "label": "Bottom space-between" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "directionMob",
+				"label": "Content direction - mobile",
+				"default": "row",
+				"options": [
+					{ "value": "row", "label": "Row" },
+					{ "value": "column", "label": "Stacked" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "positionMob",
+				"label": "Content position - mobile",
+				"default": "center",
+				"options": [
+					{ "value": "top center", "label": "Top" },
+					{ "value": "center", "label": "Middle" },
+					{ "value": "bottom center", "label": "Bottom" }
+				]
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+            {
+                "type": "checkbox",
+                "id": "paddingInline",
+                "label": "Enable lateral padding",
+                "default": false
+            },
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+            {
+              "type": "range",
+              "id": "paddingTop",
+              "label": "Padding top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 0
+            },
+            {
+              "type": "range",
+              "id": "paddingBottom",
+              "label": "Padding bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 0
+            },
+			{
+				"type": "header",
+				"content": "Appearance"
+			},  
+            {
+                "type": "checkbox",
+                "id": "mixBlend",
+                "label": "Enable text blend mode",
+                "info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+                "default": false
+            },
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+		"blocks": [
+			{
+				"type": "text",
+				"name": "Text",
+				"limit": 2,
+				"settings": [
+					{
+						"type": "inline_richtext",
+						"id": "text",
+						"label": "Text",
+                        "default": "Hero banner"
+					},
+					{
+						"type": "select",
+						"id": "fontFamily",
+						"label": "Font",
+						"default": "fontFamily",
+						"options": [
+							{ "value": "fontFamily", "label": "Body" },
+							{ "value": "hFontFamily", "label": "Headings" }
+						]
+					},
+					{
+						"type": "checkbox",
+						"id": "fontBold",
+						"label": "Enable bold text",
+						"default": false
+					},
+					{
+						"type": "text_alignment",
+						"id": "alignment",
+						"label": "Text alignment",
+						"default": "left"
+					},
+					{
+						"type": "range",
+						"id": "fontSize",
+						"label": "Text size - desktop",
+						"min": 1,
+						"max": 30,
+						"step": 1,
+						"default": 4
+					},
+					{
+						"type": "range",
+						"id": "fontSizeMob",
+						"label": "Text size - mobile",
+						"min": 1,
+						"max": 30,
+						"step": 1,
+						"default": 4
+					},
+					{
+						"type": "range",
+						"label": "Letter spacing",
+						"id": "letterSpacing",
+						"min": -50,
+						"max": 200,
+						"step": 5,
+						"default": 0,
+						"info": "Automatically optimized for mobile."
+					},
+					{
+						"type": "range",
+						"label": "Line height",
+						"id": "lineHeight",
+						"min": 0.8,
+						"max": 2,
+						"step": 0.1,
+						"default": 0.8,
+						"info": "Automatically optimized for mobile."
+					},
+					{
+						"type": "range",
+						"id": "textIndent",
+						"label": "Text indent",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					},
+					{
+						"type": "checkbox",
+						"id": "enableCharWidth",
+						"label": "Enable text lenght",
+						"default": false,
+						"info": "Automatically optimized for mobile."
+					},
+					{
+						"type": "range",
+						"label": "Text lenght",
+						"id": "charWidth",
+						"min": 10,
+						"max": 100,
+						"step": 1,
+						"unit": "ch",
+						"default": 62,
+                        "visible_if": "{{ block.settings.enableCharWidth }}"
+					},
+					{
+						"type": "header",
+						"content": "Block spacing"
+					},
+					{
+						"type": "range",
+						"id": "marginTop",
+						"label": "Margin top",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					},
+					{
+						"type": "range",
+						"id": "marginBottom",
+						"label": "Margin bottom",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					}
+				]
+			},
+			{
+				"type": "button",
+				"name": "Buttons",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "header",
+						"content": "Notice",
+						"info": "If clickable media URL is selected these buttons won't show up."
+					},
+					{
+						"type": "text_alignment",
+						"id": "alignment",
+						"label": "Text alignment",
+						"default": "left"
+					},
+					{
+						"type": "header",
+						"content": "Button one"
+					},
+					{
+						"type": "text",
+						"id": "label",
+						"label": "Button label",
+						"default": "Button label",
+						"info": "Leave blank to hide."
+					},
+					{
+						"type": "url",
+						"id": "url",
+						"label": "URL"
+					},
+					{
+						"type": "checkbox",
+						"id": "linkAsButton",
+						"label": "Link as button",
+						"default": true
+					},
+					{
+						"type": "header",
+						"content": "Button two"
+					},
+					{
+						"type": "text",
+						"id": "label2",
+						"label": "Button label",
+						"info": "Leave blank to hide."
+					},
+					{
+						"type": "url",
+						"id": "url2",
+						"label": "URL"
+					},
+					{
+						"type": "checkbox",
+						"id": "linkAsButton2",
+						"label": "Link as button",
+						"default": true
+					},
+					{
+						"type": "header",
+						"content": "Block spacing"
+					},
+					{
+						"type": "range",
+						"id": "marginTop",
+						"label": "Margin top",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					},
+					{
+						"type": "range",
+						"id": "marginBottom",
+						"label": "Margin bottom",
+						"min": 0,
+						"max": 30,
+						"step": 1,
+						"default": 0
+					}
+				]
+			}
+		]
+	}
+{% endschema %}

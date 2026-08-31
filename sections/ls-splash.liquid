@@ -1,0 +1,549 @@
+{%- assign globalDirection = section.settings.direction -%}
+
+<coretex-enter
+	class="center-axyz full"
+	id="enterBox"
+	data-section-id="{{ section.id }}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+	<x-grid columns="stack" pi="center">
+		<x-meta flow="{{ globalDirection }}" ai="{{ section.settings.alignmentAI }}" jc="{{ section.settings.alignmentJC }}" ji="{{ section.settings.alignmentJC }}"
+			flow-s="vertical" ai-s="center" jc-s="center"
+			class="meta fullwidth{% if section.settings.mixBlend %} mixBlend{% endif %}"
+		>
+			{% for block in section.blocks %}
+				{%- case block.type -%}
+					{%- when 'space' -%}
+                        {%- liquid 
+                            if globalDirection == 'vertical'
+                                assign space = block.settings.margin | prepend: 'width: var(--space-' | append: ");"
+                            else 
+                                assign space = block.settings.margin | prepend: 'height: var(--space-' | append: ");"
+                            endif
+                        -%}
+						<div class="space" style="{{ space }}" {{ block.shopify_attributes }}>&nbsp;</div>
+
+					{%- when 'logo' -%}
+						<x-cell class="logo" {{ block.shopify_attributes }}>
+                            {%- style -%}:root{ {{ block.settings.logoImageSize | prepend: '--enterLogoImageSize:' | append: 'px' }} }{%- endstyle -%}
+                            {%- liquid
+                                assign img = block.settings.image
+                                assign width = 800
+                                assign widths = '100,200,400,600,800'
+                                assign alt = shop.name | escape
+                                assign class = 'noRadius'
+
+                                if img != nil
+                                    render 'inc-img', img: img, width: width, widths: widths, alt: alt, mediaLoader: false, class: class
+                                else
+                                    echo shop.name | prepend: '<h2 class="h5">' | append: '</h2>'
+                                endif
+                            -%}
+						</x-cell>
+
+					{%- when 'clock' -%}
+						<x-cell class="clock" {{ block.shopify_attributes }}>
+							{%- liquid
+                                assign direction = block.settings.direction
+                                render 'c-clock', block: block, direction: direction
+                            -%}
+						</x-cell>
+
+					{%- when 'menu' -%}
+						<x-cell class="menu" {{ block.shopify_attributes }}>
+                            <x-flex direction="{{ block.settings.direction }}" class="text-{{ section.settings.alignmentJC }}">
+                            {%- for link in linklists[block.settings.linklist].links -%}
+                                <a href="{{ link.url }}">{{ link.title }}</a>
+                            {%- endfor -%}
+                            </x-flex>
+						</x-cell>
+
+					{%- when 'social' -%}
+						<x-cell class="socials" {{ block.shopify_attributes }}>
+                            {%- liquid
+                                assign direction = block.settings.direction | prepend: 'x-flex direction='
+                                render 'inc-socials', attribute: direction, class: nil, type: 'icon'
+                            -%}
+						</x-cell>
+
+					{%- when 'enter' -%}
+						<x-cell class="enter" {{ block.shopify_attributes }}>
+							<button class="{% if block.settings.type == 'link' %}is-blank{% endif %}" onclick="this.closest('coretex-enter').setAttribute('closed', '')">
+								{{ block.settings.label }}
+							</button>
+						</x-cell>
+
+				{%- endcase -%}
+			{%- endfor -%}
+		</x-meta>
+
+		<x-cell class="media full">
+			{% if section.settings.mediaType == 'video' -%}
+				{%- render 'inc-video',
+					vid: section.settings.video,
+					vidMobile: section.settings.videoMob,
+					loop: true,
+					autoplay: true,
+					muted: true,
+					clickToPlay: false,
+					controls: false
+				-%}
+			{%- else -%}
+				{%- liquid
+					# Optimize first section splash image
+					assign fetchpriority = nil
+					assign preload = false
+                    assign loading = 'lazy'
+
+					if section.index == 1
+						assign fetchpriority = 'high'
+						assign preload = true
+                        assign loading = 'eager'
+					endif
+				-%}
+				{%- render 'inc-img'
+                    dynamic: true,
+                    img: section.settings.image,
+                    imgMob: section.settings.imageMob,
+                    widths: '480,640,768,1024,1280,1536,1920,2560',
+                    mediaLoader: true,
+                    fetchpriority: fetchpriority,
+                    preload: preload,
+                    loading: loading
+				-%}
+			{%- endif -%}
+		</x-cell>
+
+		{%- if section.settings.show_backdrop -%}
+			<x-cell class="backdrop"></x-cell>
+		{%- endif -%}
+	</x-grid>
+</coretex-enter>
+
+{% style %}
+body:has(coretex-enter:not([closed])) { overflow: clip }
+
+coretex-enter {
+    display: block;
+
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+
+    background: var(--bg);
+    background-attachment: fixed;
+    color: var(--color);
+
+    /* Meta */
+    x-meta {
+        --gap: var(--space-4) var(--space-10);
+        --hMargin: 0;
+
+        padding: var(--layoutInline);
+        z-index: 2!important;
+        height: fit-content;
+
+        @media (width < 777px) { padding-block: var(--headSpace, 90px); max-width: 42ch }
+
+        display: grid;
+        gap: var(--gap);
+
+        &[flow="horizontal"] { grid-auto-flow: column }
+        &[flow="vertical"] { grid-auto-flow: row; max-width: 42ch }
+
+        @media (width < 777px) {
+            &[flow-s="horizontal"] { grid-auto-flow: column }
+            &[flow-s="vertical"] { grid-auto-flow: row; max-width: 42ch }
+
+            .clock x-flex, .socialNets { flex-direction: row!important }
+            .menu x-flex { flex-direction: column!important }
+        }
+
+        .menu { --gap: var(--space-3) }
+        .clock { --gap: var(--space-1) var(--space-3) }
+        .logo img { height: var(--enterLogoImageSize); width: fit-content }
+        .socialNets { --gap: var(--space-3) }
+    }
+
+    /* Media */
+    .media {
+        min-height: 100vh;
+        pointer-events: none;
+        user-select: none;
+
+        :where(img, video) {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+            user-select: none;
+            border-radius: 0;
+        }
+    }
+
+    .backdrop {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background-color: var(--overlayBg);
+        backdrop-filter: var(--overlayBlur);
+    }
+
+    &[closed] { display: none }
+}
+{% endstyle %}
+
+{% schema %}
+	{
+		"name": "Splash page",
+        "disabled_on": { "groups": ["footer", "aside"] },
+		"limit": 1, 
+		"presets": [
+			{
+				"name": "Splash page",
+				"category": "Content",
+				"blocks": [
+                    { "type":"logo" }, 
+                    { "type": "clock" }, 
+                    { "type": "space" },
+                    { "type": "enter" },
+                    { "type": "menu" },
+                    { "type": "space" },
+                    { "type": "social" }
+                ]
+			}
+		],
+		"settings": [
+            {
+                "type": "paragraph",
+                "content": "When enabled, this section will appear above all other content/sections, regardless of its position in the editor."
+            },
+			{
+				"type": "header",
+				"content": "Background media"
+			},
+			{
+				"type": "select",
+				"id": "mediaType",
+				"label": "Type",
+				"default": "image",
+				"options": [
+					{ "value": "image", "label": "Image" },
+					{ "value": "video", "label": "Video" }
+				]
+			},
+			{
+				"type": "image_picker",
+				"id": "image",
+				"label": "Desktop",
+				"visible_if": "{{ section.settings.mediaType == 'image' }}"
+			},
+			{
+				"type": "image_picker",
+				"id": "imageMob",
+				"label": "Mobile",
+				"visible_if": "{{ section.settings.mediaType == 'image' }}"
+			},
+			{
+				"type": "video",
+				"id": "video",
+				"label": "Desktop",
+				"visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "video",
+				"id": "videoMob",
+				"label": "Mobile",
+				"visible_if": "{{ section.settings.mediaType == 'video' }}"
+			},
+			{
+				"type": "checkbox",
+				"id": "show_backdrop",
+				"label": "Enable backdrop",
+				"default": false
+			},
+			{
+				"type": "header",
+				"content": "Content"
+			},
+            {
+                "type": "select",
+                "id": "direction",
+                "label": "Direction - desktop",
+                "info": "Automatically optimized for mobile.",
+                "default": "horizontal",
+                "options": [
+                    { "value": "horizontal", "label": "Horizontal" },
+                    { "value": "vertical", "label": "Vertical" }
+                ]
+            },
+			{
+				"type": "header",
+				"content": "Alignment"
+			},
+			{
+				"type": "select",
+				"id": "alignmentAI",
+				"label": "Vertical - desktop",
+				"default": "start",
+                "visible_if": "{{ section.settings.direction == 'horizontal' }}",
+				"options": [
+					{ "value": "start", "label": "Top" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Bottom" }
+				]
+			},
+			{
+				"type": "select",
+				"id": "alignmentJC",
+				"label": "Horizontal - desktop",
+				"default": "around",
+				"options": [
+					{ "value": "start", "label": "Left" },
+					{ "value": "center", "label": "Center" },
+					{ "value": "end", "label": "Right" },
+					{ "value": "between", "label": "Space between" },
+					{ "value": "around", "label": "Space around" }
+				]
+			},
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+			{
+				"type": "checkbox",
+				"id": "mixBlend",
+				"label": "Enable text blend mode",
+				"info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+				"default": false
+			},
+			{
+				"type": "checkbox",
+				"id": "global_color_scheme",
+				"label": "Use global color scheme",
+				"default": true
+			},
+			{
+				"type": "color_scheme",
+				"id": "color_scheme",
+				"label": "Color scheme",
+				"default": "coretex-1",
+				"visible_if": "{{ section.settings.global_color_scheme == false }}"
+			}
+		],
+		"blocks": [
+			{
+				"type": "space",
+				"name": "Space",
+				"settings": [
+                    {
+                        "type": "range",
+                        "id": "margin",
+                        "label": "Margin",
+                        "min": 0,
+                        "max": 30,
+                        "step": 1,
+                        "default": 5
+                    }
+				]
+			},
+			{
+				"type": "logo",
+				"name": "Logo",
+				"limit": 1,
+				"settings": [
+                    {
+                        "type": "image_picker",
+                        "id": "image",
+                        "label": "Logo"
+                    },
+                    {
+                        "type": "range",
+                        "id": "logoImageSize",
+                        "min": 20,
+                        "max": 250,
+                        "step": 5,
+                        "unit": "px",
+                        "label": "Size",
+                        "default": 25,
+                        "visible_if": "{{ block.settings.image != nil }}"
+                    }
+				]
+			},
+			{
+				"type": "social",
+				"name": "Social",
+				"limit": 1,
+                "settings": [
+                    {
+                        "type": "select",
+                        "id": "direction",
+                        "label": "Direction - desktop",
+                        "default": "column",
+                        "info": "Automatically optimized for mobile.",
+                        "options": [
+                            { "value": "row", "label": "Horizontal" },
+                            { "value": "column", "label": "Vertical" }
+                        ]
+                    }
+                ]
+			},
+			{
+				"type": "menu",
+				"name": "Menu",
+				"limit": 1,
+				"settings": [
+                    {
+                        "type": "link_list",
+                        "id": "linklist",
+                        "label": "Menu",
+                        "default": "main-menu",
+                        "info": "Only top-level menu items are displayed."
+                    },
+					{
+						"type": "header",
+						"content": "Content"
+					},
+                    {
+                        "type": "select",
+                        "id": "direction",
+                        "label": "Direction - desktop",
+                        "default": "column",
+                        "info": "Automatically optimized for mobile.",
+                        "options": [
+                            { "value": "row", "label": "Horizontal" },
+                            { "value": "column", "label": "Vertical" }
+                        ]
+                    }
+				]
+			},
+            {
+                "type": "enter",
+                "name": "Enter button",
+                "limit": 1,
+                "settings": [
+                    {
+                        "type": "text",
+                        "id": "label",
+                        "label": "Label",
+                        "default": "Enter"
+                    },
+                    {
+                        "type": "select",
+                        "id": "type",
+                        "label": "Style",
+                        "default": "button",
+                        "options": [
+                            { "value": "button", "label": "Button" },
+                            { "value": "link", "label": "Link" }
+                        ]
+                    }
+                ]
+            },
+			{
+				"type": "clock",
+				"name": "Clock",
+				"limit": 1,
+				"settings": [
+					{
+						"type": "header",
+						"content": "Time"
+					},
+					{
+						"type": "select",
+						"id": "time_format",
+						"label": "Time format",
+						"default": "24",
+						"options": [
+							{ "value": "24", "label": "24-hour (19:00)" },
+							{ "value": "12", "label": "12-hour (07:00 PM)" }
+						]
+					},
+					{
+						"type": "select",
+						"id": "timezone",
+						"label": "Timezone",
+						"default": "auto",
+						"info": "Auto uses the store's timezone.",
+						"options": [
+							{ "value": "auto", "label": "Store timezone" },
+                            { "value": "custom", "label": "Custom timezone" },
+                            { "value": "Europe/Copenhagen", "label": "Copenhagen (CET/CEST)" },
+							{ "value": "Europe/London", "label": "London (GMT/BST)" },
+							{ "value": "Europe/Paris", "label": "Paris (CET/CEST)" },
+							{ "value": "America/New_York", "label": "New York (EST/EDT)" },
+							{ "value": "America/Los_Angeles", "label": "Los Angeles (PST/PDT)" },
+							{ "value": "America/Chicago", "label": "Chicago (CST/CDT)" },
+							{ "value": "Asia/Tokyo", "label": "Tokyo (JST)" },
+							{ "value": "Asia/Shanghai", "label": "Shanghai (CST)" },
+							{ "value": "Australia/Sydney", "label": "Sydney (AEST/AEDT)" }
+						]
+					},
+					{
+						"type": "text",
+						"id": "custom_timezone",
+						"label": "Custom timezone",
+						"default": "Europe/Copenhagen",
+						"info": "Enter IANA timezone identifier. View the [complete list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)",
+						"visible_if": "{{ block.settings.timezone == 'custom' }}"
+					},
+					{
+						"type": "header",
+						"content": "Date"
+					},
+					{
+						"type": "checkbox",
+						"id": "show_date",
+						"label": "Show",
+						"default": true
+					},
+					{
+						"type": "select",
+						"id": "date_format",
+						"label": "Format",
+						"default": "dd/mm/yyyy",
+						"visible_if": "{{ block.settings.show_date == true }}",
+						"options": [
+							{ "value": "dd/mm/yyyy", "label": "30/06/2035" },
+							{ "value": "mm/dd/yyyy", "label": "06/30/2035" },
+							{ "value": "yyyy-mm-dd", "label": "2035-06-30" }
+						]
+					},
+					{
+						"type": "header",
+						"content": "Location"
+					},
+					{
+						"type": "checkbox",
+						"id": "show_location",
+						"label": "Show",
+						"default": false
+					},
+					{
+						"type": "text",
+						"id": "location_name",
+						"label": "Name",
+						"default": "Copenhagen",
+						"visible_if": "{{ block.settings.show_location == true }}"
+					},
+					{
+						"type": "header",
+						"content": "Content"
+					},
+                    {
+                        "type": "select",
+                        "id": "direction",
+                        "label": "Direction - desktop",
+                        "default": "row",
+                        "info": "Automatically optimized for mobile.",
+                        "options": [
+                            { "value": "row", "label": "Horizontal" },
+                            { "value": "column", "label": "Vertical" }
+                        ]
+                    }
+				]
+			}
+		]
+	}
+{% endschema %}

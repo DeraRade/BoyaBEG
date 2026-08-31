@@ -1,0 +1,24 @@
+{%- comment -%}
+    🚨 Code #AA-M
+
+    This is responsible for loading JS files across the theme.
+
+    Accepts:
+    src: file.js
+    loading: 'defer' | 'module'
+
+    Usage:
+    {%- render 'inc-script', src: 't-product.js', loading: 'module'  -%} 
+{%- endcomment -%}
+
+{% # theme-check-disable %}  
+{%- liquid
+    assign script_path = src | asset_url 
+    if loading == 'module'
+        assign script_type = 'type="module"'
+    else 
+        assign script_type = 'defer="defer"'
+    endif
+-%}
+<script {{ script_type }} src="{{ script_path }}"></script>
+{% # theme-check-enable %}

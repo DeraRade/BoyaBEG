@@ -1,1 +1,188 @@
-{"sections":{"main":{"type":"contact-template","settings":{"wide_display":true,"contact_heading":"Get in touch","contact_subheading":"Subheading","caption_content_background":"original","contact_text":"","show_map":false,"map_wide_display":true,"map_address":"","map_height":400,"zoom_level":16,"api_key":"","show_pin":true,"map_style":"default"}}},"order":["main"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "p-contact",
+      "blocks": {
+        "name": {
+          "type": "name",
+          "settings": {
+            "requiredInput": true
+          }
+        },
+        "email": {
+          "type": "email",
+          "settings": {
+            "requiredInput": true
+          }
+        },
+        "phone": {
+          "type": "phone",
+          "settings": {
+            "requiredInput": false
+          }
+        },
+        "message": {
+          "type": "message",
+          "settings": {}
+        },
+        "button": {
+          "type": "button",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "name",
+        "email",
+        "phone",
+        "message",
+        "button"
+      ],
+      "disabled": true,
+      "custom_css": [],
+      "settings": {
+        "show_content": true,
+        "show_title": true,
+        "title_position": "2",
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    },
+    "blocks_yEd68z": {
+      "type": "_blocks",
+      "blocks": {
+        "ai_gen_block_0dfe8e1_mN7nFm": {
+          "type": "ai_gen_block_0dfe8e1",
+          "settings": {
+            "heading": "Contáctenos",
+            "description": "",
+            "name_label": "Nombre",
+            "name_placeholder": "",
+            "name_required": true,
+            "email_label": "Correo electronico",
+            "email_placeholder": "",
+            "email_required": true,
+            "show_phone": false,
+            "phone_label": "Teléfono",
+            "phone_placeholder": "+34 600 123 456",
+            "phone_required": false,
+            "message_label": "Mensaje",
+            "message_placeholder": "Su mensaje aqui...",
+            "message_required": true,
+            "button_text": "Enviar",
+            "button_full_width": false,
+            "button_full_width_mobile": true,
+            "success_message": "¡Gracias! Su mensaje ha sido enviado correctamente.",
+            "error_message": "Ha ocurrido un error. Por favor, revise los campos e inténtelo de nuevo.",
+            "desktop_width_percent": 50,
+            "form_padding": 12,
+            "spacing": 40,
+            "field_spacing": 24,
+            "input_width_percent": 100,
+            "input_height": 50,
+            "textarea_height": 180,
+            "input_padding": 16,
+            "button_padding": 14,
+            "form_padding_mobile": 20,
+            "spacing_mobile": 16,
+            "field_spacing_mobile": 16,
+            "input_width_percent_mobile": 100,
+            "input_height_mobile": 40,
+            "textarea_height_mobile": 100,
+            "input_padding_mobile": 10,
+            "button_padding_mobile": 10,
+            "background_color": "#E4DBC7",
+            "input_bg_color": "#E5DED1",
+            "success_bg_color": "#d4edda",
+            "error_bg_color": "#E4DBC7",
+            "heading_color": "#5b5048",
+            "text_color": "#5b5048",
+            "label_color": "#5b5048",
+            "input_text_color": "#000000",
+            "required_color": "#dc3545",
+            "success_text_color": "#155724",
+            "error_text_color": "#721c24",
+            "heading_size": 24,
+            "text_size": 20,
+            "label_size": 16,
+            "input_text_size": 16,
+            "button_text_size": 16,
+            "heading_size_mobile": 22,
+            "text_size_mobile": 16,
+            "label_size_mobile": 14,
+            "input_text_size_mobile": 15,
+            "button_text_size_mobile": 14,
+            "input_border_width": 1,
+            "input_border_color": "#d6c7b0",
+            "input_focus_color": "#813e35",
+            "input_border_radius": 4,
+            "button_bg_color": "#813e35",
+            "button_text_color": "#ffffff",
+            "button_border_width": 1,
+            "button_border_color": "#813e35",
+            "button_border_radius": 4,
+            "button_hover_bg_color": "#6d3229",
+            "button_hover_text_color": "#ffffff",
+            "button_hover_border_color": "#6d3229",
+            "border_radius": 12,
+            "text_alignment": "center"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "ai_gen_block_0dfe8e1_mN7nFm"
+      ],
+      "name": "Contact form",
+      "settings": {}
+    },
+    "177741828385e3a5b4": {
+      "type": "_blocks",
+      "blocks": {
+        "ai_gen_block_1dfcfa0_jJywiR": {
+          "type": "ai_gen_block_1dfcfa0",
+          "settings": {
+            "heading": "Visítenos",
+            "address": "<p>C/ Reina Na Germana 7</p><p> 46005 València<br/><br/></p>",
+            "phone": "+34664298868",
+            "email": "studio@boyaporcelana.com",
+            "hours_heading": "Horario",
+            "hours": "<p>              lunes a viernes </p><p>              12:00 a 20:00<br/><br/></p>",
+            "map_embed": "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3080.236393521334!2d-0.36866932422201054!3d39.463987971608596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6049cceba21503%3A0x1eb5250cd602cd8e!2sBoya%20Porcelana!5e0!3m2!1sen!2ses!4v1777418628418!5m2!1sen!2ses\" width=\"600\" height=\"450\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>",
+            "map_height": 300,
+            "map_height_mobile": 300,
+            "layout": "row",
+            "gap": 20,
+            "desktop_width_percent": 100,
+            "section_padding": 20,
+            "info_padding": 20,
+            "border_radius": 10,
+            "heading_size": 26,
+            "info_bg_color": "#E4DBC7",
+            "text_color": "#000000",
+            "link_hover_color": "#666666"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "ai_gen_block_1dfcfa0_jJywiR"
+      ],
+      "name": "Map & Contact",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "blocks_yEd68z",
+    "177741828385e3a5b4"
+  ]
+}

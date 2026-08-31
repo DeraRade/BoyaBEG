@@ -1,0 +1,422 @@
+{%- liquid
+    # Debug check
+    assign debuger = false
+    if request.design_mode and section.settings.debug
+      assign debuger = true
+    endif
+  
+    # skelet .debug
+    capture debug
+      if debuger
+        echo 'debug outline' | prepend: ' '
+      endif
+    endcapture
+  
+    # x-grid columns
+    assign columns = 8
+-%}
+
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+    --gridGap: {{ section.settings.gap | prepend: 'var(--space-' | append: ');' }}
+    padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ');' }}
+    margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}
+    text-align: {{ section.settings.textAlignment | replace: 'left', 'start' | replace: 'right', 'end' }};
+    {% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+    class="image-text"
+    style="{{- style | strip_newlines | strip -}}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+
+<x-grid columns="{{ columns }}" class="{{ debug }}">
+
+    <x-cell 
+        span="{{ section.settings.mediaSpan }}"
+        span-s="row" 
+        order="{{ section.settings.imagePosition }}" 
+        order-s="1" 
+        class="media"
+    >
+		{% if section.settings.mediaType == 'video' -%}
+			{%- render 'inc-video',
+				vid: section.settings.video,
+				vidMobile: section.settings.videoMob,
+				loop: true,
+				autoplay: true,
+				muted: true,
+				clickToPlay: false,
+				controls: false
+			-%}
+		{%- else -%}
+            {%- liquid
+                assign dynamic = true
+                assign img = section.settings.image
+                assign imgMob = section.settings.imageMob
+                assign width = 1426
+                assign widths = '200,300,400,500,750,1000,1280,1426'
+                assign sizes = '(max-width:777px) 100vw, (min-width:778px) 50vw, 100vw'
+                assign mediaLoader = true
+                render 'inc-img' img: img, imgMob: imgMob, width: width, widths: widths, sizes: sizes, dynamic: dynamic, mediaLoader: mediaLoader, fallback: true
+            -%}
+		{%- endif -%}
+    </x-cell>
+
+    <x-cell 
+        span="{{ section.settings.metaSpan }}" 
+        span-s="row" 
+        order="2" 
+        order-s="2" 
+        class="meta"
+    >
+
+        <x-flex direction="column" jc="{{ section.settings.textPosition }}" class="text">
+            {%- for block in section.blocks -%}
+            {% case block.type %}
+            {%- when 'heading' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <h2 class="text-break-word">{{ block.settings.heading | escape }}</h2>
+                </x-cell>
+
+            {%- when 'text' -%}
+                {%- capture block_style -%}
+                {{- block.settings.textIndent | prepend: '--_textIndent: var(--space-' | append: ');' -}}
+                {% if block.settings.enableCharWidth %}{{- block.settings.charWidth | prepend: '--_charWidth:' | append: 'ch;' -}}{% endif %}
+                {{- block.settings.fontSize | prepend: '--_hSize: var(--type-' | append: ');' -}} 
+                {{- block.settings.fontSizeMob | prepend: '--_hSizeMob: var(--type-' | append: ');' -}}
+                {%- endcapture -%}
+
+                <div class="content rte" as="{{- block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -}}" style="{{ block_style | strip_newlines | strip }}" {{ block.shopify_attributes }}>
+                    {{ block.settings.text | replace: '\n', '<br/>' }}
+                </div>
+
+            {%- when 'button' -%}
+                {%- if block.settings.label != blank -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <a href="{{ block.settings.url | default: '#' }}" class="button {% unless block.settings.linkAsButton %}is-blank{% endunless %}">
+                        {{ block.settings.label | escape }}
+                    </a>
+                </x-cell>
+                {%- endif -%}
+
+            {%- endcase -%}
+            {%- endfor -%}
+        </x-flex>
+
+    </x-cell>
+
+</x-grid>
+
+</section>
+
+{% schema %}
+{
+  "name": "Media with text",
+  "disabled_on": { "groups": [ "header", "footer", "aside" ] },
+  "presets": [
+    {
+      "name": "Media with text",
+      "category": "Content",
+      "blocks": [
+        { "type": "heading" },
+        { "type": "text" },
+        { "type": "button" },
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Grid"
+    },
+    {
+      "type": "checkbox",
+      "id": "debug",
+      "label": "Show grid outline",
+      "default": false,
+      "info": "Visually outline grid areas and elements. These visual aids will only appear in the theme editor and won't be visible to end users."
+    },
+    {
+        "type": "range",
+        "label": "Columns gap",
+        "id": "gap",
+        "min": 0,
+        "max": 7,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "paragraph",
+        "content": "Adjust the number of columns each of these two blocks spans across, on desktop."
+    },
+    {
+        "type": "range",
+        "label": "Media block span - desktop",
+        "id": "mediaSpan",
+        "min": 1,
+        "max": 8,
+        "step": 1,
+        "default": 4
+    },
+    {
+        "type": "range",
+        "label": "Text block span - desktop",
+        "id": "metaSpan",
+        "min": 1,
+        "max": 8,
+        "step": 1,
+        "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Media"
+    },
+	{
+		"type": "select",
+		"id": "mediaType",
+		"label": "Type",
+		"default": "image",
+		"options": [
+			{ "value": "image", "label": "Image" },
+			{ "value": "video", "label": "Video" }
+		]
+	},
+	{
+		"type": "image_picker",
+		"id": "image",
+		"label": "Desktop",
+		"visible_if": "{{ section.settings.mediaType == 'image' }}"
+	},
+	{
+		"type": "image_picker",
+		"id": "imageMob",
+		"label": "Mobile",
+		"visible_if": "{{ section.settings.mediaType == 'image' }}"
+	},
+	{
+		"type": "video",
+		"id": "video",
+		"label": "Desktop",
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "video",
+		"id": "videoMob",
+		"label": "Mobile",
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+    {
+      "type": "select",
+      "id": "imagePosition",
+      "label": "Position - desktop",
+      "info": "Media first on mobile.",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": "Left"
+        },
+        {
+          "value": "3",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "select",
+      "id": "textPosition",
+      "label": "Text position - desktop",
+      "default": "start",
+      "options": [
+        {
+          "value": "start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "end",
+          "label": "Bottom"
+        }
+      ]
+    },
+    {
+        "type": "text_alignment",
+        "id": "textAlignment",
+        "label": "Text alignment",
+        "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+    {
+      "type": "range",
+      "id": "marginTop",
+      "label": "Margin top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "marginBottom",
+      "label": "Margin bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "This text can be used to make announcements, describe products, greet customers, or inform them about your brand."
+        },
+        {
+            "type": "checkbox",
+            "id": "enableCharWidth",
+            "label": "Enable text lenght",
+            "default": false,
+            "info": "Automatically optimized for mobile."
+        },
+        {
+            "type": "range",
+            "label": "Text lenght",
+            "id": "charWidth",
+            "min": 10,
+            "max": 100,
+            "step": 1,
+            "unit": "ch",
+            "default": 62,
+            "visible_if": "{{ block.settings.enableCharWidth }}"
+        },
+        {
+            "type": "range",
+            "id": "textIndent",
+            "label": "Text indent",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "default": 0
+        },
+        {
+              "type": "range",
+              "id": "fontSize",
+              "label": "Text size - desktop",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        },
+        {
+              "type": "range",
+              "id": "fontSizeMob",
+              "label": "Text size - mobile",
+              "min": 1,
+              "max": 30,
+              "step": 1,
+              "default": 2
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "name": "Button",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Label",
+          "info": "Leave blank to hide."
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Link"
+        },
+        {
+            "type": "checkbox",
+            "id": "linkAsButton",
+            "label": "Link as button",
+            "default": true
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

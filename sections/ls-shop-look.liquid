@@ -1,0 +1,208 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{% if section.settings.useLocalCardSize %}{{ section.settings.card_size | prepend: '--prodCardSlideRatio:' | append: 'px;' }}{% endif %}
+{%- endcapture -%}
+
+<section
+	class="shop-look"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+
+    {%- liquid
+        # Section heading
+        assign heading = section.settings.heading
+        assign description = section.settings.description
+        assign attributes = section.settings.heading_alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'js="' | append: '"'
+        assign stealth = section.settings.stealthMode
+
+        render 'c-section-head', heading: heading, description: description, attributes: attributes, stealth: stealth
+    -%}
+
+    <x-grid columns="{{ section.settings.layoutType }}" columns-s="1f" ji="{{ section.settings.content_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}">
+        <x-cell class="product-banner">
+            {%- assign alt_text = section.settings.image.alt | default: section.settings.heading | escape -%}
+            {%-
+                render 'inc-img',
+                dynamic: true,
+                img: section.settings.image,
+                widths: '480,640,768,1024,1280,1536,1920,2560',
+                mediaLoader: true,
+                fallback: true,
+                svg: 'lifestyle-2',
+                alt: alt_text
+            -%}
+        </x-cell>
+
+        <coretex-hover display-key="false" x-flex direction="column">
+            <x-flex hover-spotlight></x-flex>
+            <x-flex wrap="wrap" ai="center" class="product-group" stealth="{{ section.settings.prodListStealthMode }}" circle-prods="{{ section.settings.prodListCircle }}">
+                {%- for product in section.settings.product_list -%}
+                    <x-cell class="product" style="--tDelay: {{ forloop.index }}" 
+                        spotlight-title="{{ product.title }}" 
+                        spotlight-price="{{ product.price | money }}" 
+                        {% if product.compare_at_price and product.compare_at_price > product.price %}
+                            spotlight-sale-price="{{ product.compare_at_price | money }}"
+                        {% endif %}
+                        in-stock="{{ product.available }}" 
+                        {% if product.media == empty %}medialess{% endif %}
+                    >
+                        <a href="{{ product.url }}">
+                            <h3 class="title text-normal text-center text-clip{% if product.media != empty %} visually-hidden{% endif %}">{{ product.title }}</h3>
+                            {%- render 'c-prod-card-media', product: product, card_media_type: settings.card_media_type, widths: '50,180,360,540,640,768' -%}
+                        </a>
+                    </x-cell>
+                {% else %}
+                    {% for i in (1..5) %}
+                        <x-cell class="product onboarding" style="--tDelay: {{ forloop.index }}" 
+                            spotlight-title="{{ 'onboarding.product_title' | t }}" 
+                            spotlight-price="$100" 
+                        >
+                            <a href="#">{%- render 'inc-img', img: nil, fallback: true, svg: 'image' -%}</a>
+                        </x-cell>
+                    {%- endfor -%}
+                {%- endfor -%}
+            </x-flex>
+        </coretex-hover>
+    </x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Shop the look",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [ { "name": "Shop the look", "category": "Products" } ],
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "stealthMode",
+        "label": "Show header on hover - desktop",
+        "default": false
+    },
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Shop the look",
+        "info": "Leave blank to remove heading."
+    },
+    {
+        "type": "inline_richtext",
+        "id": "description",
+        "label": "Description"
+    },
+    {
+        "type": "text_alignment",
+        "id": "heading_alignment",
+        "label": "Alignment",
+        "default": "left"
+    },
+    {
+        "type": "header",
+        "content": "Content"
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Product banner",
+        "info": "16:9 recommended"
+    },
+    {
+        "type": "product_list",
+        "id": "product_list",
+        "label": "Products",
+        "limit": 10
+    },
+    {
+        "type": "checkbox",
+        "id": "prodListCircle",
+        "label": "Show products in circles",
+        "info": "Display product images in a circular format.",
+        "default": true
+    },    
+    {
+        "type": "checkbox",
+        "id": "prodListStealthMode",
+        "label": "Show products on hover - desktop",
+        "default": false
+    },
+    {
+        "type": "select",
+        "id": "layoutType",
+        "label": "Layout - desktop",
+        "default": "1",
+        "options": [
+            { "value": "1", "label": "One column" },
+            { "value": "2", "label": "Two columns" }
+        ]
+    },
+    {
+        "type": "text_alignment",
+        "id": "content_alignment",
+        "label": "Alignment",
+        "default": "left"
+    },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "range",
+        "id": "marginTop",
+        "label": "Margin top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingTop",
+        "label": "Padding top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "paddingBottom",
+        "label": "Padding bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

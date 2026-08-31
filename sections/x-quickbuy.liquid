@@ -1,0 +1,22 @@
+{%- comment -%}
+=== [ CORETEX FYI ] ===
+This section is not intended to be displayed. 
+WILL BE used to update product card content using Section rendering API. 
+
+    - Used by: `c-prod-card-form.liquid`
+ 
+DO NOT REMOVE
+
+--- [ WIP ] ---
+
+Debug URL:
+/products/color-swatches-w-3-variants/?section_id=x-quickbuy
+
+Files:
+c-prod-card.liquid
+c-prod-card-form.liquid
+{%- endcomment -%}
+
+{{ 'openthinking.theme' | t }} {{ product.title }}
+
+{%  render 'c-prod-card' %}

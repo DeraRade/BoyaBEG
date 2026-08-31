@@ -1,0 +1,94 @@
+{%- capture style -%}
+    {% unless section.settings.title_bold %}--hWeight: 400;{% endunless %}
+    padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+    margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+    {% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+{%- endcapture -%}
+
+<section
+	class="custom-liquid"
+	style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+    {{ section.settings.custom_liquid }}
+</section>
+
+{% schema %}
+{
+  "name": "Custom Liquid",
+  "class": "custom-liquid",
+  "presets": [ { "name": "Custom Liquid", "category": "Layout" } ],
+  "settings": [
+    {
+      "type": "liquid",
+      "id": "custom_liquid",
+      "label": "Liquid code",
+      "info": "Add app snippets or other code to create advanced customizations. [Learn more](https://shopify.dev/docs/api/liquid)"
+    },
+	{
+		"type": "header",
+		"content": "Spacing"
+	},
+    {
+        "type": "checkbox",
+        "id": "paddingInline",
+        "label": "Enable lateral padding",
+        "default": true
+    },
+	{
+		"type": "range",
+		"id": "marginTop",
+		"label": "Margin top",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 2
+	},
+	{
+		"type": "range",
+		"id": "marginBottom",
+		"label": "Margin bottom",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 2
+	},
+	{
+		"type": "range",
+		"id": "paddingTop",
+		"label": "Padding top",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 2
+	},
+	{
+		"type": "range",
+		"id": "paddingBottom",
+		"label": "Padding bottom",
+		"min": 0,
+		"max": 30,
+		"step": 1,
+		"default": 2
+	},
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

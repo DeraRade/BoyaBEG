@@ -1,0 +1,25 @@
+<component-loader>
+	<coretex-fetch
+		id="x-by-vendor-{{ section.id }}"
+		href="{{ routes.collections_url }}/vendors?q={{ product.vendor }}&section_id=x-pdp-by-vendor"
+		loading="lazy"
+	>
+		&nbsp;
+	</coretex-fetch>
+</component-loader>
+
+{% schema %}
+	{
+		"name": "Products by vendor",
+		"tag": "section",
+		"class": "suggested vendor",
+		"limit": 1,
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+		"settings": [
+			{
+				"type": "paragraph",
+				"content": "Displays a list of products from current vendor."
+			}
+		]
+	}
+{% endschema %}

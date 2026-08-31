@@ -1,0 +1,22 @@
+{%- for block in section.blocks -%}
+    <section class="cortex" {{ block.shopify_attributes }} data-section-id="{{ section.id }}">{%- render block -%}</section>
+{%- endfor -%}
+
+{% schema %}
+{
+  "name": "Apps",
+  "tag": "section",
+  "class": "app-block",
+  "blocks": [
+    {
+      "type": "@app"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Apps",
+      "category": "Layout"
+    }
+  ]
+}
+{% endschema %}

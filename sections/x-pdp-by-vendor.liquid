@@ -1,0 +1,37 @@
+{%- comment -%}
+=== [ CORETEX FYI ] ===
+This section is not intended to be displayed. 
+It is used to display results using Section API.
+
+    - Used by: `pdp-recommened-vendor.liquid`
+
+DO NOT REMOVE
+{%- endcomment -%}
+
+{% if collection.products.size > 0 %}
+    {%- paginate collection.products by 20 -%}
+
+        <component-loader><coretex-scroll>
+            {%- liquid
+                assign heading = collection.title
+                assign url = collection.url
+                assign url_label = 'sections.collection_list.view_all' | t
+                assign attributes = 'ai="center"'
+        
+                render 'c-section-head', heading: heading, url: url, url_label: url_label, nav: true, attributes: attributes
+            -%}
+
+            <ul direction="row" role="list" class="no-style inside scroll-snap mandatory" scroll-area>
+                {%- for product in collection.products -%}
+                <li as="start" scroll-slide>
+                    {%- render 'c-prod-card', 
+                        product: product, 
+                        loading: 'lazy'
+                    -%}
+                </li>
+                {%- endfor -%}
+            </ul>
+        </coretex-scroll></component-loader>
+            
+    {%- endpaginate -%}
+{% endif %}

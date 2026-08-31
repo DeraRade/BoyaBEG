@@ -1,0 +1,117 @@
+{% comment %}
+    Renders product variant-picker
+
+    Accepts:
+    - product: {Object} product object.
+    - block: {Object} passing the block information.
+    - product_form_id: {String} Id of the product form to which the variant picker is associated.
+
+    Usage:
+    {%- render 'pdp-variant-picker',
+        product: product,
+        block: block,
+        product_form_id: product_form_id
+    -%}
+{% endcomment %}
+
+{%- unless product.has_only_default_variant -%}
+
+    {%- # Used to show the Size chart button if the word in the locale matches, if not it defaults to "Size" -%}
+    {%- assign size_label = 'openthinking.variants.size' | t | downcase | escape | strip | append: ',size' -%}
+
+	{%- capture sizeGuideTrigger -%}
+		{%- if block.settings.size_chart != blank -%}
+		<x-cell id="size-{{ section.id }}" {{ block.shopify_attributes }}>
+            <button class="is-custom has-icon xbrk" data-open="#sizechart-{{ block.id }}Box" title="{{ "openthinking.dictionary.phrase.size_guide" | t }}" style="color: var(--colorFaded)">
+                {%- render 'inc-icon', icon: 'ruler' -%}
+                <span class="text-normal labelTitle">{{ "openthinking.dictionary.phrase.size_guide" | t }}</span>
+            </button>
+		</x-cell>
+		{%- endif -%}
+	{%- endcapture -%}
+
+    <variant-selects x-flex direction="column"
+        id="variant-selects-{{ section.id }}"
+        data-section="{{ section.id }}"
+        {{ block.shopify_attributes }}
+      >
+        {%- for option in product.options_with_values -%}
+            {%- liquid
+                assign swatch_count = option.values | map: 'swatch' | compact | size
+                assign picker_type = block.settings.picker_type
+        
+                if swatch_count > 0 and block.settings.swatch_shape != 'none'
+                  if block.settings.picker_type == 'dropdown'
+                    assign picker_type = 'swatch_dropdown'
+                  else
+                    assign picker_type = 'swatch'
+                  endif
+                endif
+              -%}
+
+            {%- if picker_type == 'swatch' -%}
+                <fieldset class="js product-form__input product-form__input--swatch fullwidth" prod-input="swatch" x-flex direction="column" ai="start" jc="center" wrap="wrap">
+                    <x-flex jc="between" ai="center" class="fullwidth">
+                        <legend class="form__label">{{ option.name }}: <span data-selected-value>{{- option.selected_value -}}</span></legend>
+                        {%- liquid
+                            assign downcase_option = option.name | downcase | escape | strip
+                            if size_label contains downcase_option
+                                echo sizeGuideTrigger
+                            endif
+                        -%}
+                    </x-flex>
+                    <x-flex direction="row" wrap="wrap" class="swatch-group">
+                        {%- render 'pdp-variant-options', product: product, option: option, block: block, picker_type: picker_type -%}
+                    </x-flex>
+                </fieldset>
+
+            {%- elsif picker_type == 'button' -%}
+                <fieldset x-flex direction="column" class="toggle-token custom js product-form__input product-form__input--pill" prod-input="pill">
+                    <x-flex jc="between" ai="center" class="fullwidth">
+                        <legend class="form__label">{{ option.name }}</legend>
+                        {%- liquid
+                            assign downcase_option = option.name | downcase | escape | strip
+                            if size_label contains downcase_option
+                                echo sizeGuideTrigger
+                            endif
+                        -%}
+                    </x-flex>
+                    <x-flex direction="row" wrap="wrap" class="swatch-group">
+                        {%- render 'pdp-variant-options', product: product, option: option, block: block, picker_type: picker_type -%}
+                    </x-flex>
+                </fieldset>
+
+            {%- else -%}
+                <x-flex direction="column" ai="center" class="product-form__input product-form__input--dropdown" prod-input="dropdown">
+                    <x-flex jc="between" ai="center" class="fullwidth">
+                        <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">{{ option.name }}</label>
+                        {%- liquid
+                            assign downcase_option = option.name | downcase | escape | strip
+                            if size_label contains downcase_option
+                                echo sizeGuideTrigger
+                            endif
+                        -%}
+                    </x-flex>
+                    <x-cell class="select fullwidth">
+                        {%- if picker_type == 'swatch_dropdown' -%}
+                            <span data-selected-value class="dropdown-swatch">
+                                {% render 'c-prod-swatch', swatch: option.selected_value.swatch, shape: block.settings.swatch_shape %}
+                            </span>
+                        {%- endif -%}
+                        <select
+                            id="Option-{{ section.id }}-{{ forloop.index0 }}"
+                            class="select__select fullwidth"
+                            name="options[{{ option.name | escape | strip }}]"
+                            form="{{ product_form_id }}"
+                        >
+                            {%- render 'pdp-variant-options', product: product, option: option, block: block, picker_type: picker_type -%}
+                        </select>
+                    </x-cell>
+                </x-flex>
+
+            {%- endif -%}
+        {%- endfor -%}
+
+        <script type="application/json" data-selected-variant>{{ product.selected_or_first_available_variant | json }}</script>
+    </variant-selects>
+{%- endunless -%}

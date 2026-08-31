@@ -1,0 +1,56 @@
+{%- comment -%}
+    🚨 Code #AA-M
+
+    This is responsible for loading Components. Only works for web components.
+
+    Usage:
+    {%- render 'inc-components' -%}
+{%- endcomment -%}
+
+<script>
+{%- capture content %}
+window.components = {
+    "coretex-ticker": "{{ 'c-ticker.js' | asset_url }}",
+    "coretex-fetch": "{{ 'c-fetch.js' | asset_url }}",
+    "coretex-menu": "{{ 'c-menu.js' | asset_url }}",
+    "coretex-dialog": "{{ 'c-dialog.js' | asset_url }}",
+    "coretex-newsletter": "{{ 'c-newsletter.js' | asset_url }}",
+    "coretex-marquee": "{{ 'c-marquee.js' | asset_url }}",
+    "coretex-slider": "{{ 'c-slider.js' | asset_url }}",
+    "coretex-autoscroll": "{{ 'c-slider-autoscroll.js' | asset_url }}",
+    "media-gallery": "{{ 'pdp-slider.js' | asset_url }}",
+    "coretex-scroll": "{{ 'c-scroller.js' | asset_url }}",
+    "infinity-scroll": "{{ 'c-infinityscroll.js' | asset_url }}",
+    "video-player": "{{ 'c-video.js' | asset_url }}",
+    "coretex-countdown": "{{ 'c-countdown.js' | asset_url }}",
+    "coretex-mouse-tracker": "{{ 'c-mouse-track.js' | asset_url }}",
+    "coretex-slideshow": "{{ 'c-slideshow.js' | asset_url }}",
+    "coretex-drawer": "{{ 'c-drawer.js' | asset_url }}",
+    "coretex-hover": "{{ 'c-hover-display.js' | asset_url }}",
+    "coretex-zoom-dialog": "{{ 'c-zoom.js' | asset_url }}",
+    "grid-view-controller": "{{ 'c-grid-view.js' | asset_url }}",
+    "coretex-preload": "{{ 'c-preload.js' | asset_url }}",
+    "coretex-clock": "{{ 'c-clock.js' | asset_url }}",
+
+    "smart-form": "{{ 'c-smart-form.js' | asset_url }}",
+    "country-province-selector": "{{ 'c-country-selector.js' | asset_url }}",
+    "search-engine": "{{ 'c-search.js' | asset_url }}",
+
+    "media-loader": "{{ 'c-media-loader.js' | asset_url }}",
+    "facets-form": "{{ 'c-facets.js' | asset_url }}",
+    "tc-range-slider": "{{ 'm-ranger.js' | asset_url }}",
+    "localization-form": "{{ 'c-localization.js' | asset_url }}",
+    
+    "infinite-paginate": "{{ 'c-pagination.js' | asset_url }}",
+    "page-viewer": "{{ 'c-page-viewer.js' | asset_url }}",
+
+    "coretex-recently": "{{ 's-recently.js' | asset_url }}",
+    "image-comparison": "{{ 's-comparison.js' | asset_url }}",
+    "cart-discount": "{{ 'c-cart-discount.js' | asset_url }}",
+}
+{%- endcapture -%}{%- render 'inc-compressor', content: content, sWd: 'true' -%}
+</script>
+
+<script>(()=>{const e=window.components||{},n=async(n,o)=>{const c=document.getElementById("OpenThinking");if(!c)return console.warn("Target container #OpenThinking not found, falling back to body"),t(n,o);const d=document.createElement("script");d.type="module",d.src=n,c.appendChild(d),d.addEventListener("error",()=>{document.querySelectorAll(o).forEach(e=>e.classList.add("no-js"))}),d.addEventListener("load",()=>{document.dispatchEvent(new CustomEvent("component-loaded",{detail:{component:o,components:e}}))})},t=async(n,t)=>{const o=document.createElement("script");o.type="module",o.src=n,document.body.appendChild(o),o.addEventListener("error",()=>{document.querySelectorAll(t).forEach(e=>e.classList.add("no-js"))}),o.addEventListener("load",()=>{document.dispatchEvent(new CustomEvent("component-loaded",{detail:{component:t,components:e}}))})};customElements.define("component-loader",class extends HTMLElement{connectedCallback(){Object.keys(e).forEach(t=>{this.querySelector(t)&&(n(e[t],t).catch(e=>console.error(`Error loading component ${t}:`,e)),delete e[t])})}})})();</script>
+
+{%- if request.design_mode -%}<script id="coretex-theme-editor" data-id="{{ shop.id }}" data-shop="{{ shop.domain | escape }}" data-contact="{{ shop.email }}" data-theme="{{ settings.themeName | escape }}" data-preset="{{ settings.themePreset | escape }}" data-version="{{ settings.themeVersion | escape }}"></script>{%- endif -%}

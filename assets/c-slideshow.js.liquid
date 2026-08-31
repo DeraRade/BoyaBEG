@@ -1,0 +1,50 @@
+import CoretexSlider from "{{ 'c-slider.js' | asset_url }}";
+
+// CoretexSlideshow inherits from CoretexSlider
+if (!customElements.get('coretex-slideshow')) {
+    customElements.define('coretex-slideshow', class CoretexSlideshow extends CoretexSlider {
+        constructor() {
+            super();
+            this.buttonThumbs = null; // Additional property specific to slideshow
+        }
+
+        // Override viewport selector for slideshow
+        getViewportSelector() {
+            return '[slideshow-viewport]';
+        }
+
+        // Override to get slideshow-specific slide attribute
+        getSlideAttribute() {
+            return 'slideshow-slide';
+        }
+
+        // Override to provide slideshow-specific default options
+        getDefaultOptions() {
+            const baseOptions = super.getDefaultOptions();
+            return {
+                ...baseOptions,
+                loop: true // Slideshows are looped by default
+            };
+        }
+
+        // Override to add slideshow-specific plugins
+        async initializePlugins() {
+            const plugins = await super.initializePlugins();
+
+            // Check for auto-height attribute - specific to slideshow
+            if (this.hasAttribute('auto-height')) {
+                const { default: AutoHeight } = await import("{{ 'h-carousel-ah.js' | asset_url }}");
+                plugins.push(AutoHeight({destroyHeight: 'auto'}));
+            }
+
+            return plugins;
+        }
+
+        // Initialize additional elements
+        async connectedCallback() {
+            this.buttonThumbs = this.querySelector('[control-thumbs]');
+            await super.connectedCallback();
+            // Initialize any slideshow-specific functionality here
+        }
+    });
+}

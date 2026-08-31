@@ -1,0 +1,1209 @@
+{%- comment -%}
+	=== [ CORETEX FYI ] ===
+	This is a copy of 't-product.liquid' w/ adaptations for sections/homepage.
+	For changes: use diffchecker & compare the files.
+    ⚠️ This file has extra stuff, so be carefull and diff check it!
+{%- endcomment -%}
+
+{%- capture style -%}
+{% if section.settings.paddingInline %}padding-inline: var(--layoutInline);{% endif %}
+padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+{%- endcapture -%}
+
+{%- # Assign the featured product %}
+{%- assign product = all_products[section.settings.featured_product] -%}
+
+{%- liquid
+    # Load PDP stylesheet
+    render 'inc-stylesheet', src: 't-product.css'
+
+    # Load Variant picker / swatches styles
+    unless product.has_only_default_variant
+        render 'inc-stylesheet', src: 'c-swatches.css'
+    endunless
+
+    # Load 3D model styles
+    assign first_3d_model = product.media | where: 'media_type', 'model' | first
+
+    # Variant images
+    assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src'
+
+    # Product form ID
+    assign product_form_id = 'product-form-' | append: section.id
+
+    # Single media
+    assign single_media = false
+    if product.media.size == 1
+        assign single_media = true
+    endif
+
+    # Section Height
+    assign section_height = section.settings.section_height
+
+    # Product page layout
+    # 3 columns (classic): info | image | actions
+    # 2 columns:           image | info + actions
+    assign pdpLayoutClassic = true
+    assign layoutType = 'triptych'
+    if section.settings.page_layout == '2'
+        assign pdpLayoutClassic = false
+        assign layoutType = 'diptych'
+    endif
+
+    # Bigger media column
+    if section.settings.bigger_media
+        # Bigger media layout columns
+        if layoutType == 'triptych'
+            # Classic layout columns (triptych)
+            assign metaSpan = 2
+            assign mediaSpan = 6
+            assign actionSpan = 2
+        else
+            # 2 columns layout (diptych)
+            assign metaSpan = 2
+            assign mediaSpan = 5
+            assign actionSpan = 3
+        endif
+    else
+        # Default layout columns
+        if layoutType == 'triptych'
+            # Classic layout columns (triptych)
+            assign metaSpan = 3
+            assign mediaSpan = 4
+            assign actionSpan = 3
+        else
+            # 2 columns layout (diptych)
+            assign metaSpan = 3
+            assign mediaSpan = 4
+            assign actionSpan = 3
+        endif
+    endif
+
+    # Media column as first column
+    # This applies to the information column!
+    # So that the media column can go first.
+    # ⚠️ Only works if Classic layout is enabled (3 columns)
+    assign mediaFirst = 1
+    if pdpLayoutClassic and section.settings.media_first
+        assign mediaFirst = 3
+    endif
+
+    # Show actions column before info column - mobile
+    assign columnOrderMob = 2
+    if section.settings.columnOrderMob
+        assign columnOrderMob = 4
+    endif
+-%}
+
+{%- # code added for this section only. Check code in schema also! -%} 
+<section style="{{- style | strip_newlines | strip -}}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+{%- # / -%} 
+
+{% # If no product is selected, show placeholder %}
+{%- if product == empty -%}
+	<product-info class="product-page featured-product placeholder" data-section-id="{{ section.id }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+		<x-grid columns="10" columns-m="2" columns-s="1f" class="product-body kontainer">
+		{%- comment -%} ---------- [ Product information ] ----------- {%- endcomment -%}
+			<x-cell span="{{ metaSpan }}" span-m="1" order="{{ mediaFirst }}" order-m="2" order-s="{{ columnOrderMob }}" class="etheryx-product-info">
+				{%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+				<x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" jc-m="start" class="kontainer">
+					<section class="title noMargin">
+						<h1 class="h3">{{ 'onboarding.product_title' | t }}</h1>
+					</section>
+				</x-flex>
+				{%- if section.settings.sticky -%}</div>{%- endif -%}
+			</x-cell>
+
+		{%- comment -%} ---------- [ Product media gallery ] ----------- {%- endcomment -%}
+			<x-cell span="{{ mediaSpan }}" span-m="1" span-y-m="5" order="2" order-m="1" order-s="1" class="etheryx-product-media">
+				{%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+				<x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" ai="center" class="kontainer">
+					{{ 'product-1' | placeholder_svg_tag: 'svg-placeholder banner' }}
+				</x-flex>
+				{%- if section.settings.sticky -%}</div>{%- endif -%}
+			</x-cell>
+
+		{%- comment -%} ---------- [ Product purchase options ] ----------- {%- endcomment -%}
+			<x-cell span="{{ actionSpan }}" span-m="1" order="4" order-m="3" order-s="3" class="etheryx-product-options">
+				{%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+				<x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" jc-m="start" class="kontainer">
+					<section class="price" role="status">€100,00</section>
+					<section class="product-form">
+						<button type="submit" name="add" class="add-2-cart fullwidth">
+							<span class="cta">{{ 'products.product.unavailable' | t }}</span>
+						</button>
+					</section>
+				</x-flex>
+				{%- if section.settings.sticky -%}</div>{%- endif -%}
+			</x-cell>
+		</x-grid>
+	</product-info>
+
+	{% # If product is selected %}
+{%- else -%}
+	<product-info
+		class="product-page featured-product"
+		id="MainProduct-{{ section.id }}"
+        layout="{{ layoutType }}"
+        section-height="{{ section_height }}"
+		data-section="{{ section.id }}"
+		data-product-id="{{ product.id }}"
+		data-update-url="false"
+		data-url="{{ product.url }}"
+        in-stock="{{ product.available }}"
+        {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	>
+		<x-grid columns="10" columns-m="2" columns-s="1f" class="product-body kontainer">
+        {%- comment -%} ---------- [ Product information ] ----------- {%- endcomment -%}
+            <x-cell 
+                span="{{ metaSpan }}" span-m="1" order="{{ mediaFirst }}" order-m="2" order-s="{{ columnOrderMob }}" 
+                {% if pdpLayoutClassic %}class="etheryx-product-info"{% else %}class="large-only"{% endif %}
+            >
+                {%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+                <x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" jc-m="start" class="kontainer">
+                    {%- liquid
+                        # render only if the pdp layout is 3 columns
+                        if pdpLayoutClassic
+                            for block in section.blocks
+                                render 'pdp-info', product: product, block: block
+                            endfor
+                        endif
+                    -%}
+                </x-flex>
+                {%- if section.settings.sticky -%}</div>{%- endif -%}
+            </x-cell>
+
+		{%- comment -%} ---------- [ Product media gallery ] ----------- {%- endcomment -%}
+		    {%- comment -%} --- [ 3D model ] --- {%- endcomment -%}
+			{%- if first_3d_model -%}
+				<link id="ModelViewerStyle" rel="stylesheet" href="https://cdn.shopify.com/shopifycloud/model-viewer-ui/assets/v1.0/model-viewer-ui.css" media="print" onload="this.media='all'">
+			{%- endif -%}
+
+        <x-cell 
+            span="{{ mediaSpan }}" span-m="1" span-y-m="5" order="2" order-m="1" order-s="1" 
+            single-media="{{ single_media }}" media-contain="{{ section.settings.contain_media_size }}"
+            class="etheryx-product-media" 
+            {%- if section.settings.media_type == 'stacked' -%}
+            style="{{ section.settings.mediaGap | prepend: '--imageStackedGap: var(--space-' | append: ');' }}"
+            {%- endif -%} 
+        >
+            {%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+                <x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" ai="center" class="kontainer">
+                    {%- render 'pdp-media', variant_images: variant_images, product: product, section: section -%}
+                </x-flex>
+            {%- if section.settings.sticky -%}</div>{%- endif -%}
+        </x-cell>
+
+        {%- comment -%} ---------- [ Product purchase options ] ----------- {%- endcomment -%}
+            <x-cell span="{{ metaSpan }}" span-m="1" order="4" order-m="3" order-s="3" class="etheryx-product-options{% unless pdpLayoutClassic %} etheryx-product-info{% endunless %}">
+                {%- if section.settings.sticky -%}<div class="sticky">{%- endif -%}
+                <x-flex direction="column" jc="{{ section.settings.vertical_alignment }}" jc-m="start" class="kontainer">
+                    {%- liquid 
+                        for block in section.blocks
+                            # render only if the pdp layout is NOT classic (2 columns)
+                            unless pdpLayoutClassic
+                                render 'pdp-info', product: product, block: block
+                            endunless
+
+                            # always render actions
+                            render 'pdp-actions', product: product, block: block, product_form_id: product_form_id
+                        endfor
+                    -%}
+                </x-flex>
+                {%- if section.settings.sticky -%}</div>{%- endif -%}
+            </x-cell>
+
+		</x-grid>
+
+        {%- render 'pdp-popups', product: product -%}
+
+		{%- comment -%} --- [ Product JS ] --- {%- endcomment -%}
+		{% comment %} {%- render 'inc-script', src: 't-product.js', loading: 'defer' -%} {% endcomment %}
+        {% comment %} 
+            === [ CORETEX FYI ] ===
+            Preventing the t-product.js from being loaded mulitple times if more than one product is on the page.
+            Check if the t-product.js is loaded by flag or DOM 
+        {% endcomment %}
+        <script>if (!window.PRODUCT_SCRIPT_LOADED && !document.querySelector('script[src="{{ 't-product.js' | asset_url }}"]')) { const script = document.createElement('script'); script.src = '{{ 't-product.js' | asset_url }}'; document.head.appendChild(script); }</script>
+
+		{%- comment -%} --- [ 3D model ] --- {%- endcomment -%}
+		{%- if first_3d_model -%}
+			<script type="application/json" id="ProductJSON-{{ product.id }}">
+				{{ product.media | where: 'media_type', 'model' | json }}
+			</script>
+			{%- render 'inc-script', src: 'pdp-modelviewer.js', loading: 'defer' -%}
+		{%- endif -%}
+
+        <div class="prodFullDetails text-center sticky-bottom">
+            <a href="{{ product.url }}" class="button">{{ 'products.product.view_full_details' | t }}</a>
+        </div>
+
+	</product-info>
+{%- endif -%}
+</section>
+
+{% schema %}
+	{
+		"name": "Featured product",
+		"disabled_on": { "groups": ["header", "footer", "aside"] },
+        "presets": [
+            {
+              "name": "Featured product",
+              "category": "Products",
+              "blocks": [
+                { "type": "vendor" },
+                { "type": "title" },
+                { "type": "subtitle" },
+                { "type": "description" },
+                { "type": "price" },
+                { "type": "variant_picker" },
+                { "type": "buy_buttons" }
+              ]
+            }
+          ],
+		"settings": [
+			{
+				"type": "product",
+				"id": "featured_product",
+				"label": "Product"
+			},
+            {
+                "type": "header",
+                "content": "Layout"
+            },
+            {
+                "type": "select",
+                "id": "page_layout",
+                "label": "Columns - desktop",
+                "default": "3",
+                "options": [
+                    { "value": "2", "label": "Two" },
+                    { "value": "3", "label": "Three" }
+                ]
+            },
+            {
+                "type": "paragraph",
+                "content": "Due to its unique design, the product page includes key concepts to consider when using the three-column layout. [Learn more](https://docs.openthinking.net/themes/etheryx/editor/os/product/?utm_source=theme&utm_medium=editor&utm_content=etheryx)",
+                "visible_if": "{{ section.settings.page_layout == '3' }}"
+            },
+            {
+                "type": "select",
+                "id": "section_height",
+                "label": "Height - desktop",
+                "default": "full",
+                "options": [
+                    { "value": "full", "label": "Full page" },
+                    { "value": "fit", "label": "Fit content" }
+                ]
+            },
+			{
+				"type": "checkbox",
+				"id": "sticky",
+				"label": "Enable sticky content",
+				"info": "Keeps content in a fixed position as the user scrolls on desktop devices.",
+				"default": true
+			},
+			{
+				"type": "select",
+				"id": "vertical_alignment",
+				"label": "Vertical alignment",
+				"default": "center",
+				"info": "Sets the vertical position of the content.",
+                "visible_if": "{{ section.settings.section_height == 'full' }}",
+				"options": [
+					{ "value": "start", "label": "Top" },
+					{ "value": "center", "label": "Middle" },
+					{ "value": "end", "label": "Bottom" }
+				]
+			},
+            {
+                "type": "checkbox",
+                "id": "priceOnMobile",
+                "label": "Show price - mobile",
+                "info": "Displays an extra product price next to the title on mobile, above the fold.",
+                "default": true
+            },
+            {
+                "type": "checkbox",
+                "id": "columnOrderMob",
+                "label": "Show actions before info - mobile",
+                "info": "Display product actions above the information section on mobile devices.",
+                "default": false,
+                "visible_if": "{{ section.settings.page_layout == '3' }}"
+            },
+			{
+				"type": "header",
+				"content": "Product media"
+			},
+            {
+                "type": "checkbox",
+                "id": "media_first",
+                "label": "Show media in first column - desktop",
+                "info": "Show product media as the first column on desktop devices.",
+                "default": false,
+                "visible_if": "{{ section.settings.page_layout == '3' }}"
+            },
+			{
+				"type": "checkbox",
+				"id": "bigger_media",
+				"label": "Enlarge media column",
+				"info": "Increases the width of the media column on desktop devices.",
+				"default": false
+			},
+			{
+				"type": "checkbox",
+				"id": "contain_media_size",
+				"label": "Contain media size",
+				"default": false
+			},
+            {
+                "type": "select",
+                "id": "media_type",
+                "label": "Media display - desktop",
+                "default": "stacked",
+                "options": [
+                    { "value": "stacked", "label": "Stacked" },
+                    { "value": "slider", "label": "Slider" }
+                ]
+            },
+			{
+				"type": "checkbox",
+				"id": "slider_thumbnails",
+				"label": "Show thumbnails - slider",
+				"default": false
+			},
+			{
+				"type": "checkbox",
+				"id": "slider_thumbnails_irregular",
+				"label": "Irregular thumbnails - slider",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "slider_button",
+				"label": "Show navigation buttons - slider",
+				"default": false
+			},
+			{
+				"type": "select",
+				"id": "slider_button_position",
+				"label": "Navigation button position - slider",
+				"default": "overlay",
+				"options": [
+					{ "value": "overlay", "label": "On image" },
+					{ "value": "inline", "label": "Next to content" }
+				]
+			},
+            {
+                "type": "checkbox",
+                "id": "pagination_overlay",
+                "label": "Overlay pagination - slider",
+                "info": "Choose whether to overlay pagination buttons on the slider or position them below.",
+                "default": true
+            },
+			{
+				"type": "checkbox",
+				"id": "slider_loop",
+				"label": "Enable slide loop - slider",
+				"info": "Allows the slider to loop back to the first slide after the last one.",
+				"default": true
+			},
+			{
+				"type": "select",
+				"id": "pagination_type",
+				"label": "Pagination type - slider",
+				"default": "lines",
+				"options": [
+					{ "value": "none", "label": "None" },
+					{ "value": "lines", "label": "Lines" },
+					{ "value": "dots", "label": "Dots" },
+					{ "value": "numbers", "label": "Numbers" }
+				]
+			},
+			{
+				"type": "range",
+				"label": "Media spacing - stacked",
+				"id": "mediaGap",
+				"info": "Adjusts the spacing between media elements when using the stacked media type.",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 8,
+                "visible_if": "{{ section.settings.media_type == 'stacked' }}"
+			},
+			{
+				"type": "header",
+				"content": "Video"
+			},
+			{
+				"type": "checkbox",
+				"id": "enable_video_autoplay",
+				"label": "Autoplay",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "enable_video_looping",
+				"label": "Loop",
+				"default": true
+			},
+			{
+				"type": "checkbox",
+				"id": "enable_video_controls",
+				"label": "Controls",
+				"default": false
+			},
+			{
+				"type": "header",
+				"content": "Spacing"
+			},
+            {
+                "type": "checkbox",
+                "id": "paddingInline",
+                "label": "Enable lateral padding",
+                "default": false
+            },
+			{
+				"type": "range",
+				"id": "marginTop",
+				"label": "Margin top",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+			{
+				"type": "range",
+				"id": "marginBottom",
+				"label": "Margin bottom",
+				"min": 0,
+				"max": 30,
+				"step": 1,
+				"default": 0
+			},
+            {
+              "type": "range",
+              "id": "paddingTop",
+              "label": "Padding top",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 0
+            },
+            {
+              "type": "range",
+              "id": "paddingBottom",
+              "label": "Padding bottom",
+              "min": 0,
+              "max": 30,
+              "step": 1,
+              "default": 0
+            },
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+        "type": "separator",
+        "name": "Separator",
+        "settings": [
+            {
+                "type": "checkbox",
+                "id": "show_hr",
+                "label": "Show horizontal rule",
+                "info": "Displays a horizontal border divider.",
+                "default": false
+            },
+            {
+                "type": "header",
+                "content": "Spacing"
+            },
+            {
+                "type": "range",
+                "id": "marginTop",
+                "label": "Margin top",
+                "min": 0,
+                "max": 30,
+                "step": 1,
+                "default": 0
+            },
+            {
+                "type": "range",
+                "id": "marginBottom",
+                "label": "Margin bottom",
+                "min": 0,
+                "max": 30,
+                "step": 1,
+                "default": 0
+            }
+        ]
+    },
+    {
+      "type": "vendor",
+      "name": "Vendor",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "This block appears in the 'Info' column on the left side on desktop.",
+          "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "id": "vendorOrigin",
+          "label": "Link behavior",
+          "type": "select",
+          "info": "The collection option requires additional setup. [Learn more](https://docs.openthinking.net/themes/etheryx/editor/os/product#vendor)",
+          "default": "default",
+          "options": [
+            {
+              "value": "default",
+              "label": "Default"
+            },
+            {
+              "value": "collection",
+              "label": "Collection"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "title",
+      "name": "Title",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "This block appears in the 'Info' column on the left side on desktop.",
+          "visible_if": "{{ section.settings.page_layout == '3' }}"
+        }
+      ]
+    },
+    {
+      "type": "price",
+      "name": "Price",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "hidePriceSold",
+          "label": "Hide when out of stock",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "sku",
+      "name": "SKU",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "showSkuLabel",
+          "label": "Show SKU label",
+          "default": false
+        }
+      ]
+    },
+    {
+        "type": "ratings",
+        "name": "Rating",
+        "limit": 1,
+        "settings": [
+          {
+                "type": "paragraph",
+                "content": "To display a rating, you need a product rating app. [Learn more](https://docs.openthinking.net/themes/etheryx/editor/os/product/#ratings)"
+          },
+          {
+            "type": "paragraph",
+            "content": "This block will only appear if the product has a rating."
+          },
+          {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+          }
+        ]
+    },
+    {
+      "type": "inventory",
+      "name": "Inventory status",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "This block appears in the 'Actions' column on the right side on desktop.",
+          "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "range",
+          "id": "inventory_threshold",
+          "label": "Low inventory threshold",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "info": "Choose 0 to always show in stock if available.",
+          "default": 10
+        },
+        {
+          "type": "checkbox",
+          "id": "show_inventory_quantity",
+          "label": "Show inventory count",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "quantity",
+      "name": "Quantity selector",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "label",
+          "label": "Show quantity heading",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "variant_picker",
+      "name": "Variant picker",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "select",
+          "id": "picker_type",
+          "label": "Style",
+          "default": "button",
+          "options": [
+            {
+              "value": "dropdown",
+              "label": "Dropdown"
+            },
+            {
+              "value": "button",
+              "label": "Pills"
+            }
+          ]
+        },
+        {
+          "id": "swatch_shape",
+          "label": "Swatch",
+          "type": "select",
+          "info": "Enable [swatches](https://help.shopify.com/en/manual/online-store/themes/theme-structure/theme-settings#options-with-swatches) on product options.",
+          "default": "square",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "circle",
+              "label": "Circle"
+            },
+            {
+              "value": "square",
+              "label": "Rectangle"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "id": "show_text",
+          "label": "Show swatch label",
+          "default": false
+        },
+        {
+            "type": "header",
+            "content": "Size chart",
+            "info": "Displays a size chart button next to the Size option on eligible products. Products must include a 'Size' option to show the chart button."
+        },
+        {
+            "type": "page",
+            "id": "size_chart",
+            "label": "Page",
+            "info": "Select a page to use as the size chart. For dynamic charts, [learn more...](https://docs.openthinking.net/themes/bullet/kb/size#dynamic)"
+        }
+      ]
+    },
+    {
+      "type": "product_list",
+      "name": "Product list",
+      "limit": 3,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+            "type": "paragraph",
+            "content": "Additional setup is required to use this block with dynamic products. [Learn more](https://docs.openthinking.net/themes/etheryx/editor/os/product/#product-list-block)" 
+        },
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Heading",
+            "default": "Product List",
+            "info": "Displayed if products are available."
+        },
+        {
+            "type": "product_list",
+            "id": "product_list",
+            "label": "Products"
+        },
+        {
+          "id": "swatch_shape",
+          "label": "Swatch shape",
+          "type": "select",
+          "default": "square",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+                "value": "circle",
+                "label": "Circle"
+            },
+            {
+                "value": "rectangle",
+                "label": "Rectangle"
+              }
+          ]
+        },
+        {
+            "type": "select",
+            "id": "swatch_size",
+            "label": "Swatch size",
+            "default": "medium",
+            "options": [
+                {
+                    "value": "small",
+                    "label": "Small"
+                },
+                {
+                    "value": "medium",
+                    "label": "Medium"
+                },
+                {
+                    "value": "large",
+                    "label": "Large"
+                }
+            ]
+        },
+        {
+            "type": "select",
+            "id": "swatch_crop",
+            "label": "Image crop type",
+            "default": "true",
+            "options": [
+                {
+                    "value": "true",
+                    "label": "Wide"
+                },
+                {
+                    "value": "false",
+                    "label": "None"
+                }
+            ]
+        }
+      ]
+    },
+    {
+      "type": "liquid_info",
+      "name": "Custom Liquid - info",
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "liquid",
+          "id": "liquid",
+          "label": "Custom Liquid"
+        }
+      ]
+    },
+    {
+        "type": "liquid",
+        "name": "Custom Liquid - actions",
+        "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+          {
+            "type": "liquid",
+            "id": "liquid",
+            "label": "Custom Liquid"
+          }
+        ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "<p>Text block</p>",
+          "label": "Text"
+        }
+      ]
+    },
+    {
+      "type": "subtitle",
+      "name": "Subtitle",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "paragraph",
+          "content": "Make sure you have a \"Product subtitle\" metafield set up for this to work. [Learn more...](https://help.shopify.com/en/manual/metafields/metafield-definitions/adding-standard-metafield-definitions#add-a-standard-definition)"
+        }
+      ]
+    },
+    {
+      "type": "description",
+      "name": "Description",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Heading",
+            "default": "Description",
+            "visible_if": "{{ block.settings.collapsible_desc }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "collapsible_desc",
+            "label": "Enable collapsible description",
+            "default": false,
+            "info": "Allows the description to be collapsible.",
+            "visible_if": "{{ block.settings.folder == false }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "expand_by_default",
+            "label": "Expand by default",
+            "default": false,
+            "info": "If enabled, the description will be expanded by default.",
+            "visible_if": "{{ block.settings.collapsible_desc }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "folder",
+          "label": "Truncate description",
+          "default": false,
+          "visible_if": "{{ block.settings.collapsible_desc == false }}"
+        }
+      ]
+    },
+    {
+      "type": "paymenticons",
+      "name": "Payment icons",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "paragraph",
+          "content": "The payment icons that show in your theme are determined by your store's [payment settings.](/admin/settings/payments) and the customer's region and currency. [Learn more...](https://docs.openthinking.net/themes/etheryx/payments-icons/)"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Secure payments:",
+          "info": "Leave blank to remove"
+        },
+        {
+          "type": "checkbox",
+          "id": "monochrome",
+          "label": "Monochrome payment icons",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "buy_buttons",
+      "name": "Buy buttons",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "header",
+          "content": "Dynamic checkout buttons"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_dynamic_checkout",
+          "label": "Enable dynamic checkout buttons",
+          "default": true,
+          "info": "Using the payment methods available on your store, customers see their preferred option, like PayPal or Apple Pay. [Learn more](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)"
+        },
+        {
+            "type": "checkbox",
+            "id": "show_addtocart_as_primary",
+            "label": "Show \"Add to Cart\" as primary button",
+            "default": false,
+            "info": "Keep the \"Add to Cart\" button styled as primary when dynamic checkout buttons are active."
+        },
+        {
+          "type": "header",
+          "content": "Pickup availability"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_pickup_availability",
+          "default": true,
+          "label": "Enable pickup availability",
+          "info": "Shows if a product is available for local pickup, and the estimated time frame. [Learn more](https://help.shopify.com/en/manual/shipping/setting-up-and-managing-your-shipping/local-methods/local-pickup)"
+        },
+        {
+          "type": "header",
+          "content": "Gift cards recipient"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_gift_card_recipient",
+          "default": false,
+          "label": "Enable recipient form for gift cards",
+          "info": "Allows buyers to send gift cards on a scheduled date along with a personal message. [Learn more](https://help.shopify.com/manual/online-store/themes/customizing-themes/add-gift-card-recipient-fields)"
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "color",
+            "id": "button_bg",
+            "label": "Button background color",
+            "default": "#000000"
+        },
+        {
+            "type": "color",
+            "id": "button_color",
+            "label": "Button label color",
+            "default": "#FFFFFF"
+        }
+      ]
+    },
+    {
+      "type": "collapsible_tab",
+      "name": "Collapsible tab",
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Collapsible tab",
+          "info": "Include a heading that explains the content."
+        },
+        {
+          "type": "checkbox",
+          "id": "checked",
+          "label": "Expand by default",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Tab content"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Tab content from page",
+          "info": "Use page as tab content"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Tab content from image",
+          "info": "Use image as tab content"
+        },
+        {
+            "type": "liquid",
+            "id": "liquid",
+            "label": "Tab content from Liquid",
+            "info": "Use Liquid code as tab content"
+        }
+      ]
+    },
+    {
+      "type": "popup",
+      "name": "Pop-up",
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Info' column on the left side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "text",
+          "id": "link_label",
+          "label": "Link label",
+          "default": "Open Pop-up"
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Page",
+          "info": "Use page as content"
+        },
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Heading",
+            "visible_if": "{{ block.settings.page == nil }}"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Text",
+          "visible_if": "{{ block.settings.page == nil }}"
+        },
+        {
+            "type": "liquid",
+            "id": "liquid",
+            "label": "Liquid",
+            "info": "Use Liquid code as content",
+            "visible_if": "{{ block.settings.page == nil }}"
+        }
+      ]
+    },
+    {
+      "type": "complementary",
+      "name": "Complementary products",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "paragraph",
+            "content": "This block appears in the 'Actions' column on the right side on desktop.",
+            "visible_if": "{{ section.settings.page_layout == '3' }}"
+        },
+        {
+          "type": "paragraph",
+          "content": "To select complementary products, add the Search & Discovery app. [Learn more](https://help.shopify.com/manual/online-store/search-and-discovery/product-recommendations)"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Pairs well with"
+        },
+        {
+            "type": "range",
+            "label": "Number of products to show",
+            "id": "product_list_limit",
+            "min": 1,
+            "max": 10,
+            "step": 1,
+            "default": 3
+        },
+        {
+          "type": "checkbox",
+          "id": "expand_by_default",
+          "label": "Expand by default",
+          "default": true
+        },
+        {
+          "type": "select",
+          "id": "list_type",
+          "label": "Product list orientation",
+          "default": "inline",
+          "options": [
+            {
+              "value": "block",
+              "label": "Stacked"
+            },
+            {
+              "value": "inline",
+              "label": "Side by side"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+	}
+{% endschema %}

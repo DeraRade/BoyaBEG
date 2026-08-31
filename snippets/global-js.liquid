@@ -1,0 +1,49 @@
+{% # Component loader %}
+<div id="OpenThinking">{%- render 'inc-components' -%}</div>
+
+{% # Cart %}
+<script type="application/json" data-ajax-cart-initial-state>{{- cart | json -}}</script>  
+{%- render 'inc-script', src: 'm-cart.js', loading: 'module'  -%}
+
+{% # Instantpage %}
+{%- render 'inc-script', src: 'm-instantpage.js', loading: 'module'  -%}
+
+<script>
+{%- capture content %}
+window.shopUrl = '{{ request.origin }}';
+window.routes = { predictive_search_url: '{{ routes.predictive_search_url }}' };
+
+window.variantStrings = {
+  addToCart: `{{ 'products.product.add_to_cart' | t }}`,
+  loading: `{{ 'accessibility.loading' | t }}`,
+  preOrder: `{{ 'openthinking.dictionary.word.preorder' | t }}`,
+  soldOut: `{{ 'products.product.sold_out' | t }}`,
+  unavailable: `{{ 'products.product.unavailable' | t }}`,
+  unavailable_with_option: `{{ 'products.product.value_unavailable' | t: option_value: '[value]' }}`,
+};
+
+window.accessibilityStrings = {
+  recipientFormExpanded: `{{ 'recipient.form.expanded' | t }}`,
+  recipientFormCollapsed: `{{ 'recipient.form.collapsed' | t }}`,
+};
+{%- endcapture -%}{%- render 'inc-compressor', content: content, sWd: 'true' -%}
+</script>
+
+{%- # theme-check-disable -%}
+{%- if settings.coretexJS != blank -%}<script id="userJS">{{ settings.coretexJS }}</script>{%- endif -%}
+{%- # theme-check-enable -%}
+
+{%- # Pixels -%}
+{%- liquid
+    if settings.pixelPinterest != blank 
+        echo settings.pixelPinterest 
+    endif
+
+    if settings.pixelTikTok != blank
+        echo settings.pixelTikTok
+    endif
+
+    if settings.pixelOther != blank
+        echo settings.pixelOther 
+    endif
+-%}

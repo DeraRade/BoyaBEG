@@ -1,0 +1,39 @@
+<section class="general-page" style="{{ section.settings.char_width | prepend: '--charWidth:' | append: 'rem' }}">
+    <x-grid columns="8" columns-m="4" columns-s="1f" class="container">
+        {%- if section.settings.show_title -%}
+        <x-cell span="{{ section.settings.title_position }}" span-m="1"> 
+            <h1 class="h4 title">{{ page.title | escape }}</h1>
+        </x-cell>
+        {%- endif -%}
+
+        <x-cell span="3">
+            <div class="content rte">
+                {{ page.content }}
+            </div>
+        </x-cell>
+    </x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "General page",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "select",
+        "id": "title_position",
+        "label": "Title position - desktop",
+        "default": "2",
+        "options": [
+            { "value": "row", "label": "Top" },
+            { "value": "2", "label": "Side" }
+        ]
+    }
+  ]
+}
+{% endschema %}

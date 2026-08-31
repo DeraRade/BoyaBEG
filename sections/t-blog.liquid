@@ -1,0 +1,152 @@
+{%- comment -%}
+    This renders the blog page, which lists all articles within a blog.
+{%- endcomment -%}
+
+{%- render 'inc-stylesheet', src: 't-blog.css', loading: 'inline' -%}
+
+{%- paginate blog.articles by section.settings.items_per_page -%}
+<section class="main-blog" style="{{ section.settings.card_grid_gap | prepend: '--artGap:' | append: 'px' }};{{ section.settings.card_grid_gap_s | prepend: '--artGapMob:' | append: 'px' }}">
+    {% comment %}
+        HEADER
+    {%- endcomment -%}
+    <section class="header">
+        {% comment %}
+            TITLE
+        {%- endcomment -%}
+        <h1 class="h4 title">{{ blog.title | escape }}</h1>
+
+        {% comment %}
+            TAG SWITCH
+        {%- endcomment -%}
+        {%- if blog.tags.size > 0 -%}
+            <div class="filter">
+                <ul x-flex ai="center" class="no-style inside scroll-snap no-scrollbars">
+                    <li><a href="{{ blog.url }}" class="button text-normal">{{ 'sections.featured_blog.view_all' | t }}</a></li>
+                        {% comment %}
+                            === [ CORETEX FYI ] ===
+                            both paginate and limit are required for pagination to work properly
+                            > https://shopify.dev/docs/api/liquid/tags/paginate#paginate-limit-data-fetching
+                        {% endcomment %}
+                        {%- assign tags_limit = 50 -%} 
+                        {%- paginate blog.all_tags by tags_limit -%}
+                        {%- for tag in blog.all_tags limit: tags_limit -%}
+                            {%- capture tag_url -%}{{ blog.url }}/tagged/{{ tag | handleize }}{%- endcapture -%}
+                            <li><a href="{{ blog.url }}/tagged/{{ tag | handleize }}" class="button {% if tag_url != request.path %}is-custom{% endif %} text-normal text-capitalize">{{ tag }}</a></li>
+                        {%- endfor -%}
+                    {% endpaginate %}
+                </ul>
+            </div>
+        {%- endif -%}
+    </section>
+
+    {% comment %}
+    ARTICLES GRID
+    {%- endcomment -%}
+    {%- if section.settings.mode == 'infinity' -%}
+    <component-loader>
+    <infinity-scroll coretex-container="#ajaxContainer" coretex-pagination="#ajaxPagination"  coretex-loading="{{ 'accessibility.loading' | t }}">
+    {%- endif -%}
+
+        <div id="ajaxContainer">
+            <x-grid columns="12" columns-s="1f" ji="center" class="blogPosts">
+                {%- for article in blog.articles -%}
+                    <x-cell span>
+                        {%- render 'c-article-card', 
+                            article: article,
+                            show_image: section.settings.show_image, 
+                            show_excerpt: section.settings.show_excerpt, 
+                            show_read_more: section.settings.show_read_more,
+                            show_author: section.settings.show_author,
+                            show_date: section.settings.show_date,
+                            show_comments: section.settings.show_comments
+                        -%}
+                    </x-cell>
+                {%- endfor -%}
+            </x-grid>
+        </div>
+        
+        {% comment %}
+        PAGINATION
+        {% endcomment %}
+        {%- render 'c-pagination'
+            paginate: paginate, 
+            mode: section.settings.mode
+        -%}
+            
+    {%- if section.settings.mode == 'infinity' -%}
+    </infinity-scroll>
+    </component-loader>
+    {%- endif -%}
+    
+</section>
+{%- endpaginate -%}
+    
+
+{% schema %}
+{
+  "name": "Main blog",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "show_image",
+        "label": "Show image",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_excerpt",
+        "label": "Show excerpt",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "show_read_more",
+        "label": "Show link to read more",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "show_author",
+        "label": "Show author",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "show_date",
+        "label": "Show date",
+        "default": false
+    },
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "select",
+      "id": "mode",
+      "label": "Type",
+      "default": "infinity",
+      "options": [
+        {
+          "value": "classic",
+          "label": "Numbers"
+        },
+        {
+          "value": "infinity",
+          "label": "Load on scroll"
+        }
+      ]
+    },
+    {
+        "type": "select",
+        "id": "items_per_page",
+        "label": "Items per page",
+        "default": "5",
+        "options": [
+            { "value": "5", "label": "5 posts" },
+            { "value": "8", "label": "8 posts" },
+            { "value": "10", "label": "10 posts" }
+        ]
+    }
+  ]
+}
+{% endschema %}

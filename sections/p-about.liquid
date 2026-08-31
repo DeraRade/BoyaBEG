@@ -1,0 +1,100 @@
+{%- comment -%}
+    Used for the About page. This displays the contents of the About page entered in the CMS. 
+    Can be hidden but cannot be removed from the Theme editor.
+{%- endcomment -%}
+
+{%- capture style -%}
+    padding-block: {{ section.settings.paddingTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.paddingBottom | prepend: 'var(--space-' | append: ')' }};
+    margin-block: {{ section.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ section.settings.marginBottom | prepend: 'var(--space-' | append: ')' }};
+    padding-inline: var(--layoutInline);
+{%- endcapture -%}
+
+{%- style -%}.about-content .content { max-width: var(--layoutMaxWidth); margin-inline: var(--layoutCenter, 0) }{%- endstyle -%}
+
+<section 
+    class="about-content" 
+    style="{{- style | strip_newlines | strip -}}"
+	{% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+	data-section-id="{{ section.id }}"
+>
+    <x-flex>
+        <x-cell><h1 class="h4 title">{% if section.settings.heading != blank %}{{ section.settings.heading }}{% else %}{{ page.title }}{% endif %}</h1></x-cell>
+        <x-cell><div class="content rte">{{ page.content }}</div></x-cell>
+    </x-flex>
+</section>
+
+{% schema %}
+{
+  "name": "About page",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "This section displays the contents entered in the CMS. Can be disabled but cannot be removed."
+    },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "range",
+        "id": "marginTop",
+        "label": "Margin top",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+        "type": "range",
+        "id": "marginBottom",
+        "label": "Margin bottom",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 2
+    },
+    {
+      "type": "range",
+      "id": "paddingTop",
+      "label": "Padding top",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "paddingBottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 2
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },  
+    {
+        "type": "checkbox",
+        "id": "mixBlend",
+        "label": "Enable text blend mode",
+        "info": "When enabled, this option will make the text color look different depending on the colors behind it.",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

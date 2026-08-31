@@ -1,0 +1,67 @@
+/** Video player */
+video-player { --vp-icon: 3rem; --vp-margin: var(--space-1); --vp-padding: var(--space-2); display: block }
+video-player > * { position: relative; grid-row: 1; grid-column: 1 }
+video-player video { width: 100%; object-fit: cover }
+
+video-player v-controls { --gap: 0; z-index: 1!important; }
+video-player v-controls[x-icons="true"] .text { display: none }
+video-player v-controls[x-icons="false"] .text { display: block }
+video-player v-controls[x-icons="false"] i { display: none }
+
+video-player button.controller { 
+    --buttonPadding: var(--vp-padding);
+    --buttonWeight: 400;
+    --buttonBg: rgb(var(--buttonBgRGB) / .5);
+    --buttonBorderWidth: 0;
+
+    backdrop-filter: blur(5px);
+    width: fit-content; 
+    display: grid; 
+    grid-template-rows: 1fr; 
+    grid-template-columns: 1fr; 
+    place-self: end; 
+    margin: var(--vp-margin); 
+    z-index: 2 
+}
+video-player button.controller > * { position: relative; grid-row: 1; grid-column: 1 }
+video-player button.controller > svg { height: var(--vp-icon); width: var(--vp-icon) }
+video-player button.controller { transition: all 200ms ease-in-out; transition-delay: var(--tDelay, 0s) }
+video-player button.controller[hidden] { display: none!important }
+
+video-player.playing button.controller { opacity: 0; transform: scale(0) }
+video-player.playing:hover button.controller { opacity: 1; transform: none }
+/* Play buttons  */
+video-player button.controller .pause-icon, video-player.playing button.controller .play-icon { opacity: 0 }
+video-player.playing button.controller .pause-icon, video-player button.controller .play-icon { opacity: 1 }
+/* Volume button */
+video-player button.controller .unmuted-icon, video-player.muted button.controller .muted-icon { opacity: 0 }
+video-player.muted button.controller .unmuted-icon, video-player button.controller .muted-icon { opacity: 1 }
+
+video-player .video-progress {
+    --vp-progress: 0%;
+
+    position: absolute;
+    inset: var(--vp-progress-inset, 0.2rem 0.5rem);
+    z-index: 1;
+    width: var(--vp-progress-width, 100vw);
+    height: var(--vp-progress-height, 8px);
+    border-radius: var(--vp-progress-radius, 100vw);
+    background: var(--vp-progress-bg);
+}
+
+video-player .video-progress::after {
+    content: '';
+    display: block;
+    background-color: var(--vp-progress-fg, rgb(0 0 0 / 0.4));
+    border-radius: inherit;
+    height: 100%;
+    width: var(--vp-progress);
+    transition: width 500ms ease;
+}
+
+/* Show / hideo progress bar on hover.
+    video-player .video-progress { opacity: 0; transform: translateY(10px); transition: all 300ms ease-in-out }
+    video-player:hover .video-progress { opacity: 1; transform: none } 
+*/
+
+@media (max-width: 777px) { video-player { --vp-icon: 2.3rem; --vp-margin: var(--space-1); --vp-padding: var(--space-2) } }

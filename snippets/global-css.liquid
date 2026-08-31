@@ -1,0 +1,310 @@
+{%- style -%}
+{%- comment -%}
+/**** 
+ * Fonts
+ * */
+{%- endcomment -%}
+{% liquid
+    # Body
+    assign body_font_bold = settings.type_body_font | font_modify: 'weight', 'bold'
+    assign body_font_italic = settings.type_body_font | font_modify: 'style', 'italic'
+    assign body_font_bold_italic = body_font_bold | font_modify: 'style', 'italic'
+
+    echo settings.type_body_font | font_face: font_display: 'swap'
+    echo body_font_bold | font_face: font_display: 'swap'
+    echo body_font_italic | font_face: font_display: 'swap'
+    echo body_font_bold_italic | font_face: font_display: 'swap'
+
+    # Heading
+    assign heading_font_bold = settings.type_heading_font | font_modify: 'weight', 'bold'
+    assign heading_font_italic = settings.type_heading_font | font_modify: 'style', 'italic'
+    assign heading_font_bold_italic = body_font_bold | font_modify: 'style', 'italic'
+
+    echo settings.type_heading_font | font_face: font_display: 'swap'
+    echo heading_font_bold | font_face: font_display: 'swap'
+    echo heading_font_italic | font_face: font_display: 'swap'
+    echo heading_font_bold_italic | font_face: font_display: 'swap'
+-%}
+{%- comment -%}
+/**** 
+ * Color schemes
+ * */
+{%- endcomment -%}
+{% for scheme in settings.color_schemes -%}
+{%- if scheme == settings.global_color_scheme %}:root,{% endif %}
+[color-scheme="{{ scheme.id }}"] {
+    {% if scheme.settings.background_gradient != empty -%}
+        --bgColor: {{ scheme.settings.background_gradient }}; --bg: {{ scheme.settings.background_gradient }};
+        --bgGradient: {{ scheme.settings.background_gradient }};
+    {%- else -%}
+        --bgColor: {{ scheme.settings.background }}; --bg: {{ scheme.settings.background }};
+    {%- endif -%}
+
+    --bgRGB: {{ scheme.settings.background.rgb }};
+    --border: {{ scheme.settings.border | color_to_hsl }};
+    --color: {{ scheme.settings.text | color_to_hsl }}; --colorRGB: {{ scheme.settings.text.rgb }}; --colorFaded: {{ scheme.settings.text_faded | color_to_hsl }};
+    --hColor: {{ scheme.settings.text | color_to_hsl }};
+    --linkColor: {{ scheme.settings.link | color_to_hsl }}; --linkColorFaded: {{ scheme.settings.link_faded | color_to_hsl }};
+    --linkHover: {{ scheme.settings.link_hover | color_to_hsl }};
+
+    --inputBg: {{ scheme.settings.input_bg | color_to_hsl }}; --inputsBgRGB: {{ scheme.settings.input_bg.rgb }};
+    --inputBgHover: {{ scheme.settings.input_bg_hover | color_to_hsl }};
+    --inputBgActive: {{ scheme.settings.input_bg_hover | color_to_hsl }};
+    --inputColor: {{ scheme.settings.input_color | color_to_hsl }};
+    --inputColorHover: {{ scheme.settings.input_color_hover | color_to_hsl }};
+    --inputPlaceholderColor: {{ scheme.settings.input_color | color_to_hsl | color_modify: 'alpha', 0.6 }};
+    --inputBorderColor: {{ scheme.settings.input_border | color_to_hsl }};
+    --inputBorderHover: {{ scheme.settings.input_border_hover | color_to_hsl | color_modify: 'alpha', 0.7 }};
+    --inputBorderActive: {{ scheme.settings.input_border_hover | color_to_hsl }};
+
+    --buttonBg: {{ scheme.settings.button_bg | color_to_hsl }}; --buttonBgRGB: {{ scheme.settings.button_bg.rgb }};
+    --buttonBgHover: {{ scheme.settings.button_bg_hover | color_to_hsl }};
+    --buttonColor: {{ scheme.settings.button_color | color_to_hsl }};
+    --buttonColorHover: {{ scheme.settings.button_color_hover | color_to_hsl }};
+    --buttonBorderColor: {{ scheme.settings.button_border | color_to_hsl }};
+    --buttonBorderHover: {{ scheme.settings.button_border_hover | color_to_hsl }};
+
+    --accentBg: {{ scheme.settings.accent_bg | color_to_hsl }}; --accentBgRGB: {{ scheme.settings.accent_bg.rgb }};
+    --accentColor: {{ scheme.settings.accent_color | color_to_hsl }}; --accentColorRGB: {{ scheme.settings.accent_color.rgb }};
+    --accentBorderColor: {{ scheme.settings.accent_border | color_to_hsl }};
+}
+{%- endfor %}
+
+{%- comment -%}
+/**** 
+ * ROOT
+ * */
+{%- endcomment -%}
+:root {
+{% comment %}  /* Typography */ {% endcomment %}
+    --fontFamily: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }}, var(--fontFallback);
+    --fontStyle: {{ settings.type_body_font.style }};
+    --fontWeight: {{ settings.type_body_font.weight }};
+    --fontWeightBold: {{ settings.type_body_font.weight | plus: 300 | at_most: 1000 }};
+    --globalScale: {{ settings.body_scale | divided_by: 100.0 }};
+    --fontLine: calc(2px + 2.2ex + 2px);
+
+    --hFontFamily: {{ settings.type_heading_font.family }}, {{ settings.type_heading_font.fallback_families }}, var(--fontFallback);
+    --hStyle: {{ settings.type_heading_font.style }};
+    --hWeight: {{ settings.type_heading_font.weight }};
+    {% if settings.heading_uppercase %}--hTransform: uppercase;{% endif %}
+
+    {% if settings.heading_as_body -%}
+    {%- # if heading_as_body is true, use default line height and letter spacing -%} 
+        --hSize: var(--fontSize); --hLine: var(--fontLine); --hSpace: 0;
+    {%- else -%}
+    {%- # if heading_as_body is false, use custom line height and letter spacing -%}
+        --hScale: {{ settings.heading_scale | divided_by: 100.0 }};
+    {%- endif %}
+
+{%- comment %} /* Global */ {% endcomment -%}
+    --iconSize: 1.25em; {% # Icons size %}
+
+    --textUnderlineOffset: 0.4rem;
+
+    --globalRadius: {{ settings.global_radius | prepend: 'var(--space-' | append: ')' }};
+    --globalRadiusFull: 100vw;
+    --globalRadiusImg:{% if settings.media_radius -%}var(--space-4);{%- else -%}0px;{%- endif %}
+
+    --globalMargin: var(--space-3);
+    --globalMarginXL: var(--space-6);
+    --globalPadding: var(--space-4);
+    --globalPaddingXL: var(--space-5);
+
+    --globalBorderWidth: 1px;
+    --globalBorder: var(--globalBorderWidth) solid var(--border);
+
+    --globalOpacity: .5;
+
+    --overlayBg: {{ settings.overlayBg }};
+    --overlayBlur: blur({{ settings.overlayBlur | append: 'px' }});
+
+    --globalShadow: 0px 0px 7px 1px rgb(0 0 0 / 0.1);
+
+    --a11yColor: rgb(41 145 248 / .7);
+
+    --bc: currentColor;
+    --bcHover: currentColor;
+
+    --hoverSymbol: "\2022";
+    --openSymbol: "\221f";
+
+{% comment %} /* Product card */ {% endcomment %} 
+    --prodCardRatio: {{ settings.card_crop_ratio }};
+    {% if settings.card_crop_ratio == 'auto' %}
+    --prodCardHeight: {{ settings.card_crop_height | append: 'px' }};
+    {% endif %}
+    --prodCardFit: {{ settings.card_crop_fit }};
+    --prodCardPosition: {{ settings.card_crop_position }}; 
+    
+    --prodCardSlideRatio: 260px;
+
+{% comment %} /* Animations */ {% endcomment %} 
+    --globalAnimeTime: 500ms;
+    --globalAnimeEase: var(--easeInOutQuint);
+
+    --animationInHeader: 500ms spicy-zoommin var(--easeInOutBack) forwards;
+    --animationOutHeader: 500ms spicy-zoomout var(--easeInOutBack) forwards;
+
+{% comment %} /* Layout size */ {% endcomment %} 
+    --layoutMaxWidth: {{ settings.global_wrapper_width | append: 'ch' }}; {% # max width of the layout %}
+    {%- if settings.global_wrapper_center -%}--layoutCenter: auto;{%- endif -%} {% # center main content %}
+    --layoutInline: 1vw; {% # inline padding %}
+
+{% comment %} /* buttons */ {% endcomment %} 
+    --buttonMargin: 0;
+    --buttonPadding: {{ settings.input_padding | prepend: 'var(--space-' | append: ')' }};
+    --buttonRadius: var(--globalRadius);
+    --buttonAlign: {{ settings.button_alignment | replace: 'left', 'start' | replace: 'right', 'end' }};
+    --buttonTransform: {{ settings.button_text_transform }};
+
+{% comment %} /* inputs */ {% endcomment %} 
+    --inputShadow: none;
+    --inputShadowHover: none;
+    --inputPadding: {{ settings.input_padding | prepend: 'var(--space-' | append: ')' }};
+    --inputRadius: var(--globalRadius);
+
+{% comment %} /* toggle token */ {% endcomment %} 
+    --tokenPadding: var(--space-2) var(--space-5);
+    --tokenWeight: 400;
+}
+
+#ot3f13574b5c4430724e4d2cc0901c6287 { display: block; font-size: 0.8em; margin-top: 1rem }
+
+{%- if settings.page_transition -%}
+{%- #  View transition API -%}
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto }
+    ::view-transition-old(root) { animation: faderOut 350ms ease-in-out both  }
+    ::view-transition-new(root) { animation: faderIn 350ms ease-in-out both  }
+}
+
+@keyframes faderIn { 
+    from { opacity: 0; transform: translateY(1rem) }
+    to { opacity: 1; transform: translateY(0) }
+}
+
+@keyframes faderOut { 
+    from { opacity: 1; transform: translateY(0) }
+    to { opacity: 0; transform: translateY(1rem) }
+}
+{% endif %}
+
+{%- if template contains 'product' and settings.page_transition == false -%}
+{% # View transition API for product body %}
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; } 
+    product-info:has(.product-siblings) { view-transition-name: product-info }
+    ::view-transition-old(product-info) { animation: fadeOut 250ms ease-in-out both } 
+    ::view-transition-new(product-info) { animation: fadeIn 250ms ease-in-out both }
+}
+{%- endif -%}
+
+{% comment %} 
+/**** 
+ * Queries
+ * */
+{% endcomment %}
+@media (max-width: 777px) {
+    :root { 
+        --iconSize: 1.6rem; 
+        --layoutInline: 2.5vw;
+        --layoutMaxWidth: 100%;
+    }
+}
+{% comment %}
+/**** 
+ * other styles
+ * */
+{% endcomment %}
+{% if settings.body_underline_links -%}
+a:not(.button):not(.no-style),
+a:not(.button):is(:hover,:focus-visible),
+button.is-link {
+    --linkDecorationHover: underline; 
+    --linkDecorationOffset: 0.3rem; 
+    text-decoration: underline; 
+    text-underline-offset: 0.3rem 
+}
+{%- endif -%}
+
+{% if settings.body_strikethrough_links_hover -%}
+a:not(.button):not(.no-style):is(:hover,:focus-visible),
+a:not(.button):is(:hover,:focus-visible),
+button.is-link:is(:hover,:focus-visible) {
+    --linkDecorationHover: line-through; 
+    text-decoration: line-through;
+}
+{%- endif -%}
+
+{%- comment -%}
+    # Custom cursors
+{%- endcomment -%}
+{%- if settings.custom_cursor -%}
+:root {
+{%- if settings.custom_cursor_default != nil %}--cursorDefault: url({{ settings.custom_cursor_default | image_url: width: 32, height: 32 }}) 0 0, default;{% endif -%}
+{%- if settings.custom_cursor_pointer != nil %}--cursorPointer: url({{ settings.custom_cursor_pointer | image_url: width: 32, height: 32 }}) 0 0, pointer;{% endif -%}
+}
+
+* { cursor: var(--cursorDefault, default)!important }
+a, button, [role="button"], .button, summary, select, input[type="submit"], input[type="reset"], input[type="button"] { cursor: var(--cursorPointer, pointer)!important }
+{%- endif -%}
+
+.wrapper { width: var(--layoutMaxWidth); margin-inline: var(--layoutCenter, 0) } 
+.gradient { background: var(--bg); background-attachment: fixed }
+
+{%- comment %} Coretex dialog {% endcomment -%}
+.coretex-dialog {
+    --dialogBg: var(--bg);
+    --dialogColor: var(--color);
+        --hColor: var(--dialogColor);
+    --dialogRadius: var(--globalRadius);
+    --dialogW: calc(100% - var(--dialogMargin));
+    --dialogMaxW: 520px;
+    --dialogH: 600px;
+    --dialogMaxH: calc(100dvh - (var(--margin) * 2));
+    --dialogBorder: 1px solid var(--border);
+    --dialogPadding: var(--padding);
+    --dialogMargin: auto;
+
+    --dialogSize: inherit;
+    --hSize: var(--dialogSize);
+
+    --dialogAnimationOpen: 700ms dialog-modal-slide-up var(--easeInOutQuint) forwards;
+    --dialogAnimationClose: 500ms dialog-modal-slide-down var(--easeInOutQuint) forwards;
+    --dialogTransOrigin: bottom center;
+}
+
+.coretex-dialog dialog::-webkit-backdrop {
+    {% capture dialog_backdrop %}
+    --dialogBackdropBg: {{ settings.overlayBg }};
+    --dialogBackdropBlur: blur({{ settings.overlayBlur | append: 'px' }});
+    --dialogBackdropAnimationIn: fadeIn 1s ease forwards;
+    --dialogBackdropAnimationOut: fadeOut 1s ease forwards;
+    pointer-events: all;
+    {% endcapture %}
+    {{ dialog_backdrop }}
+}
+
+.coretex-dialog dialog::backdrop {
+    {{ dialog_backdrop }}
+}
+
+.coretex-dialog dialog[dialog-position="bottom center"]  {
+    --dialogRadius: var(--globalRadius) var(--globalRadius) 0 0;
+    --dialogPosSize: var(--padding) var(--padding) 0 var(--padding) !important;
+}
+
+.coretex-dialog dialog[dialog-position="top center"] {
+    --dialogRadius: 0 0 var(--globalRadius) var(--globalRadius);
+    --dialogPosSize: 10px var(--padding) var(--padding) var(--padding) !important;
+}
+
+.coretex-dialog dialog[dialog-position~="top"] {
+    --dialogTransOrigin: top center; 
+    --dialogAnimationOpen: 700ms dialog-modal-slide-in-down var(--easeInOutQuint) forwards;
+    --dialogAnimationClose: 500ms dialog-modal-slide-out-up var(--easeInOutQuint) forwards;
+}
+
+
+{%- endstyle -%}

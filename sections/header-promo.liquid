@@ -1,0 +1,153 @@
+{%- if section.settings.homeOnly == false or template.name == 'index' -%}
+{%- style -%}
+{%- comment %} 
+    === [ CORETEX FYI ] === 
+    CSS is kept inline to prevent CLS, since this is the first element rendered.
+{%- endcomment -%}
+coretex-ticker { display: block; background: var(--bg);  background-attachment: fixed; color: var(--color); border-block-end: var(--globalBorderWidth) solid var(--border); position: relative; overflow: clip; padding: var(--space-1) var(--layoutInline) }
+coretex-ticker > * { opacity: 0; animation: fadeInDown 500ms ease-in-out forwards;  animation-delay: 500ms }
+coretex-ticker .item { width: 100%; text-align: inherit; width: 100%; height: 100%; opacity: 0; transition: all var(--_tickSpeed) var(--easeInOutQuint); filter: blur(0.5rem) }
+coretex-ticker[direction="block"] .item { --_tickSpeed: 800ms; --_translate: translateY(-100%); --_scale: scale(0.8); transform: var(--_translate) var(--_scale) }
+coretex-ticker[direction="block"] .item.upNext { --_translate: translateY(100%); --_scale: scale(0.85); transform: var(--_translate) var(--_scale) }
+coretex-ticker[direction="inline"] .item { --_tickSpeed: 1.5s; --_translate: translateX(-50%); --_scale: scale(0.8); transform: var(--_translate) var(--_scale) }
+coretex-ticker[direction="inline"] .item.upNext { --_translate: translateX(100%); --_scale: scale(0.8); transform: var(--_translate) var(--_scale) }
+coretex-ticker .item.active { transform: none; filter: none; opacity: 1 }
+coretex-ticker button.is-custom {
+    --buttonBg: rgb(var(--bgRGB) / .9);
+    --buttonColor: var(--color);
+    --buttonRadius: 0;
+    --buttonMargin: 0;
+    --buttonPadding: var(--space-2);
+    --a11yOffset: -1px;
+
+    height: 100%;
+}
+
+coretex-ticker .closer { position: absolute; inset-block: 0; inset-inline-end: 0 }
+{%- endstyle -%}
+
+<coretex-ticker 
+    pause="{{ section.settings.pause | times: 1000 }}" 
+    direction="{{ section.settings.direction }}"
+    id="promoBar"
+    class="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-' }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+>
+    <ul class="msgs no-style inside" x-grid columns="stack" ai="center">
+        {% for block in section.blocks %}
+        <li class="item{% if forloop.first %} active{% endif %} {% if section.settings.textClip %}text-clip{% endif %}" ac="center" ji="end">
+            {%- if block.settings.link -%}<a href="{{ block.settings.link }}"{% if section.settings.linkUnderline %} class="text-underline"{% endif %}>{%- endif -%}
+                {{ block.settings.text }}
+            {%- if block.settings.link -%}</a>{%- endif %}
+        </li>
+        {%- endfor -%}
+    </ul>
+    <x-cell class="closer mask inline-start">
+        <button x-close class="is-custom has-icon text-normal" aria-label="{{ 'accessibility.close' | t }}">{%- render 'inc-icon', icon: 'x-close' -%}</button>
+    </x-cell>
+</coretex-ticker>
+
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Announcement bar",
+  "enabled_on": { "groups": ["header"] },
+  "limit": 1,
+  "presets": [
+    {
+      "name": "Announcement bar"
+    }
+  ],
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "homeOnly",
+        "label": "Show only on home page",
+        "default": false
+    },
+    {
+        "type": "range",
+        "id": "pause",
+        "label": "Slide transition interval",
+        "info": "Time interval, in seconds, between each message slide.",
+        "min": 1,
+        "max": 60,
+        "step": 1,
+        "default": 5,
+        "unit": "s"
+    },      
+    {
+        "type": "select",
+        "id": "direction",
+        "label": "Ticker direction",
+        "info": "Select the direction in which the ticker will scroll.",
+        "default": "block",
+        "options": [
+            { "value": "block", "label": "Vertical" },
+            { "value": "inline", "label": "Horizontal" }
+        ]
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Text alignment",
+        "default": "center"
+    },
+    {
+        "type": "checkbox",
+        "id": "textClip",
+        "label": "Enable text clipping",
+        "info": "When enabled prevents long text from collapsing onto multiple lines.",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "linkUnderline",
+        "label": "Underline links",
+        "info": "Enable to underline linked text for better visibility.",
+        "default": false
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+        "type": "item",
+        "name": "Message",
+        "limit": 5,
+        "settings": [
+            {
+                "type": "text",
+                "id": "text",
+                "label": "Text",
+                "default": "Announce something here",
+                "info": "Enter the message to display in the ticker."
+            },
+            {
+                "type": "url",
+                "id": "link",
+                "label": "Link",
+                "info": "Provide a URL to link the message. Leave blank to disable."
+            }
+        ]
+    }    
+  ]
+}
+{% endschema %}

@@ -1,0 +1,65 @@
+import CoretexDialog from "{{ 'c-dialog.js' | asset_url }}";
+
+export default class CoretexNewsletter extends CoretexDialog {
+    constructor() {
+        super();
+        this.cookieName = 'cortex:newsletter';
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+
+        if (window.location.pathname === '/challenge') return; // Skip initialization on challenge page
+        if ([...document.body.classList].some(cls => cls.startsWith('o-'))) return; // Skip initialization if body has a class starting with "o-"
+
+        if (this.querySelector('[data-form-status]')) {
+            this.open();
+            this.classList.add('hasFormStatus'); // Open modal on failure or success
+        }
+
+        // Check if auto-appear is enabled
+        const autoOpen = this.dataset.autoOpen === 'true';
+
+        if (autoOpen && (!this.getCookie(this.cookieName) || this.dataset.designMode === 'true')) {
+            this.init();
+        }
+    }
+
+    init() {
+        if (Shopify && Shopify.designMode) return;
+
+        const delay = parseInt(this.dataset.delay);
+        if (!isNaN(delay) && delay > 0) {
+            setTimeout(() => {
+                if (!this.dialog.hasAttribute('open')) {
+                    this.open();
+                }
+            }, delay * 1000);
+        }
+    }
+
+    /*** 
+     * === [ CORETEX FYI ] ===
+     * 'open' and 'close' methods will call the parent class methods
+     * and include any additional logic specific to CoretexNewsletter
+     */
+
+    open() {
+        if (!this.dialog.hasAttribute('open')) {
+            super.open(); // Call the open() method from the parent class
+            this.removeCookie(this.cookieName);
+        }
+    }
+
+    close() {
+        super.close(); // Call the close() method from the parent class
+        if (this.dataset.designMode !== 'true') this.setCookie(this.cookieName, this.dataset.expire);
+    }
+
+    // Cookie handling methods
+    getCookie(name) { const match = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`); return match ? match[2] : null;}
+    setCookie(name, expire) { document.cookie = `${name}=true; max-age=${expire * 24 * 60 * 60}; path=/`; }
+    removeCookie(name) { document.cookie = `${name}=; max-age=0`; }
+}
+
+if (!customElements.get('coretex-newsletter')) customElements.define('coretex-newsletter', CoretexNewsletter);

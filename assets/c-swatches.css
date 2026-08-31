@@ -1,0 +1,118 @@
+/** 
+  component-swatch.css
+*/
+.swatch {
+  --swatch--size: var(--swatch-input--size, 2.5rem);
+  --swatch--border-radius: var(--swatch-input--border-radius, 50%);
+
+  display: block;
+  width: var(--swatch--size);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--swatch--background);
+  background-position: var(--swatch-focal-point, initial);
+  background-size: cover;
+  background-origin: border-box;
+  box-shadow: inset 0 0 0.1rem rgb(0 0 0 / 0.25);
+  border-radius: var(--swatch--border-radius);
+}
+
+.swatch--square {
+  --swatch--border-radius: var(--swatch-input--border-radius, 0.2rem);
+}
+
+.swatch--unavailable { border: .1rem dashed rgb(var(--colorRGB) / 0.5); }
+
+
+/** 
+    component-swatch-input.css
+  */
+.swatch-input__input + .swatch-input__label {
+  --swatch-input--border-radius: 50%;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: var(--swatch-input--border-radius);
+  cursor: pointer;
+  outline-offset: 0.2rem;
+  outline-color: transparent;
+  outline-style: solid;
+  transition-property: outline-color, outline-width, box-shadow;
+  transition-duration: var(--duration-short);
+  transition-timing-function: ease;
+  forced-color-adjust: none;
+}
+
+.swatch-input__input + .swatch-input__label.swatch-input__label--square {
+  --swatch-input--border-radius: 0;
+  min-height: 2.4rem;
+}
+
+/* Active state */
+.swatch-input__input:active + .swatch-input__label .swatch,
+.swatch-input__input:checked + .swatch-input__label .swatch {
+    outline: .1rem solid var(--color);
+    outline-offset: .1rem
+}
+
+/* Hover state */
+.swatch-input__input + .swatch-input__label:hover .swatch,
+.swatch-input__input:hover + .swatch-input__label .swatch {
+    outline: .1rem solid var(--color);
+    outline-offset: .1rem
+}
+
+/* Focus visible */
+.swatch-input__input:focus-visible + .swatch-input__label .swatch {
+    outline: .1rem solid var(--color);
+    outline-offset: .1rem
+}
+
+/* Active and focused */
+.swatch-input__input:active:focus-visible + .swatch-input__label .swatch,
+.swatch-input__input:checked:focus-visible + .swatch-input__label .swatch {
+    outline: .1rem solid var(--color);
+    outline-offset: .1rem
+}
+
+/* Visually disabled */
+.swatch-input__input.visually-disabled:not(:active):not(:checked) + .swatch-input__label {
+  transition: none;
+}
+.swatch-input__input.visually-disabled:not(:active):not(:checked) + .swatch-input__label:hover {
+  outline: none;
+}
+
+/* Actually disabled */
+.swatch-input__input:disabled + .swatch-input__label {
+    cursor: not-allowed;
+}
+
+/* Overrides for swatch snippet when used inside disabled swatch-input */
+.swatch-input__input:disabled + .swatch-input__label > .swatch,
+.swatch-input__input.visually-disabled + .swatch-input__label > .swatch {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Disabled styles */
+.swatch-input__input:disabled + .swatch-input__label > .swatch,
+.swatch-input__input.visually-disabled + .swatch-input__label > .swatch {
+  opacity: 0.4;
+}
+
+/* Display crossed out line over swatch when input is disabled */
+.swatch-input__input:disabled + .swatch-input__label > .swatch::after,
+.swatch-input__input.visually-disabled + .swatch-input__label > .swatch::after {
+  /* Diagonal of a square = length of the side * sqrt(2)  */
+  --diagonal--size: calc(var(--swatch-input--size) * 1.414);
+  --crossed-line--size: 0.1rem;
+  content: '';
+  position: absolute;
+  bottom: calc(var(--crossed-line--size) * -0.5);
+  left: 0;
+  width: var(--diagonal--size);
+  height: var(--crossed-line--size);
+  background-color: rgb(var(--color-foreground));
+  transform: rotate(-45deg);
+  transform-origin: left;
+}

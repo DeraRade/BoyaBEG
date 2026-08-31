@@ -1,0 +1,85 @@
+.customer  { 
+    margin-block-start: var(--space-8); 
+    padding-inline: var(--layoutInline);
+    
+    .button.is-custom { --buttonWeight: 400 }
+}
+.portal-nav { --gap: 0; padding: var(--margin) var(--layoutInline) 0 }
+
+@media screen and (min-width: 777px) {
+    .customer .order-info { 
+        width: fit-content;
+        max-width: 100%;
+        margin-inline: var(--layoutCenter, 0);
+    }
+
+    .customer coretex-address { 
+        display: block;
+        width: var(--layoutMaxWidth);
+        margin-inline: var(--layoutCenter, 0);
+    }
+}
+
+coretex-address { margin-block: var(--margin) }
+
+/*** Orders page */
+.customer table {
+    --tablePadding: 0 var(--margin) 0 0;
+    --tableBg: transparent; 
+    margin: var(--space-5) 0;
+}
+
+.customer tbody::before, 
+.customer tbody::after { 
+    content: '';
+    display: block;
+    height: var(--space-4);
+}
+
+@media screen and (max-width: 777px) {
+    .customer table { margin: var(--margin) 0; width: 100% }
+
+    .customer table :where(thead, th, tfoot td:first-of-type) { display: none }
+  
+    .customer table td { display: flex; text-align: right; gap: var(--inputPadding); padding: 0 }
+  
+    .customer table td::before {
+      content: attr(data-label);
+      text-align: left;
+      flex-grow: 1;
+    }
+
+    .customer table td:first-of-type { display: flex; align-items: center }
+
+    .customer table tr td { padding: 0 }
+
+    .customer table tr { display: flex; flex-direction: column; justify-content: flex-start; width: 100% }
+    .customer table :not(tfoot) tr { margin-bottom: var(--space-7) }
+
+    #RowTotal, #RowSubtotal { display: none }
+}
+
+.customer .order-address { margin-block-start: var(--space-9)}
+.customer .order-address x-flex { gap: var(--space-9) }
+
+.customer .order-details a { display: block; padding-block: var(--space-1) }
+.customer .order-details :is(dd,dl) { margin: 0 }
+.customer .order-details table tr td { vertical-align: top }
+
+/*** Address book page */
+/* === [ CORETEX FYI ] === Used to switch between address book and the Add new address form */
+#new-address, #new-address + div { display: none }
+#new-address:target { display: block }
+#new-address:target + div { display: block }
+#new-address:target ~ #address-book, #new-address:target ~ #address-book + div { display: none }
+#new-address, #address-book { scroll-margin-top: 20rem }
+#new-address { margin-bottom: 0 }
+
+/* === [ CORETEX FYI ] === Used to show/hide the edit form */
+#addressBook address-form[id^="EditAddress-"] { display: none } /* Hide all address forms by default */
+#addressBook address-form[id^="EditAddress-"]:target { display: block } /* Show the targeted address form */
+
+#addressBook ul:has(:target) > li { display: none  } /* If an address form is targeted, hide all other siblings */
+#addressBook ul:has(:target) > li:has(:target) { display: block } /* If an address form is targeted, show it */
+
+/* mobile table overrides */

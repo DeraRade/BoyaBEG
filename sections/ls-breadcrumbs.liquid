@@ -1,0 +1,171 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- liquid
+    if collection
+      assign genieCollection = collection
+    elsif product.collections[0]
+      assign genieCollection = product.collections[0]
+    else
+      assign genieCollection = false
+    endif
+
+    if genieCollection
+      assign geniePath = routes.collections_url | append: '/' | append: genieCollection.handle
+    else
+      assign geniePath = false
+    endif
+-%}
+
+{%- capture separator -%}
+{%- if section.settings.breadcrumbSeparator == 'default' -%}&rsaquo;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'greater' -%}&gt;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'slash' -%}&sol;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'endash' -%}&ndash;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'emdash' -%}&mdash;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'dot' -%}&middot;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'bullet' -%}&bull;{%- endif -%}
+{%- if section.settings.breadcrumbSeparator == 'wave' -%}&#8275;{%- endif -%}
+{%- endcapture -%}
+
+{%- unless template == 'index' or template == 'cart' or template == 'list-collections' -%}
+    <nav class="breadcrumb mob-scroller" aria-label="breadcrumbs" color-scheme style="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'justify-content:' | append: ';' }}" data-section-id="{{ section.id }}">
+      <a href="{{ routes.root_url }}" title="{{ 'openthinking.dictionary.word.home' | t }}" class="no-style">{{ 'openthinking.dictionary.word.home' | t }}</a>
+      {%- case template.name -%}
+        {%- when 'page' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ page.title }}</span>
+
+        {%- when 'product' -%}
+        <span aria-hidden="true">{{ separator }}</span>
+        {%- if genieCollection -%}
+          <a href="{{ geniePath }}" class="no-style">{{ genieCollection.title }}</a>
+        {%- else -%}
+          <a href="{{ routes.all_products_collection_url }}" title="{{ 'templates.search.products' | t }}" class="no-style">
+            {{- 'templates.search.products' | t -}}
+          </a>
+        {%- endif -%}
+
+        <span aria-hidden="true">{{ separator }}</span>
+        <span>{{ product.title }}</span>
+
+        {%- when 'collection' -%}
+            {%- if collection.handle -%}
+                <span aria-hidden="true">{{ separator }}</span>
+                    <a href="{{ routes.collections_url }}">{{ 'openthinking.dictionary.word.collections' | t }}</a>
+                <span aria-hidden="true">{{ separator }}</span>
+                {%- if current_tags -%}
+                    {{ collection.title | link_to: collection.url }}
+                    <span aria-hidden="true">{{ separator }}</span>
+                    {%- capture tag_url -%}{{ collection.url }}/{{ current_tags | join: "+" }}{%- endcapture -%}
+                    <a href="{{ tag_url }}">{{ current_tags | join: ' + ' }}</a>
+                {%- else -%}
+                    <span>{{ collection.title }}</span>
+                {%- endif -%}
+            {% endif %}
+
+        {%- when 'blog' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          {%- if current_tags -%}
+            {{ blog.title | link_to: blog.url }}
+            <span aria-hidden="true">{{ separator }}</span>
+            <span>{{ current_tags | join: ' + ' }}</span>
+          {%- else -%}
+            <span>{{ blog.title }}</span>
+          {%- endif -%}
+
+        {%- when 'article' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          {{ blog.title | link_to: blog.url }}
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ article.title }}</span>
+
+        {%- when 'search' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <a href="{{ routes.search_url }}" class="no-style">{{ 'general.search.search' | t }}</a>
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ page_title }}</span>
+
+        {%- else -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <a href="{{ request.path }}" class="no-style">{{ page_title }}</a>
+      {%- endcase %}
+    </nav>
+{%- endunless -%}
+
+{%- if collection.handle != 'all' and collection -%}
+<script>if(!window.isCrawlingBot){const a=()=>{var t=navigator.userAgent.toLowerCase();for(const e of["bot","robot","crawl","baidu","slurp","spider","yandex","bingbot","googlebot","yandexbot","duckduckbot"])if(t.includes(e))return!0;return!1},b=()=>{var t=document.getElementById("ajaxContainer");t?t.querySelectorAll("a").forEach(e=>{e.addEventListener("click",t=>{null!==e.getAttribute("data-href")&&(t.preventDefault(),t=e.getAttribute("data-href"),window.location.href=t)})}):console.error("#ajaxContainer not found")};document.addEventListener("DOMContentLoaded",()=>{a()||b()}),window.isCrawlingBot=a}</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Breadcrumbs",
+  "disabled_on": { "groups": [ "aside" ] },
+  "class": "breadcrumbs",
+  "presets": [
+    {
+      "name": "Breadcrumbs",
+      "category": "Layout"
+    }
+  ],
+  "settings": [
+    {
+        "type": "paragraph",
+        "content": "This section won't show on the home, cart and collection list pages."
+    },
+    {
+        "type": "paragraph",
+        "content": "Breadcrumbs are static and unaware of the user's navigation."
+    },
+    {
+        "type": "paragraph",
+        "content": "On product pages, the first collection listed in alphabetical order is shown by default."
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Alignment",
+        "default": "left"
+    },
+    {
+        "type": "select",
+        "id": "breadcrumbSeparator",
+        "label": "Breadcrumb separator",
+        "default": "default",
+        "options": [
+            {
+                "value": "default",
+                "label": "› (Right-pointing quotation mark)"
+            },
+            {
+                "value": "greater",
+                "label": "> (Greater-than sign)"
+            },
+            {
+                "value": "bullet",
+                "label": "• (Bullet)"
+            },
+            {
+                "value": "dot",
+                "label": "· (Dot)"
+            },
+            {
+                "value": "slash",
+                "label": "/ (Slash)"
+            },
+            {
+                "value": "endash",
+                "label": "- (En dash)"
+            },
+            {
+                "value": "emdash",
+                "label": "— (Em dash)"
+            },
+            {
+                "value": "wave",
+                "label": "~ (Wave dash)"
+            }
+        ]
+    }
+  ]
+}
+{% endschema %}

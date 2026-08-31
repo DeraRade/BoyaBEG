@@ -1,0 +1,150 @@
+{%- case block.type -%}
+
+{%- when 'liquid_info' -%}
+    <section class="liquid" {{ block.shopify_attributes }}>{{- block.settings.liquid -}}</section>
+
+{%- when 'separator' -%}
+    <horizontal-rule {{ block.shopify_attributes }} 
+        style="margin-block: {{ block.settings.marginTop | prepend: 'var(--space-' | append: ')' }} {{ block.settings.marginBottom | prepend: 'var(--space-' | append: ');' }}">
+        {% if block.settings.show_hr %}<hr>{% endif %}
+    </horizontal-rule>
+
+{%- when 'ratings' -%}
+    {%- if product.metafields.reviews.rating.value != blank -%}
+    <section class="ratings noMargin" {{ block.shopify_attributes }}>{%- render 'c-reviews', product: product -%}</section>
+    {%- endif -%}
+
+{%- when 'vendor' -%}
+    {%- if product.vendor != blank -%}
+    <section class="vendor noMargin" {{ block.shopify_attributes }}>
+        {%- if block.settings.vendorOrigin == 'default' -%}
+            {{ product.vendor | link_to_vendor }}
+        {%- else -%}
+            <a href="{{ routes.collections_url }}/{{ product.vendor | handleize }}">{{ product.vendor }}</a>
+        {%- endif -%}
+    </section>
+    {%- endif -%}
+
+{%- when 'title' -%}
+    <section class="title noMargin" {{ block.shopify_attributes }}>
+        <x-flex jc="between">
+            <x-cell>
+                {%- unless featured_product -%}
+                    <h1 class="h5">{{ product.title }}</h1>
+                {%- else -%}
+                    <h2 class="h5"><a href="{{ product.url }}" class="no-style">{{ product.title }}</a></h2>
+                {%- endunless-%}
+            </x-cell>
+            {%- if section.settings.priceOnMobile -%}
+            <x-cell class="small-only mobile-price text-end">
+                {%- render 'c-price', product: product, use_variant: true -%}
+            </x-cell>
+            {%- endif -%}
+        </x-flex>
+    </section>
+
+{%- when 'subtitle' -%}
+	{%- if product.metafields.descriptors.subtitle.value != nil -%}
+    <section class="subtitle noMargin" {{ block.shopify_attributes }}><h3 class="h4">{{ product.metafields.descriptors.subtitle.value }}</h3></section>
+	{%- endif -%}
+
+{%- when 'description' -%}
+	{%- if product.description != blank -%}
+		{%- if block.settings.collapsible_desc -%}
+            <coretex-accordion class="description accordion">
+            <details class="closex" name="product-info-tabs" {% if block.settings.expand_by_default %}open{% endif %}>
+		    <summary><span>{{ block.settings.heading | default: 'Details' }}</span></summary><details-content>
+        {%- else -%}
+            <section class="description" {{ block.shopify_attributes }}>
+		{%- endif -%}
+        
+            {% liquid
+                # Count words
+                assign word_threshold = false
+                assign word_count = product.description | strip_html | size
+                if word_count > 250
+                    assign word_threshold = true
+                endif
+
+                # Show folder
+                assign show_folder = false 
+                if block.settings.folder and word_threshold and block.settings.collapsible_desc != true
+                    assign show_folder = true
+                endif
+            -%}
+
+		    <product-description class="text rte {% if show_folder %}folder{% endif %}">
+                {{ product.description }}
+            </product-description>
+
+            {% if show_folder %}
+            <label for="showMore-{{ block.id }}">
+                <input id="showMore-{{ block.id }}" type="checkbox" name="folder" class="visually-hidden">
+                <span class="button is-custom text-normal expandButton">{{ 'products.facets.show_more' | t }}</span>
+            </label>
+            {%- endif -%}
+
+		{%- if block.settings.collapsible_desc -%}
+            </details-content></details></coretex-accordion>
+        {%- else -%}
+            </section>
+        {%- endif -%}
+
+	{%- endif -%}
+
+{%- when 'collapsible_tab' -%}
+	{%- if block.settings.content != empty or block.settings.page.content != nil or block.settings.image != empty or block.settings.liquid != empty -%}
+	<coretex-accordion class="accordion" {{ block.shopify_attributes }}>
+		<details class="closex" name="product-info-tabs" {% if block.settings.checked == true %}open{% endif %}>
+			<summary>
+                <span>{{ block.settings.heading | default: block.settings.page.title }}</span>
+            </summary>
+            <details-content>
+			    <div class="text rte">
+			    	{%- liquid
+			    		echo block.settings.content
+			    		echo block.settings.page.content
+                        echo block.settings.liquid
+
+			    		assign img = block.settings.image
+			    		assign alt = block.settings.heading | default: block.settings.page.title
+			    		if block.settings.image != nil
+			    			echo img | image_url: width: 1024 | image_tag: loading: 'lazy', alt: alt
+			    		endif
+			    	-%}
+			    </div>
+            </details-content>
+		</details>
+	</coretex-accordion>
+	{%- endif -%}
+
+{%- when 'text' -%}
+	{%- if block.settings.text != blank -%}
+	<section class="text" {{ block.shopify_attributes }}>
+		<div class="rte">{{- block.settings.text -}}</div>
+	</section>
+	{%- endif -%}
+
+{%- when 'paymenticons' -%}
+	{%- if shop.enabled_payment_types != empty -%}
+        {%- if block.settings.heading != blank -%}<span class="labelTitle">{{ block.settings.heading }}</span>{%- endif -%}
+        <section class="payment-icons">
+            <div style="{%- if block.settings.monochrome -%}filter:grayscale(1){%- endif -%}">{%- render 'inc-payment-icons' -%}</div>
+        </section>
+    {%- endif -%}
+
+{%- when 'popup' -%}
+	<section class="popup" {{ block.shopify_attributes }}>
+        <button class="is-custom has-icon xbrk poptrigger" data-open="#x{{ block.id }}Box">
+            <span>{{ block.settings.link_label }}</span>
+            {% render 'inc-icon', icon: 'chevron-right' %}
+        </button>
+	</section>
+
+{%- when 'sku' -%}
+    <section id="Sku-{{ section.id }}" role="status" class="no-js-hidden {% if product.selected_or_first_available_variant.sku.size == 0 %} visually-hidden{% endif %}" {{ block.shopify_attributes }}>
+        <span class="skuLabel labelTitle{% if block.settings.showSkuLabel != true %} visually-hidden{% endif %}">{{ 'products.product.sku' | t }}</span>
+        <span>{{- product.selected_or_first_available_variant.sku -}}</span>
+    </section>
+
+{%- endcase -%}

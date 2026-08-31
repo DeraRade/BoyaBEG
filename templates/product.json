@@ -1,1 +1,204 @@
-{"sections":{"sidebar":{"type":"product-sidebar","settings":{"toggle":false}},"main":{"type":"product-template","blocks":{"title":{"type":"title","settings":{}},"price":{"type":"price","settings":{"display_savings":true}},"description":{"type":"description","settings":{}},"form":{"type":"form","settings":{}},"dff21801-ab60-4318-9518-43900940c043":{"type":"custom-liquid","settings":{"custom_liquid":"{% if shop.locale == 'sr' %}\n  <script type=\"text\/javascript\">\n    window.DashPreordersLocales =  {\n      buttonText: \"Poruči za izradu\",\n      buttonTextNow: \"Poruči za izradu\",\n      buttonTextEnded: \"Predporučivanje je završeno\",\n      buttonTextBuyWith: \"Poruči za izradu sa\",\n      shippingPolicyText: \"Očekivano vreme do slanja {{ship_date}}\",\n      shippingDateFormat: \"Format datuma\",\n      lineItemPropProductTypeKey: \"Vrsta proizvoda\",\n      lineItemPropProductTypeValue: \"Poruči za izradu\",\n      lineItemPropShipByText: \"Šaljemo do\"\n    };\n  <\/script>\n{% endif %}"}},"share":{"type":"share","settings":{}},"growave_loyalty_wishlist_block_product_fave_button_Mitkim":{"type":"shopify:\/\/apps\/growave-loyalty-wishlist\/blocks\/block.product.faveButton\/b3d2efbe-110a-4e27-84a8-1f2ed63996a4","settings":{"option_button_class":""}}},"block_order":["title","price","description","form","dff21801-ab60-4318-9518-43900940c043","share","growave_loyalty_wishlist_block_product_fave_button_Mitkim"],"settings":{"product_breadcrumb":false,"media_position":"is-flex-row","set_product_height":false,"product_height":500,"video_looping":false,"product_thumbs":true,"gallery_arrows":true,"enable_product_lightbox":true,"activate_zoom":true,"slideshow_speed":0,"slideshow_animation":"slide","thumbnail_position":"bottom","enable_thumbnail_slider":true}},"recently-viewed":{"type":"recently-viewed","settings":{"rv_title":"Recently viewed products","rv_max_display":9,"rv_per":3,"css_class":"","custom_css":""}},"recommendations":{"type":"product-recommendations","settings":{"show_product_recommendations":true,"wide_display":false,"product_recommendations_style":"grid","product_recommendations_heading":"You may also like","products_per_row":3,"recommended_products_limit":4}},"dc34c997-cf59-40d1-a5a7-85fbee0cc307":{"type":"custom-liquid","disabled":true,"settings":{"custom_liquid":"<script type=\"text\/javascript\">\n\n  window.DashPreordersLocales =  {\n\n    buttonText: 'Preorder',\n\n    buttonTextNow: 'Pre-order now',\n\n    buttonTextEnded: 'Pre-order ended',\n\n    buttonTextBuyWith: 'Pre-order with',\n\n    shippingPolicyText: 'Expected to ship by {ship_date}',\n\n    shippingDateFormat: '%B %e, %Y',\n\n    shippingPolicyColour: '#333333',\n\n    lineItemPropProductTypeKey: 'Product type',\n\n    lineItemPropProductTypeValue: 'Preorder',\n\n    lineItemPropShipByText: 'Ships by'\n\n  };\n\n<\/script>","css_class":"","custom_css":""}}},"order":["sidebar","main","recently-viewed","recommendations","dc34c997-cf59-40d1-a5a7-85fbee0cc307"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "t-product",
+      "blocks": {
+        "vendor": {
+          "type": "vendor",
+          "disabled": true,
+          "settings": {
+            "vendorOrigin": "default"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "description": {
+          "type": "description",
+          "settings": {
+            "heading": "Descripción",
+            "collapsible_desc": true,
+            "expand_by_default": true,
+            "folder": false
+          }
+        },
+        "popup_MebGP8": {
+          "type": "popup",
+          "disabled": true,
+          "settings": {
+            "link_label": "Open Pop-up",
+            "page": "",
+            "heading": "",
+            "content": "",
+            "liquid": ""
+          }
+        },
+        "popup_zGh6UC": {
+          "type": "popup",
+          "disabled": true,
+          "settings": {
+            "link_label": "Open Pop-up",
+            "page": "",
+            "heading": "",
+            "content": "",
+            "liquid": ""
+          }
+        },
+        "separator": {
+          "type": "separator",
+          "settings": {
+            "show_hr": true,
+            "marginTop": 0,
+            "marginBottom": 0
+          }
+        },
+        "liquid_KT7Biq": {
+          "type": "liquid",
+          "settings": {
+            "liquid": ""
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "hidePriceSold": false
+          }
+        },
+        "quantity": {
+          "type": "quantity",
+          "settings": {
+            "label": true
+          }
+        },
+        "product_list_LxajFg": {
+          "type": "product_list",
+          "settings": {
+            "heading": "Lista de productos",
+            "product_list": [],
+            "swatch_shape": "square",
+            "swatch_size": "medium",
+            "swatch_crop": "true"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "square",
+            "show_text": false,
+            "size_chart": ""
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": false,
+            "show_addtocart_as_primary": true,
+            "show_pickup_availability": true,
+            "show_gift_card_recipient": true,
+            "button_bg": "#721c24",
+            "button_color": "#ffffff"
+          }
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "description",
+        "popup_MebGP8",
+        "popup_zGh6UC",
+        "separator",
+        "liquid_KT7Biq",
+        "price",
+        "quantity",
+        "product_list_LxajFg",
+        "variant_picker",
+        "buy_buttons"
+      ],
+      "settings": {
+        "page_layout": "3",
+        "section_height": "fit",
+        "sticky": true,
+        "vertical_alignment": "center",
+        "priceOnMobile": true,
+        "previewTab": true,
+        "columnOrderMob": false,
+        "media_first": false,
+        "bigger_media": true,
+        "contain_media_size": true,
+        "imageZoom": true,
+        "media_type": "stacked",
+        "slider_thumbnails": false,
+        "slider_thumbnails_irregular": true,
+        "slider_button": true,
+        "slider_button_position": "overlay",
+        "pagination_overlay": true,
+        "slider_loop": false,
+        "pagination_type": "lines",
+        "mediaGap": 4,
+        "enable_video_autoplay": true,
+        "enable_video_looping": true,
+        "enable_video_controls": true,
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    },
+    "product-recommendations": {
+      "type": "pdp-recommend",
+      "disabled": true,
+      "settings": {
+        "stealthMode": true,
+        "heading": "Quizás también te guste",
+        "product_limit": 3,
+        "layoutType": "list",
+        "card_grid_columns": "5",
+        "card_grid_columns_m": "3",
+        "card_grid_columns_s": "2",
+        "card_grid_gap": 3,
+        "card_grid_gap_s": 2,
+        "marginTop": 2,
+        "marginBottom": 2,
+        "paddingTop": 2,
+        "paddingBottom": 2,
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    },
+    "product-recommendations-vendor": {
+      "type": "pdp-recommend-vendor",
+      "disabled": true,
+      "settings": {}
+    },
+    "product-recommendations-recent": {
+      "type": "ls-recently-viewed",
+      "disabled": true,
+      "settings": {
+        "stealthMode": false,
+        "useLocalCardSize": false,
+        "card_size": 250,
+        "marginTop": 0,
+        "marginBottom": 0,
+        "paddingTop": 2,
+        "paddingBottom": 2,
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    }
+  },
+  "order": [
+    "main",
+    "product-recommendations",
+    "product-recommendations-vendor",
+    "product-recommendations-recent"
+  ]
+}

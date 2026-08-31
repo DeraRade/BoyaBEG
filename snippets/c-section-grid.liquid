@@ -1,0 +1,82 @@
+{% comment %}
+	Renders a product listing in either grid or horizontal scroll list format
+	
+	Accepts:
+	- products: {Array} Collection of Shopify Product objects to display
+	- layoutType: {String} 'list' for horizontal scroll, 'grid' for standard grid (default: 'list')
+	- products_limit: {Number} Maximum number of products to display (default: nil - shows all)
+	- section_heading: {String} HTML content for section heading/title
+	- section.settings.card_grid_columns: {Number} Desktop grid columns (grid layout only)
+	- section.settings.card_grid_columns_m: {Number} Medium screen grid columns (grid layout only)  
+	- section.settings.card_grid_columns_s: {Number} Small screen grid columns (grid layout only)
+	- section.settings.card_grid_gap: {String} Grid gap spacing token (grid layout only)
+	- section.settings.card_grid_gap_s: {String} Mobile grid gap spacing token (grid layout only)
+	
+	Behavior:
+	- List layout: Creates horizontal scrollable list with scroll-snap
+	- Grid layout: Creates responsive CSS grid with configurable columns and gaps
+	- Shows placeholder products (1-10) if no products available in store
+	- All product cards use lazy loading by default
+	
+	Usage:
+	{%- render 'product-listing', 
+		products: collection.products, 
+		layoutType: 'grid', 
+		products_limit: 12,
+		section_heading: section_heading
+    -%}
+{% endcomment %}
+
+{%- liquid
+    assign layoutType = layoutType | default: 'list' 
+    assign products_limit = products_limit | default: nil 
+-%}
+
+<component-loader>
+{%- if layoutType == 'list' -%}<coretex-scroll>{%- endif -%} 
+
+{%- liquid
+    # Section heading
+    echo section_heading 
+-%}
+
+{% if layoutType == 'list' %}
+    <ul direction="row" role="list" class="no-style inside scroll-snap mandatory" scroll-area>
+{%- else -%}
+    <x-grid class="product-grid"
+        columns="{{ section.settings.card_grid_columns }}" 
+        columns-m="{{ section.settings.card_grid_columns_m }}" 
+        columns-s="{{ section.settings.card_grid_columns_s }}"
+        style="{{ section.settings.card_grid_gap | prepend: '--gridGap: var(--space-' | append: ');' }}{{ section.settings.card_grid_gap_s | prepend: '--gridGapMob: var(--space-' | append: ');'}}"
+    >
+{%- endif -%}
+
+{%- liquid
+    for product in products limit: products_limit
+
+        if layoutType == 'list'
+            echo '<li as="start" scroll-slide>'
+        endif
+
+        # Render product card
+        render 'c-prod-card', product: product, loading: 'lazy'
+        
+        # Close list or grid
+        if layoutType == 'list'
+            echo '</li>'
+        endif
+
+    else
+        # If no products in store show placeholders
+        for i in (1..10)
+            render 'c-prod-card'
+        endfor
+    endfor
+-%}
+
+{%- if layoutType == 'list' -%}
+    </ul></coretex-scroll>
+{%- else -%}
+    </x-grid>
+{%- endif -%}
+</component-loader>

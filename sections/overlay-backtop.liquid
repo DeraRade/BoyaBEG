@@ -1,0 +1,64 @@
+{%- style -%}
+back-to-top {
+    display: block;
+    position: fixed;
+    inset-block-end: 0;
+    inset-inline-end: var(--space-3);
+    z-index: 101;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    pointer-events: none;
+    transition: all 800ms var(--easeInOutBack);
+
+    &.show { opacity: 1; transform: none; pointer-events: all }
+    &.show:is(:hover,:focus-visible) { scale: 1.3 }
+}
+
+.shopify-design-mode back-to-top,
+body[coretex-footer="stealth"]:has(#footerGroup:target) back-to-top,
+back-to-top.moveUp { --buttonBg: rgb(var(--bgRGB)); inset-block-end: calc(var(--footerHeight, calc(var(--space-6) + 46px)) - 46px); }
+{%- endstyle -%}
+
+<back-to-top onload="backToTop()" data-section-id="{{ section.id }}"><a href="#app" role="button" class="button is-custom has-icon xbrk" aria-label="Back to top">{%- render 'inc-icon', icon: 'arrow-up' -%}</a></back-to-top>
+
+<script>
+class BackToTop extends HTMLElement {
+    constructor() {
+        super();
+        this.threshold = 600;
+        this.footerThreshold = 50;
+        this.footerSelector = 'body:not([coretex-footer="stealth"]) footer';
+
+        this.handleScroll = this.handleScroll.bind(this);
+    }
+
+    connectedCallback() {
+        this.handleScroll();
+        ['scroll', 'resize'].forEach(evt => window.addEventListener(evt, this.handleScroll));
+    }
+        
+    handleScroll() {
+        const footer = document.querySelector(this.footerSelector);
+        const scrolled = window.pageYOffset;
+        const elevate = footer && scrolled + window.innerHeight > footer.offsetTop - this.footerThreshold;
+        // Toggle classes based on the scroll position
+        this.classList.toggle('show', scrolled > this.threshold);
+        this.classList.toggle('moveUp', elevate);
+    }
+        
+} customElements.define('back-to-top', BackToTop);
+</script>
+
+{% schema %}
+{
+    "name": "Back-to-top button",
+    "enabled_on": { "groups": [ "aside" ] },
+    "settings": [
+        {
+            "type": "paragraph",
+            "content": "Allow users to return to the top of the page effortlessly."
+        }
+    ]
+}
+{% endschema %}

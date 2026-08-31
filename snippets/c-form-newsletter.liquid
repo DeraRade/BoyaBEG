@@ -1,0 +1,62 @@
+{%- comment -%} 
+    Replace the code below with the code provided from 
+    a third party provider such as MailChimp, Klaviyo etc.
+{%- endcomment -%}
+{%- assign autofocus = focus | default: true -%}
+<div {% if form.posted_successfully? %}submit-success{% endif %}>
+    {%- form 'customer', class: 'newsletter-form', id: 'NewsletterPopupForm' -%}
+    {%- if template.name == 'password' -%}
+        <input type="hidden" name="contact[tags]" value="prospect, password page">
+    {%- else -%}
+        <input type="hidden" name="contact[tags]" value="newsletter">
+    {%- endif -%}
+    <x-stack presuffix no-style class="fullwidth {% if form.errors %}is-red{%- endif -%}">
+        <x-field class="fullwidth">
+            <input id="NewsletterForm--{{ section.id }}" class="is-blank fullwidth {% if form.errors %}is-red{%- endif -%}"
+                type="email"
+                name="contact[email]"
+                value="{{ form.email }}"
+                placeholder="{{ 'newsletter.label' | t }}"
+                autocorrect="off"
+                autocapitalize="off"
+                autocomplete="email"
+                {% if autofocus %}autofocus{% endif %}
+                required
+                pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                aria-required="true"
+                {% if form.errors %}
+                aria-invalid="true"
+                aria-describedby="Newsletter-error--{{ section.id }}"
+                {% elsif form.posted_successfully? %}
+                aria-describedby="Newsletter-success--{{ section.id }}"
+                {% endif %}
+            >
+            <label for="NewsletterForm--{{ section.id }}">{{ 'newsletter.label' | t }}</label>
+        </x-field>
+
+        <button id="Subscribe" class="is-blank has-icon text-normal" style="width: fit-content" type="submit" name="commit">
+            <span class="visually-hidden">{{ 'newsletter.button_label' | t }}</span>
+            {%- render 'inc-icon', icon: 'arrow-right' -%}
+        </button>
+    </x-stack>
+
+    {%- if form.errors -%}
+    <x-flex ai="center" jc="center" id="newsletter-error" data-form-status>
+        <x-cell>{%- render 'inc-icon', icon: 'o-error' -%}</x-cell>
+        <x-cell><p><strong>{{ form.errors.translated_fields.email | capitalize }}</strong> {{ form.errors.messages.email }}</p></x-cell>
+    </x-flex>
+    {%- endif -%}
+
+    {%- if form.posted_successfully? -%}
+    <style>#newsletter-form-block :is(.title, .description, .disclaimer, x-stack[presuffix]) { display: none }</style>
+    <x-flex ai="center" jc="center" id="newsletter-success" data-form-status>
+        <x-cell>{%- render 'inc-icon', icon: 'o-success' -%}</x-cell>
+        <x-cell><h2 class="h5">{{ 'newsletter.success' | t }}</h2></x-cell>
+    </x-flex>
+    {%- endif -%}
+
+    {% endform %}
+</div>
+{%- comment -%} 
+    stop editing here. 
+{%- endcomment -%}
