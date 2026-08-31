@@ -97,6 +97,7 @@
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ 'event': name, 'qv_score': score, 'qv_reasons': rs });
     if (typeof gtag === 'function') gtag('event', name, { 'qv_score': score, 'qv_reasons': rs });
+    if (typeof fbq === 'function') fbq('trackCustom', name, { qv_score: score, qv_reasons: rs });
   }
 
   evaluate();
