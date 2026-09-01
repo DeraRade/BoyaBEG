@@ -98,6 +98,56 @@ Claude radi isto, plus po potrebi doda uključivanje (npr. `{% render %}`
 u odgovarajući layout/sekciju). Pred-provera live teme je već pokrivena
 Korakom 0.
 
+## Kad `main` odluta od live-a (drift) — kako otkriti i vratiti
+
+Ako je neko menjao živu temu u Shopify editoru mimo git-a, `main` zaostane
+za živom. Simptom: „prosti tok" postaje opasan, jer `theme push` celog fajla
+može da pregazi te editorske izmene.
+
+### Otkrivanje
+U folderu teme (`<LIVE_ID>` iz Koraka 0):
+```bash
+shopify theme pull --store boyaporcelain.myshopify.com --theme <LIVE_ID>
+git status
+```
+Ako `git status` posle svežeg `theme pull` pokaže mnogo izmenjenih fajlova,
+`main` je odlutao od žive teme za tu razliku.
+
+> Pager: ako `git diff` / `git log` otvore čitač i „nema prompta", pritisni
+> `q` za izlaz. `git --no-pager <komanda>` ispisuje bez čitača.
+
+### Vraćanje (`main == live`) — bezbedno, korak po korak
+1. Snimi živu temu na **nov** branch (push uvek prolazi, bez rizika po grane):
+   ```bash
+   git checkout -b live-sync
+   git add -A
+   git commit -m "Snapshot of current live theme"
+   git push -u origin live-sync
+   ```
+2. Claude (cloud) izjednači `main` sa `live-sync` (uz čuvanje `DEPLOY.md`) i
+   push-uje `main`.
+3. Vrati lokalni `main` na osveženi GitHub:
+   ```bash
+   git fetch origin
+   git checkout main
+   git reset --hard origin/main
+   ```
+   Uvek `git fetch` PRE `reset --hard origin/main` — inače je `origin/main`
+   zastareo i reset sleti na staru tačku.
+
+### Ako `main` ima zalutale lokalne commit-e
+Pre `reset --hard`, proveri da ne baciš nešto vredno:
+```bash
+git --no-pager log --oneline origin/main..main
+```
+Ako vidiš stvarnu izmenu koja nije ni na GitHub-u ni na živoj temi
+(npr. „Restore GTM container"), prvo je sačuvaj na GitHub:
+```bash
+git push -u origin <ime-te-grane>
+```
+pa tek onda `reset --hard`. Tako commit ostaje sačuvan i može se deploy-ovati
+kasnije kao zaseban zadatak.
+
 ## Zašto ovako (grablje na koje smo već stali)
 
 - **„Zašto Claude ne push-uje sam na Shopify?"** — mreža ka Shopify-ju je
