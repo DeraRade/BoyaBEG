@@ -9,7 +9,16 @@
   /* ---- Collection stock-view switcher ---- */
   .collection-view-switcher__column {
     text-align: center;
-    margin-bottom: 18px;
+    /* Larger gap toward the text above, smaller gap toward the products below. */
+    margin-top: 22px;
+    margin-bottom: 8px;
+  }
+
+  @media only screen and (max-width: 798px) {
+    .collection-view-switcher__column {
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
   }
 
   .collection-view-switcher {
@@ -257,10 +266,6 @@
       {% endif %}
     </div>
 
-    {% if collection.products_count > 0 %}
-      {% render 'collection-view-switcher' %}
-    {% endif %}
-
     <div class="one-whole column">
       <div class="feature-divider"></div>
     </div>
@@ -304,6 +309,9 @@
               </div>
             {% else %}
               {%- assign products_per_row = section.settings.products_per_row -%}
+
+              {% comment %} Availability switcher: below the text, right above the products {% endcomment %}
+              {% render 'collection-view-switcher' %}
 
               {% comment %} Whole collection view (default) {% endcomment %}
               {%
