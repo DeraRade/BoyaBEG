@@ -1,0 +1,79 @@
+{% comment %}
+  Renders a grid of variant tiles for a single availability view, used by the
+  collection stock-view switcher.
+
+  A dedicated grid per view (instead of interleaving variant tiles in the main
+  product grid) keeps each grid's children homogeneous, so the theme's
+  'equal-columns--outside-trim' :nth-of-type row trimming stays correct.
+
+  Availability rule (per variant):
+    - inventory not tracked  → treated as in stock
+    - inventory quantity > 0 → in stock
+    - inventory quantity <= 0 → pre-order (not in stock)
+
+  Required values
+  products: <collection products>
+  view: <string> either 'instock' or 'preorder'
+  products_per_row: <number>
+  collection: <collection>
+
+  Optional values
+  skip_product: <product>
+{% endcomment %}
+
+<div
+  class="
+    product-list
+    product-list--variants
+    is-flex
+    is-flex-wrap
+    equal-columns--outside-trim
+    collection-view-grid
+    collection-view-grid--{{ view }}
+  "
+  data-collection-view-grid="{{ view }}"
+>
+  {% assign rendered_count = 0 %}
+
+  {% for product in products %}
+    {% if product.id != skip_product.id %}
+      {% for variant in product.variants %}
+        {%- assign variant_in_stock = false -%}
+        {%- if variant.inventory_management == blank -%}
+          {%- assign variant_in_stock = true -%}
+        {%- elsif variant.inventory_quantity > 0 -%}
+          {%- assign variant_in_stock = true -%}
+        {%- endif -%}
+
+        {%- assign show_variant = false -%}
+        {%- if view == 'instock' and variant_in_stock -%}
+          {%- assign show_variant = true -%}
+        {%- elsif view == 'preorder' and variant_in_stock == false -%}
+          {%- assign show_variant = true -%}
+        {%- endif -%}
+
+        {% if show_variant %}
+          {%
+            render 'variant-thumbnail',
+            product: product,
+            variant: variant,
+            view: view,
+            collection: collection,
+            products_per_row: products_per_row,
+          %}
+          {% assign rendered_count = rendered_count | plus: 1 %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if rendered_count == 0 %}
+    <p class="quote collection-view-empty">
+      {% if view == 'instock' %}
+        {{ 'collections.general.no_in_stock' | t }}
+      {% else %}
+        {{ 'collections.general.no_pre_order' | t }}
+      {% endif %}
+    </p>
+  {% endif %}
+</div>

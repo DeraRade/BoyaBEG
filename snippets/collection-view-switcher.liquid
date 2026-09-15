@@ -1,0 +1,58 @@
+{% comment %}
+  Stock-availability view switcher for collection pages.
+
+  Three options separated by two dividers, styled to match the site's
+  localization switcher (Crimson Text, muted rose accent):
+
+    Whole collection  |  In stock  |  Pre-order only
+
+  - Whole collection (default): every product in the collection.
+  - In stock: variants with inventory in stock, shown as individual products.
+  - Pre-order only: out-of-stock variants, shown as individual products.
+
+  The active view is reflected by a class on <body> (see the collection
+  section script), so it survives AJAX grid updates (load more / filtering).
+{% endcomment %}
+
+<div class="one-whole column collection-view-switcher__column">
+  <div
+    class="collection-view-switcher"
+    data-collection-view-switcher
+    role="tablist"
+    aria-label="{{ 'collections.general.availability_filter' | t }}"
+  >
+    <button
+      type="button"
+      class="collection-view-switcher__option is-active"
+      data-collection-view="whole"
+      role="tab"
+      aria-selected="true"
+    >
+      {{ 'collections.general.view_whole_collection' | t }}
+    </button>
+
+    <span class="collection-view-switcher__divider" aria-hidden="true"></span>
+
+    <button
+      type="button"
+      class="collection-view-switcher__option"
+      data-collection-view="instock"
+      role="tab"
+      aria-selected="false"
+    >
+      {{ 'collections.general.view_in_stock' | t }}
+    </button>
+
+    <span class="collection-view-switcher__divider" aria-hidden="true"></span>
+
+    <button
+      type="button"
+      class="collection-view-switcher__option"
+      data-collection-view="preorder"
+      role="tab"
+      aria-selected="false"
+    >
+      {{ 'collections.general.view_pre_order' | t }}
+    </button>
+  </div>
+</div>
