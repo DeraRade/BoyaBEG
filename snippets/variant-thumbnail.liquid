@@ -1,0 +1,111 @@
+{% comment %}
+  Renders a single product variant as an individual collection tile.
+
+  Used by the collection stock-view switcher ("In stock" / "Pre-order only"),
+  where variants that match the selected availability are shown as standalone
+  products. Mirrors the markup, classes and hover behaviour of
+  'product-thumbnail' so it inherits the exact same grid layout, typography
+  and colours as regular product tiles.
+
+  Required values
+  product: <product>
+  variant: <variant>
+  view: <string> either 'instock' or 'preorder'
+  products_per_row: <number>
+  collection: <collection>
+{% endcomment %}
+
+{%- if variant.image -%}
+  {%- assign variant_image = variant.image -%}
+{%- else -%}
+  {%- assign variant_image = product.featured_media.preview_image -%}
+{%- endif -%}
+
+{%- assign variant_url = variant.url | within: collection -%}
+
+{%- if variant.title == 'Default Title' -%}
+  {%- assign variant_alt = product.title | escape -%}
+{%- else -%}
+  {%- assign variant_alt = product.title | append: ' - ' | append: variant.title | escape -%}
+{%- endif -%}
+
+{%- capture variant_details -%}
+  <div class="product-details">
+    <span class="title" itemprop="name">
+      {{- product.title | escape -}}
+    </span>
+    {% unless variant.title == 'Default Title' %}
+      <span class="brand variant-thumbnail__option">
+        {{ variant.title }}
+      </span>
+    {% endunless %}
+    <span class="price {% if variant.compare_at_price > variant.price %}sale{% endif %}">
+      <span class="current_price">
+        <span class="money">{% render 'price-element', price: variant.price %}</span>
+      </span>
+      {% if variant.compare_at_price > variant.price %}
+        <span class="was_price">
+          <span class="money">{% render 'price-element', price: variant.compare_at_price %}</span>
+        </span>
+      {% endif %}
+    </span>
+  </div>
+{%- endcapture -%}
+
+<div
+  class="
+    {%
+      render 'column-width',
+      value: products_per_row
+    %}
+    column
+    thumbnail
+    variant-thumbnail
+    variant-thumbnail--{{ view }}
+    thumbnail-hover-enabled--{{ settings.thumbnail_hover_enabled }}
+    {% if settings.mobile_products_per_row == '1' %}
+      medium-down--one-half
+      small-down--one-whole
+    {% else %}
+      medium-down--one-half
+    {% endif %}
+  "
+  data-variant-view="{{ view }}"
+  {% if settings.pagination_type != 'basic_pagination' %}
+    data-load-more--grid-item
+  {% endif %}
+>
+  <div class="product-{{ product.id }} variant-thumbnail__inner">
+    <div class="product-wrap">
+      <div class="relative product_image">
+        <a href="{{ variant_url }}">
+          <div class="image__container">
+            {%
+              render 'image-element',
+              image: variant_image,
+              alt: variant_alt,
+            %}
+          </div>
+        </a>
+
+        {% if settings.thumbnail_hover_enabled %}
+          <div class="thumbnail-overlay">
+            <a href="{{ variant_url }}" itemprop="url" class="hidden-product-link">
+              {{ variant_alt }}
+            </a>
+            <div class="info">
+              {{ variant_details }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <a
+    class="product-info__caption {% if settings.thumbnail_hover_enabled %}hidden{% endif %}"
+    href="{{ variant_url }}"
+  >
+    {{ variant_details }}
+  </a>
+</div>
