@@ -79,7 +79,7 @@ additional_classes: <string>
                     name="locale_code"
                     value="{{ locale.iso_code }}"
                   >
-                    {{ locale.endonym_name }}
+                    {{ locale.iso_code | upcase }}
                   </button>
                 </li>
               {%- endfor -%}
