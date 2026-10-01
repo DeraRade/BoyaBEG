@@ -76,6 +76,15 @@
 
 {% comment %}Mobile navigation{% endcomment %}
 
+<style>
+  /* Lay the language switcher and currency selector inline in the top bar */
+  .top-bar__menu .localization-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+</style>
+
 <header id="header" class="mobile_nav-fixed--{{ section.settings.fixed_header }}">
   {% if section.settings.promo_text != blank %}
     <div class="promo-banner">

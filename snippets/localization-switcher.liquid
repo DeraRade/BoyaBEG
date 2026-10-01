@@ -58,7 +58,7 @@ additional_classes: <string>
             aria-describedby="lang-heading"
             data-disclosure-toggle
           >
-            {{ form.current_locale.endonym_name }} <span class="icon-down-arrow"></span>
+            {{ form.current_locale.iso_code | upcase }} <span class="icon-down-arrow"></span>
           </button>
           <div class="disclosure__list-wrap">
             <ul
