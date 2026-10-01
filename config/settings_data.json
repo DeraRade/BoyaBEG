@@ -223,7 +223,7 @@
           "top_bar_menu": "",
           "show_cart": true,
           "cart_icon": "bag",
-          "show_locale_selector": false,
+          "show_locale_selector": true,
           "show_currency_selector": false,
           "logo_display_width": 150,
           "logo": "shopify://shop_images/Boya_logo200w_26be2e80-6346-4545-b310-3440479efe8b.png",
@@ -288,16 +288,6 @@
         }
       }
     },
-    "content_for_index": [],
-    "blocks": {
-      "14818028230436078177": {
-        "type": "shopify://apps/langify/blocks/langify/b50c2edb-8c63-4e36-9e7c-a7fdd62ddb8f",
-        "disabled": false,
-        "settings": {
-          "theme_id": "122473283718",
-          "rtl_css": "body {\n  direction: rtl;\n}"
-        }
-      }
-    }
+    "content_for_index": []
   }
 }

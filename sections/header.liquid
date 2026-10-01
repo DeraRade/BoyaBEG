@@ -76,6 +76,15 @@
 
 {% comment %}Mobile navigation{% endcomment %}
 
+<style>
+  /* Lay the language switcher and currency selector inline in the top bar */
+  .top-bar__menu .localization-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+</style>
+
 <header id="header" class="mobile_nav-fixed--{{ section.settings.fixed_header }}">
   {% if section.settings.promo_text != blank %}
     <div class="promo-banner">
@@ -145,9 +154,6 @@
               show_currency: section.settings.show_currency_selector,
             %}
           {% endif %}
-          <li>
-              <span class="ly-custom-0"></span>
-          </li>
         </ul>
       </div>
     </details>
@@ -273,7 +279,6 @@
 
      <div class="top-bar--right-menu">
         <ul class="top-bar__menu">
-          <span class="ly-custom-798 is-hidden-mobile-only"></span>
           {% if locale_selector or currency_selector or settings.show_multiple_currencies == true %}
             <li class="localization-wrap">
               {%
@@ -922,17 +927,3 @@
 }
 
 {% endschema %}
-
-<script>
-  function hideLanguageSwitcherOnMobile() {
-    if (window.innerWidth > 798) return;
-    var el = document.querySelector('.ly-custom-798');
-    if (!el) return;
-    el.style.setProperty('display', 'none', 'important');
-    el.style.setProperty('visibility', 'hidden', 'important');
-  }
-
-  hideLanguageSwitcherOnMobile();
-  window.addEventListener('load', hideLanguageSwitcherOnMobile);
-  window.addEventListener('resize', hideLanguageSwitcherOnMobile);
-</script>
