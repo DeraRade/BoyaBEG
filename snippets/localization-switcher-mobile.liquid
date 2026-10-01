@@ -17,7 +17,7 @@ additional_classes: <string>
       data-mobile-dropdown-rel="catalog-no-link"
       class="mobile-disclosure-link parent-link--false"
     >
-      {{ request.locale.endonym_name }}<span class="right icon-down-arrow"></span>
+      {{ request.locale.iso_code | upcase }}<span class="right icon-down-arrow"></span>
     </a>
     <ul
       class="
@@ -47,7 +47,7 @@ additional_classes: <string>
               name="locale_code"
               value="{{ locale.iso_code }}"
             >
-              {{ locale.endonym_name }}
+              {{ locale.iso_code | upcase }}
             </button>
           </li>
         {%- endfor -%}
@@ -153,7 +153,6 @@ additional_classes: <string>
   >
     
 <a data-mobile-dropdown-rel="catalog-no-link" class="mobile-disclosure-link parent-link--false">
-    >
       <span class="custom-currency-code-mobile">{{ shop.currency | upcase }}</span><span class="right icon-down-arrow"></span>
     </a>
     <ul

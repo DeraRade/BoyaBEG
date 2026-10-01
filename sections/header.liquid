@@ -83,6 +83,13 @@
     align-items: center;
     gap: 14px;
   }
+  /* Separate the language/currency selectors from the rest of the mobile menu */
+  #mobile_menu .mobile-menu__localization-spacer {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
 </style>
 
 <header id="header" class="mobile_nav-fixed--{{ section.settings.fixed_header }}">
@@ -109,6 +116,16 @@
       </summary>
       <div class="mobile-menu-container dropdown" data-nav>
         <ul class="menu" id="mobile_menu">
+          {% if locale_selector or currency_selector or settings.show_multiple_currencies == true %}
+            {%
+              render 'localization-switcher-mobile',
+              additional_classes: 'mobile-menu__disclosure',
+              currency_selector: currency_selector,
+              locale_selector: locale_selector,
+              show_currency: section.settings.show_currency_selector,
+            %}
+            <li class="mobile-menu__localization-spacer" aria-hidden="true"></li>
+          {% endif %}
           {%
             render 'mobile-menu',
             menu: section.settings.main_linklist,
@@ -143,16 +160,6 @@
                 <a href="{{ routes.account_login_url }}" id="customer_login_link">{{ 'layout.customer.log_in' | t }}</a>
               </li>
             {% endif %}
-          {% endif %}
-
-          {% if locale_selector or currency_selector or settings.show_multiple_currencies == true %}
-            {%
-              render 'localization-switcher-mobile',
-              additional_classes: 'mobile-menu__disclosure',
-              currency_selector: currency_selector,
-              locale_selector: locale_selector,
-              show_currency: section.settings.show_currency_selector,
-            %}
           {% endif %}
         </ul>
       </div>
